@@ -37,7 +37,6 @@ RUN composer install --no-dev --no-interaction --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && mkdir -p public/uploads var && chmod -R 777 public/uploads var
-RUN APP_ENV=prod php bin/console cache:warmup
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 9000
