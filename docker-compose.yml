@@ -1,0 +1,43 @@
+services:
+
+  cokalbarunning-backend:
+    container_name: cokalbarunning-backend
+    restart: unless-stopped
+    build:
+      context: ./backend
+      target: dev
+    env_file: .env
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "0"
+      DEFAULT_URI: "http://localhost"
+      DATABASE_URL: "postgresql://cokalba:secret@shared-postgres-db:5432/cokalba_running?serverVersion=16&charset=utf8"
+      CORS_ALLOW_ORIGIN: "^https?://(localhost|app\\.localhost)(:[0-9]+)?$"
+    networks:
+      - shared-network
+    volumes:
+      - ./backend:/var/www/backend
+      - /var/www/backend/vendor
+      - /var/www/backend/var
+      - ./backend/public/uploads:/var/www/backend/public/uploads
+
+  cokalbarunning-frontend:
+    container_name: cokalbarunning-frontend
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      target: dev
+
+    networks:
+      - shared-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+networks:
+  shared-network:
+    name: shared-network
+    external: true
+
+volumes:
+  pgdata: {}

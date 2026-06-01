@@ -1,0 +1,18 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            async: 'sync://'
+            failed: 'doctrine://default?queue_name=failed'
+
+        default_bus: messenger.bus.default
+
+        buses:
+            messenger.bus.default: []
+
+        routing:
+            Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+            # App\Application\Results\ImportResults\ImportResultsCommand: async
+            # App\Application\Media\GenerateThumbnail\GenerateThumbnailCommand: async
+            # App\Application\Notification\SendEmail\SendEmailCommand: async

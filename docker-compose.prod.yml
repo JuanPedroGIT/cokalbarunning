@@ -1,0 +1,31 @@
+services:
+
+  cokalbarunning-backend:
+    build:
+      context: ./backend
+      target: prod
+    env_file: .env
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      DEFAULT_URI: https://cokalba-running.com
+      DATABASE_URL: "postgresql://cokalba:${COKALBA_DB_PASS}@shared-postgres-db:5432/cokalba_running?serverVersion=16&charset=utf8"
+      CORS_ALLOW_ORIGIN: https://cokalba-running.com
+    networks:
+      - shared-network
+    volumes:
+      - ./backend/public/uploads:/var/www/backend/public/uploads
+
+  cokalbarunning-frontend:
+    build:
+      context: ./frontend
+      target: prod
+      args:
+        VITE_API_URL: /api/v1
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    name: shared-network
+    external: true

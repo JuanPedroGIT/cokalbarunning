@@ -1,0 +1,6 @@
+framework:
+    test: false
+    profiler:
+        enabled: false
+    php_errors:
+        log: true

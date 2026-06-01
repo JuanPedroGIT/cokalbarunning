@@ -1,0 +1,13 @@
+/.env
+/.env.local
+/.env.local.php
+/.env.*.local
+/backend/vendor/
+/backend/var/
+/frontend/node_modules/
+/frontend/dist/
+/backend/public/uploads/
+*.log
+.idea/
+.vscode/
+.DS_Store
