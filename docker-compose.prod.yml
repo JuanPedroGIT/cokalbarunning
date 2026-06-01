@@ -9,8 +9,8 @@ services:
       APP_ENV: prod
       APP_DEBUG: "0"
       DEFAULT_URI: https://cokalba-running.com
-      DATABASE_URL: "postgresql://cokalba:${COKALBA_DB_PASS}@shared-postgres-db:5432/cokalba_running?serverVersion=16&charset=utf8"
-      CORS_ALLOW_ORIGIN: https://cokalba-running.com
+      DATABASE_URL: "postgresql://cokalba:${COKALBA_DB_PASS}@shared-postgres-db:5432/cokalba_running?serverVersion=16&charset=utf8"      
+      CORS_ALLOW_ORIGIN: '^https?://(localhost|cokalba-running\.com|.*\.cokalba-running\.com)$'
     networks:
       - shared-network
     volumes:
