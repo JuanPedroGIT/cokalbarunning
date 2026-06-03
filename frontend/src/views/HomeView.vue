@@ -8,7 +8,7 @@ import { useRaceStore } from '@/stores/race.store'
 import api from '@/services/api.service'
 
 interface ClubMember {
-  id: string; name: string; description: string | null; photoUrl: string | null
+  id: string; name: string; description: string | null; bio: string | null; photoUrl: string | null
 }
 interface LatestPost {
   title: string; slug: string; excerpt: string; coverImage: string | null
@@ -81,24 +81,26 @@ onMounted(async () => {
         <div class="font-barlow-condensed text-xs tracking-[0.25em] uppercase text-white/40 mb-2 mt-10">
           {{ isExpired ? 'Carrera finalizada' : 'Cuenta atrás · Salida 09:00h' }}
         </div>
-        <div class="flex gap-0 justify-center lg:justify-start flex-wrap">
-          <div class="text-center px-6 py-4 border border-white/10 border-r-0 bg-white/[0.03]">
-            <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none">{{ days }}</div>
-            <div class="text-xs tracking-widest uppercase text-gris-texto mt-1">Dias</div>
+        <div class="flex flex-col lg:flex-row gap-0 lg:gap-0">
+          <div class="flex gap-0 justify-center lg:justify-start">
+            <div class="text-center px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/10 border-r-0 bg-white/[0.03]">
+              <div class="font-barlow-condensed font-black text-xl sm:text-2xl lg:text-4xl text-naranja leading-none">{{ days }}</div>
+              <div class="text-[0.6rem] sm:text-xs tracking-widest uppercase text-gris-texto mt-1">Dias</div>
+            </div>
+            <div class="text-center px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/10 border-r-0 bg-white/[0.03]">
+              <div class="font-barlow-condensed font-black text-xl sm:text-2xl lg:text-4xl text-naranja leading-none">{{ hours }}</div>
+              <div class="text-[0.6rem] sm:text-xs tracking-widest uppercase text-gris-texto mt-1">Horas</div>
+            </div>
+            <div class="text-center px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/10 border-r-0 bg-white/[0.03]">
+              <div class="font-barlow-condensed font-black text-xl sm:text-2xl lg:text-4xl text-naranja leading-none">{{ minutes }}</div>
+              <div class="text-[0.6rem] sm:text-xs tracking-widest uppercase text-gris-texto mt-1">Min</div>
+            </div>
+            <div class="text-center px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/10 bg-white/[0.03]">
+              <div class="font-barlow-condensed font-black text-xl sm:text-2xl lg:text-4xl text-naranja leading-none">{{ seconds }}</div>
+              <div class="text-[0.6rem] sm:text-xs tracking-widest uppercase text-gris-texto mt-1">Seg</div>
+            </div>
           </div>
-          <div class="text-center px-6 py-4 border border-white/10 border-r-0 bg-white/[0.03]">
-            <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none">{{ hours }}</div>
-            <div class="text-xs tracking-widest uppercase text-gris-texto mt-1">Horas</div>
-          </div>
-          <div class="text-center px-6 py-4 border border-white/10 border-r-0 bg-white/[0.03]">
-            <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none">{{ minutes }}</div>
-            <div class="text-xs tracking-widest uppercase text-gris-texto mt-1">Min</div>
-          </div>
-          <div class="text-center px-6 py-4 border border-white/10 bg-white/[0.03]">
-            <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none">{{ seconds }}</div>
-            <div class="text-xs tracking-widest uppercase text-gris-texto mt-1">Seg</div>
-          </div>
-          <div class="font-barlow-condensed text-sm tracking-widest uppercase text-white/40 self-center ml-5">
+          <div class="font-barlow-condensed text-xs sm:text-sm tracking-widest uppercase text-white/40 text-center lg:text-left lg:self-center lg:ml-5 mt-2 lg:mt-0">
             {{ raceStore.activeEdition?.date || '5 Julio 2026' }}<br>09:00h
           </div>
         </div>
@@ -202,6 +204,7 @@ onMounted(async () => {
             </div>
             <div class="font-barlow-condensed font-bold text-lg uppercase">{{ m.name }}</div>
             <div v-if="m.description" class="text-gris-texto text-sm mt-1">{{ m.description }}</div>
+            <p v-if="m.bio" class="text-white/50 text-xs sm:text-sm mt-2 leading-relaxed line-clamp-4">{{ m.bio }}</p>
           </div>
         </div>
       </div>

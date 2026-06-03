@@ -10,6 +10,7 @@ final readonly class UpdateClubMemberCommand
         public string $id,
         public ?string $name = null,
         public ?string $description = null,
+        public ?string $bio = null,
         public ?string $photoPath = null,
         public ?bool $isActive = null,
         public ?int $sortOrder = null,

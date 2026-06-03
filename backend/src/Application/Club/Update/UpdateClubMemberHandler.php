@@ -25,6 +25,7 @@ final class UpdateClubMemberHandler
         $member->update(
             name: $command->name ?? $member->name(),
             description: $command->description ?? $member->description(),
+            bio: $command->bio ?? $member->bio(),
             photoPath: $command->photoPath ?? $member->photoPath(),
             isActive: $command->isActive ?? $member->isActive(),
             sortOrder: $command->sortOrder ?? $member->sortOrder(),

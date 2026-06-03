@@ -21,7 +21,7 @@ onMounted(() => {
 
     <div v-if="raceStore.loading" class="text-white/50 text-center py-20">Cargando...</div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="edition in raceStore.editions"
         :key="edition.id"

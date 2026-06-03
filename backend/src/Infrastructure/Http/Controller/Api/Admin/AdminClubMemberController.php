@@ -50,6 +50,7 @@ class AdminClubMemberController extends AbstractController
         $envelope = $this->commandBus->dispatch(new CreateClubMemberCommand(
             name: $data['name'],
             description: $data['description'] ?? null,
+            bio: $data['bio'] ?? null,
             isActive: $data['isActive'] ?? true,
             sortOrder: $data['sortOrder'] ?? 0,
         ));
@@ -75,6 +76,7 @@ class AdminClubMemberController extends AbstractController
             id: $id,
             name: $data['name'] ?? null,
             description: array_key_exists('description', $data) ? $data['description'] : null,
+            bio: array_key_exists('bio', $data) ? $data['bio'] : null,
             isActive: $data['isActive'] ?? null,
             sortOrder: $data['sortOrder'] ?? null,
         ));

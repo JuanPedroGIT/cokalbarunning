@@ -2,18 +2,20 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import ImageDropZone from '@/components/ui/ImageDropZone.vue'
 
 interface ClubMember {
   id: string
   name: string
   description: string | null
+  bio: string | null
   photoUrl: string | null
   isActive: boolean
   sortOrder: number
 }
 
 const members = ref<ClubMember[]>([])
-const form = ref<Partial<ClubMember>>({ name: '', description: '', isActive: true, sortOrder: 0 })
+const form = ref<Partial<ClubMember>>({ name: '', description: '', bio: '', isActive: true, sortOrder: 0 })
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const photoFiles = ref<Record<string, File | null>>({})
@@ -49,13 +51,11 @@ async function remove(id: string) {
   await fetch()
 }
 
-function onPhotoChange(memberId: string, e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0] || null
-  if (file && memberId !== 'new') {
+function onPhotoSelect(memberId: string, file: File) {
+  if (memberId !== 'new') {
     photoFiles.value[memberId] = file
     uploadPhoto(memberId)
-  } else if (file) {
+  } else {
     photoFiles.value['new'] = file
   }
 }
@@ -78,7 +78,7 @@ async function uploadPhotoDirect(memberId: string, file: File) {
 function resetForm() {
   editingId.value = null
   photoFiles.value['new'] = null
-  form.value = { name: '', description: '', isActive: true, sortOrder: 0 }
+  form.value = { name: '', description: '', bio: '', isActive: true, sortOrder: 0 }
 }
 
 onMounted(fetch)
@@ -105,9 +105,13 @@ onMounted(fetch)
             <label class="block text-xs text-gray-400 mb-1">Descripción / Rol</label>
             <input v-model="form.description" placeholder="Presidente, Corredor..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
           </div>
-          <div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-400 mb-1">Biografía</label>
+            <textarea v-model="form.bio" rows="3" placeholder="Breve biografía del miembro..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition resize-none"></textarea>
+          </div>
+          <div class="sm:col-span-2">
             <label class="block text-xs text-gray-400 mb-1">Foto</label>
-            <input type="file" accept="image/*" @change="onPhotoChange('new', $event)" class="text-sm text-gray-400" />
+            <ImageDropZone @select="onPhotoSelect('new', $event)" />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Orden</label>
@@ -135,6 +139,7 @@ onMounted(fetch)
               <th class="p-3 font-medium">Nombre</th>
               <th class="p-3 font-medium">Foto</th>
               <th class="p-3 font-medium">Rol</th>
+              <th class="p-3 font-medium">Bio</th>
               <th class="p-3 font-medium">Activo</th>
               <th class="p-3 text-right font-medium">Acciones</th>
             </tr>
@@ -144,14 +149,17 @@ onMounted(fetch)
               <td class="p-3 font-medium">{{ m.name }}</td>
               <td class="p-3">
                 <div class="flex items-center gap-2">
-                  <img v-if="m.photoUrl" :src="m.photoUrl" class="h-8 w-8 object-cover rounded-full bg-white/5" :alt="m.name" />
-                  <input type="file" accept="image/*" :id="`photo-${m.id}`" class="hidden" @change="onPhotoChange(m.id, $event)" />
-                  <label :for="`photo-${m.id}`" class="cursor-pointer text-xs bg-[#222] text-gray-300 px-2 py-1 rounded hover:bg-[#333] transition border border-white/10">
-                    {{ m.photoUrl ? 'Cambiar' : 'Subir foto' }}
-                  </label>
+                  <img v-if="m.photoUrl" :src="m.photoUrl" class="h-8 w-8 object-cover rounded-full bg-white/5 shrink-0" :alt="m.name" />
+                  <ImageDropZone
+                    compact
+                    :label="m.photoUrl ? 'Cambiar' : 'Subir foto'"
+                    class="min-w-[140px]"
+                    @select="onPhotoSelect(m.id, $event)"
+                  />
                 </div>
               </td>
               <td class="p-3 text-gray-400 text-xs">{{ m.description || '—' }}</td>
+              <td class="p-3 text-gray-400 text-xs max-w-[200px] truncate">{{ m.bio || '—' }}</td>
               <td class="p-3">
                 <span v-if="m.isActive" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Sí</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
@@ -165,7 +173,7 @@ onMounted(fetch)
               </td>
             </tr>
             <tr v-if="!members.length">
-              <td colspan="5" class="p-6 text-center text-gray-500">No hay miembros registrados</td>
+              <td colspan="6" class="p-6 text-center text-gray-500">No hay miembros registrados</td>
             </tr>
           </tbody>
         </table>

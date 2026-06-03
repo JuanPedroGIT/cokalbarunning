@@ -15,6 +15,7 @@ final class ClubMemberMapper
             id: $orm->getId(),
             name: $orm->getName(),
             description: $orm->getDescription(),
+            bio: $orm->getBio(),
             photoPath: $orm->getPhotoPath(),
             isActive: $orm->isActive(),
             sortOrder: $orm->getSortOrder(),
@@ -27,6 +28,7 @@ final class ClubMemberMapper
         $target->setId($domain->id());
         $target->setName($domain->name());
         $target->setDescription($domain->description());
+        $target->setBio($domain->bio());
         $target->setPhotoPath($domain->photoPath());
         $target->setIsActive($domain->isActive());
         $target->setSortOrder($domain->sortOrder());

@@ -24,6 +24,7 @@ final class CreateClubMemberHandler
             id: $id,
             name: $command->name,
             description: $command->description,
+            bio: $command->bio,
             photoPath: $command->photoPath,
             isActive: $command->isActive,
             sortOrder: $command->sortOrder,

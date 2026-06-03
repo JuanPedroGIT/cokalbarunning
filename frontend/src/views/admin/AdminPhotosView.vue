@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import ImageDropZone from '@/components/ui/ImageDropZone.vue'
 
 interface Photo {
   id: string
@@ -27,7 +28,6 @@ const isFeatured = ref(false)
 const sortOrder = ref(0)
 const selectedEditionId = ref<string>('')
 const router = useRouter()
-const fileInputKey = ref(0)
 
 async function fetchPhotos() {
   if (!selectedEditionId.value) {
@@ -64,7 +64,6 @@ async function upload() {
   altText.value = ''
   isFeatured.value = false
   sortOrder.value = 0
-  fileInputKey.value++
   await fetchPhotos()
 }
 
@@ -74,9 +73,8 @@ async function remove(id: string) {
   await fetchPhotos()
 }
 
-function onFileChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  file.value = target.files?.[0] || null
+function onPhotoSelect(selectedFile: File) {
+  file.value = selectedFile
 }
 
 watch(selectedEditionId, () => {
@@ -108,16 +106,11 @@ onMounted(() => { fetchEditions() })
       <!-- Upload form (solo visible si hay edicion seleccionada) -->
       <div v-if="selectedEditionId" class="bg-[#141414] rounded-lg border border-white/5 p-6 space-y-4">
         <h2 class="text-lg font-semibold border-b border-white/5 pb-3">Subir Foto</h2>
-        <div class="flex items-center gap-4">
-          <input :key="fileInputKey" type="file" accept="image/*" id="photo-upload" class="hidden" @change="onFileChange" />
-          <label for="photo-upload" class="cursor-pointer bg-[#0A0A0A] border-2 border-dashed border-white/20 rounded-lg px-6 py-4 hover:border-[#FF5C00]/50 hover:bg-[#1a1a1a] transition flex items-center gap-3">
-            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3l4.5 4.5m-13.5 9V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0021 6.75v6.75" />
-            </svg>
-            <span v-if="!file" class="text-gray-400">Haz clic para seleccionar una imagen</span>
-            <span v-else class="text-white font-medium">{{ file.name }}</span>
-          </label>
-        </div>
+        <ImageDropZone
+          :label="'Haz clic para seleccionar una imagen'"
+          :selected-label="file ? file.name : undefined"
+          @select="onPhotoSelect"
+        />
         <div>
           <label class="block text-xs text-gray-400 mb-1">Texto alternativo (alt)</label>
           <input v-model="altText" placeholder="Descripcion de la imagen para accesibilidad..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />

@@ -11,7 +11,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
+  <div class="columns-3 md:columns-3 lg:columns-4 gap-3 space-y-3">
     <div
       v-for="(photo, index) in photos"
       :key="photo.id"

@@ -21,6 +21,9 @@ class ClubMember
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $bio = null;
+
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $photoPath = null;
 
@@ -42,6 +45,8 @@ class ClubMember
     public function setName(string $name): static { $this->name = $name; return $this; }
     public function getDescription(): ?string { return $this->description; }
     public function setDescription(?string $description): static { $this->description = $description; return $this; }
+    public function getBio(): ?string { return $this->bio; }
+    public function setBio(?string $bio): static { $this->bio = $bio; return $this; }
     public function getPhotoPath(): ?string { return $this->photoPath; }
     public function setPhotoPath(?string $photoPath): static { $this->photoPath = $photoPath; return $this; }
     public function isActive(): bool { return $this->isActive; }
