@@ -33,7 +33,7 @@ function tick() {
 const pad = (n: number) => String(n).padStart(2, '0')
 
 onMounted(() => {
-  raceStore.fetchActiveEdition().then(() => { tick(); timer = setInterval(tick, 1000) })
+  raceStore.fetchLatestEdition().then(() => { tick(); timer = setInterval(tick, 1000) })
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>

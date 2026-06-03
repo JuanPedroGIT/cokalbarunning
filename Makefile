@@ -35,48 +35,48 @@ shell-frontend: ## Shell en el contenedor frontend
 # ─── Symfony ────────────────────────────────────────────────────────────────
 
 migrate: ## Ejecuta migraciones
-	docker compose exec cokalbarunning-backend php bin/console doctrine:migrations:migrate --no-interaction
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:migrations:migrate --no-interaction
 
 migration-diff: ## Genera migración por diff
-	docker compose exec cokalbarunning-backend php bin/console doctrine:migrations:diff
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:migrations:diff
 
 migration-status: ## Estado de migraciones
-	docker compose exec cokalbarunning-backend php bin/console doctrine:migrations:status
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:migrations:status
 
 schema-validate: ## Valida mapping Doctrine
-	docker compose exec cokalbarunning-backend php bin/console doctrine:schema:validate
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:schema:validate
 
 cache-clear: ## Limpia caché Symfony
-	docker compose exec cokalbarunning-backend php bin/console cache:clear
+	docker compose exec -u www-data cokalbarunning-backend php bin/console cache:clear
 
 cache-warm: ## Precalienta caché
-	docker compose exec cokalbarunning-backend php bin/console cache:clear
-	docker compose exec cokalbarunning-backend php bin/console cache:warmup
+	docker compose exec -u www-data cokalbarunning-backend php bin/console cache:clear
+	docker compose exec -u www-data cokalbarunning-backend php bin/console cache:warmup
 
 # ─── Tests ──────────────────────────────────────────────────────────────────
 
 test: ## Todos los tests
-	docker compose exec cokalbarunning-backend php bin/phpunit
+	docker compose exec -u www-data cokalbarunning-backend php bin/phpunit
 
 test-unit: ## Tests unitarios
-	docker compose exec cokalbarunning-backend php bin/phpunit tests/Unit
+	docker compose exec -u www-data cokalbarunning-backend php bin/phpunit tests/Unit
 
 test-integration: ## Tests integración
-	docker compose exec cokalbarunning-backend php bin/phpunit tests/Integration
+	docker compose exec -u www-data cokalbarunning-backend php bin/phpunit tests/Integration
 
 test-functional: ## Tests funcionales
-	docker compose exec cokalbarunning-backend php bin/phpunit tests/Functional
+	docker compose exec -u www-data cokalbarunning-backend php bin/phpunit tests/Functional
 
 # ─── Dependencias ───────────────────────────────────────────────────────────
 
 install: ## Instalación completa tras clonar
-	docker compose exec cokalbarunning-backend composer install
+	docker compose exec -u www-data cokalbarunning-backend composer install
 	$(MAKE) sync-vendor
 	npm --prefix frontend install
 	$(MAKE) sync-npm
 
 composer-require: ## Añade paquete PHP (ej: make composer-require pkg="vendor/pkg")
-	docker compose exec cokalbarunning-backend composer require $(pkg)
+	docker compose exec -u www-data cokalbarunning-backend composer require $(pkg)
 	$(MAKE) sync-vendor
 
 npm-install: ## Añade paquete npm (ej: make npm-install pkg="nombre")
@@ -94,22 +94,22 @@ sync-npm:
 # ─── Utilidades ─────────────────────────────────────────────────────────────
 
 backend-console: ## Symfony console (ej: make backend-console cmd="debug:router")
-	docker compose exec cokalbarunning-backend php bin/console $(cmd)
+	docker compose exec -u www-data cokalbarunning-backend php bin/console $(cmd)
 
 backend-routes: ## Lista rutas de Symfony
-	docker compose exec cokalbarunning-backend php bin/console debug:router
+	docker compose exec -u www-data cokalbarunning-backend php bin/console debug:router
 
 schema-update: ## Actualiza schema (⚠️ no usar en prod)
-	docker compose exec cokalbarunning-backend php bin/console doctrine:schema:update --force
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:schema:update --force
 
 schema-drop: ## Elimina schema (⚠️ datos perdidos)
-	docker compose exec cokalbarunning-backend php bin/console doctrine:schema:drop --force
+	docker compose exec -u www-data cokalbarunning-backend php bin/console doctrine:schema:drop --force
 
 composer-update: ## Actualiza dependencias PHP
-	docker compose exec cokalbarunning-backend composer update
+	docker compose exec -u www-data cokalbarunning-backend composer update
 
 composer-dump: ## Regenera autoload
-	docker compose exec cokalbarunning-backend composer dump-autoload
+	docker compose exec -u www-data cokalbarunning-backend composer dump-autoload
 
 npm-update: ## Actualiza dependencias frontend
 	docker compose exec cokalbarunning-frontend npm update
@@ -121,19 +121,19 @@ npm-lint: ## Linter frontend
 	docker compose exec cokalbarunning-frontend npm run lint
 
 jwt-generate: ## Genera claves JWT
-	docker compose exec cokalbarunning-backend php bin/console lexik:jwt:generate-keypair --overwrite
+	docker compose exec -u www-data cokalbarunning-backend php bin/console lexik:jwt:generate-keypair --overwrite
 
 create-admin: ## Crea admin (ej: make create-admin email="a@b.com" password="s")
-	docker compose exec cokalbarunning-backend php bin/console app:user:create $(email) -p $(password)
+	docker compose exec -u www-data cokalbarunning-backend php bin/console app:user:create $(email) -p $(password)
 
 create-editor: ## Crea editor (ej: make create-editor email="a@b.com" password="s")
-	docker compose exec cokalbarunning-backend php bin/console app:user:create $(email) -p $(password) -r ROLE_EDITOR
+	docker compose exec -u www-data cokalbarunning-backend php bin/console app:user:create $(email) -p $(password) -r ROLE_EDITOR
 
 update-admin: ## Actualiza contraseña (ej: make update-admin email="a@b.com" password="n")
-	docker compose exec cokalbarunning-backend php bin/console app:user:create $(email) -p $(password) --update
+	docker compose exec -u www-data cokalbarunning-backend php bin/console app:user:create $(email) -p $(password) --update
 
 storage-migrate: ## Migra URLs a paths relativos en BD
-	docker compose exec cokalbarunning-backend php bin/console app:migrate-storage-urls-to-paths
+	docker compose exec -u www-data cokalbarunning-backend php bin/console app:migrate-storage-urls-to-paths
 
 # ─── Producción ─────────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http\Controller\Api;
 use App\Application\Race\Query\GetActiveEditionQuery;
 use App\Application\Race\Query\GetAllEditionsQuery;
 use App\Application\Race\Query\GetEditionByYearQuery;
+use App\Application\Race\Query\GetLatestEditionQuery;
 use App\Application\Race\Response\RaceEditionResponseDto;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,11 +41,17 @@ class RaceController extends AbstractController
         /** @var RaceEditionResponseDto|null $dto */
         $dto = $envelope->last(HandledStamp::class)?->getResult();
 
-        if ($dto === null) {
-            return $this->json(['data' => null], 404);
-        }
+        return $this->json(['data' => $dto?->toArray() ?? null]);
+    }
 
-        return $this->json(['data' => $dto->toArray()]);
+    #[Route('/editions/latest', methods: ['GET'])]
+    public function latest(): JsonResponse
+    {
+        $envelope = $this->queryBus->dispatch(new GetLatestEditionQuery());
+        /** @var RaceEditionResponseDto|null $dto */
+        $dto = $envelope->last(HandledStamp::class)?->getResult();
+
+        return $this->json(['data' => $dto?->toArray() ?? null]);
     }
 
     #[Route('/editions/{year}', methods: ['GET'])]

@@ -49,5 +49,17 @@ export const useRaceStore = defineStore('race', () => {
     }
   }
 
-  return { editions, activeEdition, loading, error, fetchEditions, fetchActiveEdition }
+  async function fetchLatestEdition() {
+    loading.value = true
+    try {
+      const response = await api.get('/editions/latest')
+      activeEdition.value = response.data.data
+    } catch (e) {
+      error.value = 'Error cargando ultima edicion'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { editions, activeEdition, loading, error, fetchEditions, fetchActiveEdition, fetchLatestEdition }
 })

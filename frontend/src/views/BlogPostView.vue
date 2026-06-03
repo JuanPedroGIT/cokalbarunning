@@ -57,9 +57,7 @@ watch(() => route.params.slug, (newSlug) => {
         {{ post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('es-ES') : '' }}
       </div>
       <img v-if="post.coverImage" :src="post.coverImage" class="w-full max-h-96 object-cover mb-8 rounded border border-white/5" loading="lazy" />
-      <div class="text-white/70 leading-relaxed whitespace-pre-line">
-        {{ post.content }}
-      </div>
+      <div class="text-white/70 leading-relaxed" v-html="post.content"></div>
     </div>
   </section>
 </template>

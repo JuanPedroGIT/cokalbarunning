@@ -53,18 +53,19 @@ onMounted(async () => {
 
     <template v-else>
     <!-- HERO -->
-    <section id="inicio" class="min-h-screen relative z-10 overflow-hidden">
-      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-16 items-center px-6 pt-32 pb-20 max-w-6xl mx-auto">
+    <section id="inicio" class="relative z-10 overflow-hidden" :class="raceStore.activeEdition ? 'min-h-screen' : ''">
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-16 items-center px-6 pt-32 pb-8 lg:pb-20 max-w-6xl mx-auto">
 
-      <div class="relative z-10 text-center lg:text-left">
+      <!-- Carrera activa -->
+      <div v-if="raceStore.activeEdition" class="relative z-10 text-center lg:text-left">
         <div class="font-barlow-condensed font-semibold text-sm tracking-[0.25em] uppercase text-naranja mb-5">
-          {{ raceStore.activeEdition?.name || 'IX Carrera Solidaria' }} - {{ raceStore.activeEdition?.date ? new Date(raceStore.activeEdition.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '5 de Julio 2026' }}
+          {{ raceStore.activeEdition.name }} - {{ new Date(raceStore.activeEdition.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) }}
         </div>
         <h1 class="font-barlow-condensed font-black text-[clamp(3.5rem,8vw,8rem)] leading-[0.92] uppercase">
           Un Nuevo<br><span class="text-naranja">Impulso</span>
         </h1>
         <p class="text-lg font-light text-white/60 max-w-lg mt-6 leading-relaxed mx-auto lg:mx-0">
-          {{ raceStore.activeEdition?.description || 'La carrera solidaria de Coca de Alba vuelve un año más. Corre por una buena causa y ayuda a impulsar el futuro de muchas personas.' }}
+          {{ raceStore.activeEdition.description || 'La carrera solidaria de Coca de Alba vuelve un año más. Corre por una buena causa y ayuda a impulsar el futuro de muchas personas.' }}
         </p>
         <div class="flex gap-4 mt-10 justify-center lg:justify-start">
           <a v-if="!isExpired" href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank" class="font-barlow-condensed font-bold text-base tracking-widest uppercase bg-naranja text-negro px-8 py-3 hover:bg-amarillo transition-colors inline-block">
@@ -101,44 +102,38 @@ onMounted(async () => {
             </div>
           </div>
           <div class="font-barlow-condensed text-xs sm:text-sm tracking-widest uppercase text-white/40 text-center lg:text-left lg:self-center lg:ml-5 mt-2 lg:mt-0">
-            {{ raceStore.activeEdition?.date || '5 Julio 2026' }}<br>09:00h
+            {{ raceStore.activeEdition.date }}<br>09:00h
           </div>
         </div>
       </div>
 
-      <!-- Última noticia -->
-      <RouterLink v-if="latestPost" :to="`/blog/${latestPost.slug}`" class="relative z-10 w-full lg:max-w-none group block no-underline">
-        <div class="aspect-[3/4] flex items-center justify-center overflow-hidden bg-gris-medio">
+      <!-- Última noticia (igual que en Blog) -->
+      <RouterLink v-if="latestPost" :to="`/blog/${latestPost.slug}`" class="relative z-10 w-full group block no-underline bg-negro overflow-hidden" :class="raceStore.activeEdition ? 'lg:max-w-none' : 'lg:col-span-2'">
+        <div class="h-64 lg:h-80 bg-gris-medio relative overflow-hidden">
           <img
             v-if="latestPost.coverImage"
             :src="latestPost.coverImage"
             :alt="latestPost.title"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
-          <span v-else class="font-barlow-condensed text-sm tracking-widest uppercase text-white/15">Última noticia</span>
+          <div v-else class="absolute inset-0 bg-gradient-to-br from-naranja/20 to-red-600/10" />
+          <div v-if="!latestPost.coverImage" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl opacity-15">📣</div>
         </div>
-        <div class="mt-4">
+        <div class="p-6">
           <div class="font-barlow-condensed text-xs font-semibold tracking-[0.2em] uppercase text-naranja">Última noticia</div>
-          <div class="font-barlow-condensed font-bold text-xl uppercase mt-1 group-hover:text-naranja transition-colors">{{ latestPost.title }}</div>
-          <p class="text-sm text-white/40 leading-relaxed mt-2 line-clamp-2">{{ latestPost.excerpt }}</p>
+          <div class="font-barlow-condensed font-bold text-lg uppercase leading-tight mt-2 group-hover:text-naranja transition-colors">{{ latestPost.title }}</div>
+          <div class="text-sm text-white/50 leading-relaxed mt-2">{{ latestPost.excerpt }}</div>
+          <div class="text-sm text-gris-texto mt-4">{{ latestPost.publishedAt ? new Date(latestPost.publishedAt).toLocaleDateString('es-ES') : '' }}</div>
         </div>
       </RouterLink>
-      <!-- Fallback cartel si no hay noticias -->
-      <div v-else class="relative z-10 w-full lg:max-w-none">
+      <!-- Fallback cartel si no hay noticias ni carrera -->
+      <div v-else class="relative z-10 w-full lg:max-w-none" :class="raceStore.activeEdition ? '' : 'lg:col-span-2 max-w-md mx-auto'">
         <div class="aspect-[3/4] flex items-center justify-center overflow-hidden">
-          <img
-            v-if="raceStore.activeEdition?.posterUrl"
-            :src="raceStore.activeEdition.posterUrl"
-            :alt="raceStore.activeEdition.name"
-            class="w-full h-full object-contain cursor-zoom-in"
-            loading="lazy"
-            @click="zoomImage($event.target as HTMLImageElement)"
-          />
-          <span v-else class="font-barlow-condensed text-sm tracking-widest uppercase text-white/25">Cartel IX Edicion</span>
+          <span class="font-barlow-condensed text-sm tracking-widest uppercase text-white/25">Cartel IX Edicion</span>
         </div>
         <div class="font-barlow-condensed text-xs tracking-[0.2em] uppercase text-white/30 text-center mt-3">
-          {{ raceStore.activeEdition?.name || 'IX Edicion - Un Nuevo Impulso' }}
+          IX Edicion - Un Nuevo Impulso
         </div>
       </div>
       </div>

@@ -39,7 +39,7 @@ final class UpdateBlogPostHandler
         );
 
         if ($command->publishedAt !== null) {
-            $post->updatePublishedAt($command->publishedAt ? new \DateTimeImmutable($command->publishedAt) : null);
+            $post->updatePublishedAt($command->publishedAt !== '' ? new \DateTimeImmutable($command->publishedAt) : null);
         }
 
         $this->repository->save($post);

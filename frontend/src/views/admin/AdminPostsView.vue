@@ -91,7 +91,8 @@ onMounted(fetchPosts)
         </div>
         <div>
           <label class="block text-xs text-gray-400 mb-1">Contenido</label>
-          <textarea v-model="form.content" placeholder="Contenido completo..." rows="6" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"></textarea>
+          <textarea v-model="form.content" placeholder="Contenido completo..." rows="6" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition font-mono text-sm"></textarea>
+          <p class="text-[0.65rem] text-gray-500 mt-1">Se admite HTML: &lt;p&gt;, &lt;h2&gt;, &lt;strong&gt;, &lt;a&gt;, &lt;img&gt;, etc.</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -100,7 +101,12 @@ onMounted(fetchPosts)
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Fecha publicacion</label>
-            <input v-model="form.publishedAt" type="datetime-local" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <input
+              :value="form.publishedAt ? form.publishedAt.slice(0, 10) : ''"
+              type="date"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition [color-scheme:dark]"
+              @input="ev => form.publishedAt = (ev.target as HTMLInputElement).value || null"
+            />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Imagen portada</label>
