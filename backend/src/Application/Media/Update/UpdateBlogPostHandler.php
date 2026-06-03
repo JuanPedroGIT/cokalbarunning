@@ -26,7 +26,7 @@ final class UpdateBlogPostHandler
 
         $title = $command->title ?? $post->title();
         $slug = $command->title !== null
-            ? (string) $this->slugger->slug($command->title)->lower()
+            ? $this->generateUniqueSlug($command->title, $post->id())
             : $post->slug();
 
         $post->update(
@@ -43,5 +43,21 @@ final class UpdateBlogPostHandler
         }
 
         $this->repository->save($post);
+    }
+
+    private function generateUniqueSlug(string $title, string $excludeId): string
+    {
+        $baseSlug = (string) $this->slugger->slug($title)->lower();
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (true) {
+            $existing = $this->repository->findBySlug($slug);
+            if ($existing === null || $existing->id() === $excludeId) {
+                return $slug;
+            }
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
     }
 }

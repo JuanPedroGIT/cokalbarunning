@@ -22,10 +22,11 @@ final class CreateBlogPostHandler
     public function __invoke(CreateBlogPostCommand $command): string
     {
         $id = Uuid::uuid4()->toString();
+        $slug = $this->generateUniqueSlug($command->title);
         $post = new BlogPost(
             id: $id,
             title: $command->title,
-            slug: (string) $this->slugger->slug($command->title)->lower(),
+            slug: $slug,
             excerpt: $command->excerpt,
             content: $command->content,
             tag: $command->tag,
@@ -37,5 +38,19 @@ final class CreateBlogPostHandler
         $this->repository->save($post);
 
         return $id;
+    }
+
+    private function generateUniqueSlug(string $title): string
+    {
+        $baseSlug = (string) $this->slugger->slug($title)->lower();
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while ($this->repository->findBySlug($slug) !== null) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

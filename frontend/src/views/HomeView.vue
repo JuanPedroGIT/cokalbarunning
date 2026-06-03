@@ -199,7 +199,7 @@ onMounted(async () => {
             </div>
             <div class="font-barlow-condensed font-bold text-lg uppercase">{{ m.name }}</div>
             <div v-if="m.description" class="text-gris-texto text-sm mt-1">{{ m.description }}</div>
-            <p v-if="m.bio" class="text-white/50 text-xs sm:text-sm mt-2 leading-relaxed line-clamp-4">{{ m.bio }}</p>
+            <p v-if="m.bio" class="text-white/50 text-xs sm:text-sm mt-2 leading-relaxed">{{ m.bio }}</p>
           </div>
         </div>
       </div>
