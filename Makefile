@@ -121,7 +121,8 @@ npm-lint: ## Linter frontend
 	docker compose exec cokalbarunning-frontend npm run lint
 
 jwt-generate: ## Genera claves JWT
-	docker compose exec -u www-data cokalbarunning-backend php bin/console lexik:jwt:generate-keypair --overwrite
+	docker compose exec cokalbarunning-backend php bin/console lexik:jwt:generate-keypair --overwrite
+	docker compose exec cokalbarunning-backend chown -R www-data:www-data /var/www/backend/config/jwt
 
 create-admin: ## Crea admin (ej: make create-admin email="a@b.com" password="s")
 	docker compose exec -u www-data cokalbarunning-backend php bin/console app:user:create $(email) -p $(password)
