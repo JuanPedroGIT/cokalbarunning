@@ -28,6 +28,7 @@ final class CreateClubMemberHandler
             photoPath: $command->photoPath,
             isActive: $command->isActive,
             sortOrder: $command->sortOrder,
+            userId: $command->userId,
         );
 
         $this->repository->save($member);

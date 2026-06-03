@@ -17,4 +17,5 @@ interface ClubMemberRepositoryInterface
 
     /** @return ClubMember[] */
     public function findAll(): array;
+    public function findByUserId(string $userId): ?ClubMember;
 }

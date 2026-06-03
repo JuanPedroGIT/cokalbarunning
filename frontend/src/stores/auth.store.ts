@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import api from '@/services/api.service'
 
-function parseJwt(token: string): { email?: string; roles?: string[] } | null {
+function parseJwt(token: string): { id?: string; email?: string; roles?: string[] } | null {
   try {
     const parts = token.split('.')
     if (parts.length < 2) return null
@@ -23,8 +23,8 @@ function parseJwt(token: string): { email?: string; roles?: string[] } | null {
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('jwt_token'))
   const payload = token.value ? parseJwt(token.value) : null
-  const user = ref<{ email: string; roles: string[] } | null>(
-    payload ? { email: payload.email || '', roles: payload.roles || [] } : null
+  const user = ref<{ id: string; email: string; roles: string[] } | null>(
+    payload ? { id: payload.id || '', email: payload.email || '', roles: payload.roles || [] } : null
   )
   const isAuthenticated = ref(!!token.value)
 
@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken
     localStorage.setItem('jwt_token', newToken)
     const p = parseJwt(newToken)
-    user.value = p ? { email: p.email || '', roles: p.roles || [] } : null
+    user.value = p ? { id: p.id || '', email: p.email || '', roles: p.roles || [] } : null
     isAuthenticated.value = true
   }
 

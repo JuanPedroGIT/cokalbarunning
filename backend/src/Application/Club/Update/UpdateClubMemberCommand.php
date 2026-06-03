@@ -14,6 +14,7 @@ final readonly class UpdateClubMemberCommand
         public ?string $photoPath = null,
         public ?bool $isActive = null,
         public ?int $sortOrder = null,
+        public ?string $userId = null,
     ) {
     }
 }

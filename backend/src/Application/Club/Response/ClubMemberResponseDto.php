@@ -17,6 +17,7 @@ final readonly class ClubMemberResponseDto
         public ?string $photoUrl,
         public bool $isActive,
         public int $sortOrder,
+        public ?string $userId,
     ) {
     }
 
@@ -30,6 +31,7 @@ final readonly class ClubMemberResponseDto
             photoUrl: $member->photoPath() !== null ? $storage->url($member->photoPath()) : null,
             isActive: $member->isActive(),
             sortOrder: $member->sortOrder(),
+            userId: $member->userId(),
         );
     }
 
@@ -52,6 +54,7 @@ final readonly class ClubMemberResponseDto
             'photoUrl' => $this->photoUrl,
             'isActive' => $this->isActive,
             'sortOrder' => $this->sortOrder,
+            'userId' => $this->userId,
         ];
     }
 

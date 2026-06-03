@@ -39,6 +39,9 @@ class ClubMember
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $updatedBy = null;
 
+    #[ORM\Column(type: 'string', length: 36, nullable: true, unique: true)]
+    private ?string $userId = null;
+
     public function getId(): string { return $this->id; }
     public function setId(string $id): static { $this->id = $id; return $this; }
     public function getName(): string { return $this->name; }
@@ -57,4 +60,7 @@ class ClubMember
     public function setCreatedBy(?string $v): static { $this->createdBy = $v; return $this; }
     public function getUpdatedBy(): ?string { return $this->updatedBy; }
     public function setUpdatedBy(?string $v): static { $this->updatedBy = $v; return $this; }
+
+    public function getUserId(): ?string { return $this->userId; }
+    public function setUserId(?string $v): static { $this->userId = $v; return $this; }
 }

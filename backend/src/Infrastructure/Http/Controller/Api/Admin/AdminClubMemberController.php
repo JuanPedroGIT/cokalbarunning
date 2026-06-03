@@ -53,6 +53,7 @@ class AdminClubMemberController extends AbstractController
             bio: $data['bio'] ?? null,
             isActive: $data['isActive'] ?? true,
             sortOrder: $data['sortOrder'] ?? 0,
+            userId: $data['userId'] ?? null,
         ));
         $id = $envelope->last(HandledStamp::class)?->getResult();
 
@@ -79,6 +80,7 @@ class AdminClubMemberController extends AbstractController
             bio: array_key_exists('bio', $data) ? $data['bio'] : null,
             isActive: $data['isActive'] ?? null,
             sortOrder: $data['sortOrder'] ?? null,
+            userId: array_key_exists('userId', $data) ? $data['userId'] : null,
         ));
 
         $orm = $this->em->getRepository(OrmClubMember::class)->find($id);

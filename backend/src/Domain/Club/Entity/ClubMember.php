@@ -14,6 +14,7 @@ final class ClubMember
         private ?string $photoPath = null,
         private bool $isActive = true,
         private int $sortOrder = 0,
+        private ?string $userId = null,
     ) {
     }
 
@@ -24,6 +25,7 @@ final class ClubMember
     public function photoPath(): ?string { return $this->photoPath; }
     public function isActive(): bool { return $this->isActive; }
     public function sortOrder(): int { return $this->sortOrder; }
+    public function userId(): ?string { return $this->userId; }
 
     public function update(
         string $name,
@@ -32,6 +34,7 @@ final class ClubMember
         ?string $photoPath = null,
         bool $isActive = true,
         int $sortOrder = 0,
+        ?string $userId = null,
     ): void {
         $this->name = $name;
         $this->description = $description;
@@ -39,5 +42,6 @@ final class ClubMember
         $this->photoPath = $photoPath ?? $this->photoPath;
         $this->isActive = $isActive;
         $this->sortOrder = $sortOrder;
+        $this->userId = $userId ?? $this->userId;
     }
 }

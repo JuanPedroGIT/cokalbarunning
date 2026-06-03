@@ -29,6 +29,7 @@ final class UpdateClubMemberHandler
             photoPath: $command->photoPath ?? $member->photoPath(),
             isActive: $command->isActive ?? $member->isActive(),
             sortOrder: $command->sortOrder ?? $member->sortOrder(),
+            userId: $command->userId,
         );
 
         $this->repository->save($member);

@@ -14,21 +14,34 @@ describe('auth.store', () => {
     expect(store.user).toBeNull()
   })
 
-  it('sets token and parses JWT payload', () => {
+  it('sets token and parses JWT payload with id', () => {
     const store = useAuthStore()
-    const payload = btoa(JSON.stringify({ email: 'test@test.com', roles: ['ROLE_ADMIN'] }))
+    const payload = btoa(JSON.stringify({ id: 'user-123', email: 'test@test.com', roles: ['ROLE_ADMIN'] }))
     const token = `header.${payload}.signature`
 
     store.setToken(token)
 
     expect(store.isAuthenticated).toBe(true)
+    expect(store.user?.id).toBe('user-123')
     expect(store.user?.email).toBe('test@test.com')
     expect(store.user?.roles).toContain('ROLE_ADMIN')
   })
 
+  it('parses JWT payload without id as empty string', () => {
+    const store = useAuthStore()
+    const payload = btoa(JSON.stringify({ email: 'legacy@test.com', roles: ['ROLE_EDITOR'] }))
+    const token = `header.${payload}.signature`
+
+    store.setToken(token)
+
+    expect(store.isAuthenticated).toBe(true)
+    expect(store.user?.id).toBe('')
+    expect(store.user?.email).toBe('legacy@test.com')
+  })
+
   it('hasRole returns correct value', () => {
     const store = useAuthStore()
-    const payload = btoa(JSON.stringify({ email: 'test@test.com', roles: ['ROLE_ADMIN'] }))
+    const payload = btoa(JSON.stringify({ id: 'user-456', email: 'test@test.com', roles: ['ROLE_ADMIN'] }))
     store.setToken(`header.${payload}.signature`)
 
     expect(store.hasRole('ROLE_ADMIN')).toBe(true)

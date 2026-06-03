@@ -13,6 +13,7 @@ final readonly class CreateClubMemberCommand
         public ?string $photoPath = null,
         public bool $isActive = true,
         public int $sortOrder = 0,
+        public ?string $userId = null,
     ) {
     }
 }

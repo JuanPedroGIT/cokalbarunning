@@ -56,4 +56,10 @@ final class DoctrineClubMemberRepository implements ClubMemberRepositoryInterfac
             $this->em->getRepository(OrmMember::class)->findBy([], ['sortOrder' => 'ASC'])
         );
     }
+
+    public function findByUserId(string $userId): ?ClubMember
+    {
+        $orm = $this->em->getRepository(OrmMember::class)->findOneBy(['userId' => $userId]);
+        return $orm !== null ? $this->mapper->toDomain($orm) : null;
+    }
 }

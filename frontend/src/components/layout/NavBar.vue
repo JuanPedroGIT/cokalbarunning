@@ -34,6 +34,7 @@ function logout() { auth.logout(); close(); router.push('/') }
       <!-- Desktop CTA -->
       <div class="hidden md:flex items-center gap-3">
         <template v-if="auth.isAuthenticated">
+          <RouterLink to="/perfil" class="font-semibold text-xs tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Mi Perfil</RouterLink>
           <RouterLink to="/admin" class="font-semibold text-xs tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Admin</RouterLink>
           <button @click="logout" class="font-bold text-xs tracking-widest uppercase text-red-400 hover:text-red-300 transition-colors cursor-pointer border border-red-400/30 px-3 py-1.5" style="font-family: 'Barlow Condensed', sans-serif;">Salir</button>
         </template>
@@ -73,7 +74,8 @@ function logout() { auth.logout(); close(); router.push('/') }
         </ul>
         <div class="px-6 pb-5 flex flex-col gap-3">
           <template v-if="auth.isAuthenticated">
-            <RouterLink @click="close" to="/admin" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-[#FF5C00] border border-[#FF5C00]/30 px-4 py-3 hover:bg-[#FF5C00] hover:text-[#0A0A0A] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Admin</RouterLink>
+            <RouterLink @click="close" to="/perfil" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-[#FF5C00] border border-[#FF5C00]/30 px-4 py-3 hover:bg-[#FF5C00] hover:text-[#0A0A0A] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Mi Perfil</RouterLink>
+            <RouterLink @click="close" to="/admin" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-gray-400 border border-white/10 px-4 py-3 hover:bg-white/5 transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Admin</RouterLink>
             <button @click="logout" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-red-400 border border-red-400/30 px-4 py-3 hover:bg-red-400/10 transition-colors cursor-pointer" style="font-family: 'Barlow Condensed', sans-serif;">Cerrar sesion</button>
           </template>
           <a v-else href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank"
