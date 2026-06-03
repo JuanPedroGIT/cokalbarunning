@@ -5,6 +5,7 @@ services:
       context: ./backend
       target: prod
     env_file: .env
+    restart: unless-stopped
     environment:
       APP_ENV: prod
       APP_DEBUG: "0"
@@ -22,6 +23,7 @@ services:
       target: prod
       args:
         VITE_API_URL: /api/v1
+    restart: unless-stopped
     networks:
       - shared-network
 
