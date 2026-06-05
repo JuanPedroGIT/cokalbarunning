@@ -314,7 +314,7 @@ onMounted(async () => {
 
         <div class="text-center mt-10 p-7 border border-white/[0.06]">
           <p class="text-white/30 text-sm mb-4">Tu empresa quiere apoyar la carrera? Contacta con nosotros.</p>
-          <a href="mailto:info@cokalbarunning.es" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-transparent text-white border border-white/30 px-8 py-3 hover:border-naranja hover:text-naranja transition-colors inline-block">
+          <a href="mailto:jabautistah@gmail.com" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-transparent text-white border border-white/30 px-8 py-3 hover:border-naranja hover:text-naranja transition-colors inline-block">
             Conviertete en patrocinador
           </a>
         </div>

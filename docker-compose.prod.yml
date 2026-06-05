@@ -16,6 +16,7 @@ services:
       - shared-network
     volumes:
       - ./backend/public/uploads:/var/www/backend/public/uploads
+      - ./backend/config/jwt:/var/www/backend/config/jwt
 
   cokalbarunning-frontend:
     build:
