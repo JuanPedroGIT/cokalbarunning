@@ -33,6 +33,9 @@ El objetivo es poder trabajar en esta feature larga sin saturar el contexto de l
 | `07_FIX_PATHS_PRD.md` | Corrección de paths post-implementación (alineación con PRD + inglés) |
 | `08_PLAN_SOLID.md` | Plan de mejora aplicando principios SOLID (6 fases) |
 | `09_PLAN_ROLES.md` | Plan de roles: ROLE_EDITOR, panel de usuarios, protección por rol |
+| `10_FIX_FRONTEND_MOBILE.md` | Fix de responsive en frontend: hero, countdown, grid de fotos |
+| `11_TROPHY_URL.md` | Fix de URL de trofeo y camiseta en ediciones |
+| `12_ERROR_PERMISOS_VAR_DOCKER.md` | Error recurrente: 502/500 en API por permisos de `var/` en Docker |
 
 ## Reglas de oro
 

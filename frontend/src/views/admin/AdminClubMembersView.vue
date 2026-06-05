@@ -167,23 +167,23 @@ onMounted(fetch)
         </div>
       </div>
 
-      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[640px]">
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
-              <th class="p-3 font-medium">Nombre</th>
-              <th class="p-3 font-medium">Foto</th>
-              <th class="p-3 font-medium">Rol</th>
-              <th class="p-3 font-medium">Bio</th>
-              <th class="p-3 font-medium">Usuario</th>
-              <th class="p-3 font-medium">Activo</th>
-              <th class="p-3 text-right font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium">Nombre</th>
+              <th class="p-2 md:p-3 font-medium">Foto</th>
+              <th class="p-2 md:p-3 font-medium">Rol</th>
+              <th class="p-2 md:p-3 font-medium hidden md:table-cell">Bio</th>
+              <th class="p-2 md:p-3 font-medium hidden md:table-cell">Usuario</th>
+              <th class="p-2 md:p-3 font-medium">Activo</th>
+              <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="m in members" :key="m.id" :class="['border-t border-white/5 transition', editingId === m.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
-              <td class="p-3 font-medium">{{ m.name }}</td>
-              <td class="p-3">
+              <td class="p-2 md:p-3 font-medium">{{ m.name }}</td>
+              <td class="p-2 md:p-3">
                 <div
                   class="relative h-10 w-10 rounded-full overflow-hidden cursor-pointer group shrink-0"
                   @click="triggerPhotoInput(m.id)"
@@ -223,19 +223,19 @@ onMounted(fetch)
                   />
                 </div>
               </td>
-              <td class="p-3 text-gray-400 text-xs">{{ m.description || '—' }}</td>
-              <td class="p-3 text-gray-400 text-xs max-w-[200px] truncate">{{ m.bio || '—' }}</td>
-              <td class="p-3 text-gray-400 text-xs">
+              <td class="p-2 md:p-3 text-gray-400 text-xs hidden md:table-cell">{{ m.description || '—' }}</td>
+              <td class="p-2 md:p-3 text-gray-400 text-xs max-w-[200px] truncate hidden md:table-cell">{{ m.bio || '—' }}</td>
+              <td class="p-2 md:p-3 text-gray-400 text-xs">
                 <span v-if="m.userId">
                   {{ users.find(u => u.id === m.userId)?.email || m.userId }}
                 </span>
                 <span v-else>—</span>
               </td>
-              <td class="p-3">
+              <td class="p-2 md:p-3">
                 <span v-if="m.isActive" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Sí</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
               </td>
-              <td class="p-3 text-right">
+              <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(m)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm transition cursor-pointer">Editar</button>
                   <span class="text-white/10">|</span>

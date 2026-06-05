@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api.service'
+import { usePageMeta } from '@/composables/usePageMeta'
 
 interface Post {
   id: string
@@ -40,6 +41,18 @@ onMounted(() => {
 watch(() => route.params.slug, (newSlug) => {
   if (newSlug) fetchPost(newSlug as string)
 })
+
+watch(() => post.value, (newPost) => {
+  if (newPost) {
+    usePageMeta({
+      title: newPost.title,
+      description: newPost.excerpt || 'Noticia del club Cokalba Running.',
+      image: newPost.coverImage || undefined,
+      type: 'article',
+      url: `/blog/${newPost.slug}`,
+    })
+  }
+})
 </script>
 
 <template>
@@ -57,6 +70,7 @@ watch(() => route.params.slug, (newSlug) => {
         {{ post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('es-ES') : '' }}
       </div>
       <img v-if="post.coverImage" :src="post.coverImage" class="w-full max-h-96 object-cover mb-8 rounded border border-white/5" loading="lazy" />
+      <!-- ADVERTENCIA: el backend debe sanitizar el HTML antes de guardarlo -->
       <div class="text-white/70 leading-relaxed" v-html="post.content"></div>
     </div>
   </section>

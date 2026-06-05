@@ -13,6 +13,7 @@ export interface RaceEdition {
   posterUrl: string | null
   registrationUrl: string | null
   shirtUrl: string | null
+  trophyUrl: string | null
   resultsUrl: string | null
   inscriptionInfo: string | null
   solidarityCause: string | null

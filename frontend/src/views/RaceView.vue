@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRaceStore } from '@/stores/race.store'
 import { useImageZoom } from '@/composables/useImageZoom'
+import { useCountdown } from '@/composables/useCountdown'
+import { usePageMeta } from '@/composables/usePageMeta'
+import { useHead } from '@vueuse/head'
 
 const raceStore = useRaceStore()
 const { zoomImage } = useImageZoom()
@@ -10,32 +13,57 @@ const raceDate = computed(() => {
   const d = raceStore.activeEdition?.date
   return d ? new Date(d + 'T09:00:00') : new Date('2026-07-05T09:00:00')
 })
-
-const countdown = ref({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false })
-let timer: ReturnType<typeof setInterval> | null = null
-
-function tick() {
-  const diff = raceDate.value.getTime() - Date.now()
-  if (diff <= 0) {
-    countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }
-    if (timer) { clearInterval(timer); timer = null }
-    return
-  }
-  countdown.value = {
-    days: Math.floor(diff / 86400000),
-    hours: Math.floor((diff % 86400000) / 3600000),
-    minutes: Math.floor((diff % 3600000) / 60000),
-    seconds: Math.floor((diff % 60000) / 1000),
-    expired: false,
-  }
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
+const { days, hours, minutes, seconds, isExpired } = useCountdown(raceDate)
 
 onMounted(() => {
-  raceStore.fetchLatestEdition().then(() => { tick(); timer = setInterval(tick, 1000) })
+  raceStore.fetchLatestEdition()
 })
-onUnmounted(() => { if (timer) clearInterval(timer) })
+
+usePageMeta({
+  title: 'La Carrera',
+  description: 'Inscríbete en la carrera solidaria Un Nuevo Impulso de Coca de Alba. 8.124m homologados. Carreras de promoción gratuitas.',
+  url: '/carrera',
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SportsEvent',
+        name: 'Carrera Solidaria Un Nuevo Impulso',
+        description: 'Carrera solidaria de 8.124m en Coca de Alba, Salamanca. Organizada por Cokalba Running.',
+        url: 'https://cokalba-running.com/carrera',
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: {
+          '@type': 'Place',
+          name: 'Coca de Alba',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Calle Larga nº 16',
+            addressLocality: 'Coca de Alba',
+            addressRegion: 'Salamanca',
+            addressCountry: 'ES',
+          },
+        },
+        organizer: {
+          '@type': 'SportsActivityLocation',
+          name: 'Cokalba Running',
+          url: 'https://cokalba-running.com',
+        },
+        offers: {
+          '@type': 'Offer',
+          price: '9',
+          priceCurrency: 'EUR',
+          availability: 'https://schema.org/InStock',
+          url: 'https://www.deporticket.com',
+        },
+      }),
+    },
+  ],
+})
 </script>
 
 <template>
@@ -48,7 +76,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 items-center">
         <div>
           <div class="inline-flex items-center gap-2 font-barlow-condensed font-bold text-xs tracking-[0.25em] uppercase text-naranja border border-naranja/30 px-3 py-1.5 mb-6">
-            <span class="w-2 h-2 rounded-full bg-naranja" :class="{ 'animate-pulse': !countdown.expired }" />
+            <span class="w-2 h-2 rounded-full bg-naranja" :class="{ 'animate-pulse': !isExpired }" />
             {{ raceStore.activeEdition?.name || 'IX Edición · Carrera Solidaria' }}
           </div>
           <h1 class="font-barlow-condensed font-black text-[clamp(3.5rem,8vw,7.5rem)] leading-[0.9] uppercase mb-6">
@@ -66,23 +94,23 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 
           <!-- Countdown -->
           <div class="font-barlow-condensed font-semibold text-[0.7rem] tracking-[0.25em] uppercase text-white/30 mb-2">
-            {{ countdown.expired ? '¡La carrera ha comenzado!' : 'Cuenta atrás · Salida 09:00h' }}
+            {{ isExpired ? '¡La carrera ha comenzado!' : 'Cuenta atrás · Salida 09:00h' }}
           </div>
           <div class="flex gap-0 mb-3">
             <div class="text-center px-5 py-3 border border-white/[0.08] border-r-0 bg-white/[0.02] min-w-[76px]">
-              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ pad(countdown.days) }}</div>
+              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ days }}</div>
               <div class="text-[0.6rem] tracking-[0.18em] uppercase text-white/30 mt-1">Días</div>
             </div>
             <div class="text-center px-5 py-3 border border-white/[0.08] border-r-0 bg-white/[0.02] min-w-[76px]">
-              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ pad(countdown.hours) }}</div>
+              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ hours }}</div>
               <div class="text-[0.6rem] tracking-[0.18em] uppercase text-white/30 mt-1">Horas</div>
             </div>
             <div class="text-center px-5 py-3 border border-white/[0.08] border-r-0 bg-white/[0.02] min-w-[76px]">
-              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ pad(countdown.minutes) }}</div>
+              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ minutes }}</div>
               <div class="text-[0.6rem] tracking-[0.18em] uppercase text-white/30 mt-1">Min</div>
             </div>
             <div class="text-center px-5 py-3 border border-white/[0.08] bg-white/[0.02] min-w-[76px]">
-              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ pad(countdown.seconds) }}</div>
+              <div class="font-barlow-condensed font-black text-4xl text-naranja leading-none tabular-nums">{{ seconds }}</div>
               <div class="text-[0.6rem] tracking-[0.18em] uppercase text-white/30 mt-1">Seg</div>
             </div>
           </div>
@@ -92,7 +120,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 
           <!-- CTA -->
           <div class="flex flex-wrap gap-3 mb-8">
-            <a v-if="!countdown.expired" :href="raceStore.activeEdition?.registrationUrl || 'https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso'" target="_blank" class="font-barlow-condensed font-bold text-base tracking-[0.1em] uppercase bg-naranja text-negro px-8 py-3 hover:bg-amarillo transition-colors inline-block">
+            <a v-if="!isExpired" :href="raceStore.activeEdition?.registrationUrl || 'https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso'" target="_blank" class="font-barlow-condensed font-bold text-base tracking-[0.1em] uppercase bg-naranja text-negro px-8 py-3 hover:bg-amarillo transition-colors inline-block">
               ¡Inscríbete ahora!
             </a>
             <span v-else class="font-barlow-condensed font-bold text-base tracking-[0.1em] uppercase bg-gray-600 text-gray-300 px-8 py-3 inline-block cursor-not-allowed">
@@ -442,10 +470,20 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
           </div>
         </div>
 
-        <!-- Camiseta -->
-        <div v-if="raceStore.activeEdition?.shirtUrl" class="mt-12 flex flex-col items-center gap-4 text-center">
-          <div class="font-barlow-condensed font-bold text-base tracking-[0.2em] uppercase text-naranja">Camiseta conmemorativa 2026</div>
-          <img :src="raceStore.activeEdition.shirtUrl" alt="Camiseta conmemorativa" class="w-full max-w-2xl border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.6)] cursor-zoom-in" loading="lazy" @click="zoomImage($event.target as HTMLImageElement)" />
+        <!-- Camiseta y Trofeo -->
+        <div
+          v-if="raceStore.activeEdition?.shirtUrl || raceStore.activeEdition?.trophyUrl"
+          class="mt-12 grid gap-8"
+          :class="raceStore.activeEdition?.shirtUrl && raceStore.activeEdition?.trophyUrl ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'"
+        >
+          <div v-if="raceStore.activeEdition?.shirtUrl" class="flex flex-col items-center gap-4 text-center">
+            <div class="font-barlow-condensed font-bold text-base tracking-[0.2em] uppercase text-naranja">Camiseta conmemorativa 2026</div>
+            <img :src="raceStore.activeEdition.shirtUrl" alt="Camiseta conmemorativa" class="w-full max-w-2xl border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.6)] cursor-zoom-in" loading="lazy" @click="zoomImage($event.target as HTMLImageElement)" />
+          </div>
+          <div v-if="raceStore.activeEdition?.trophyUrl" class="flex flex-col items-center gap-4 text-center">
+            <div class="font-barlow-condensed font-bold text-base tracking-[0.2em] uppercase text-naranja">Trofeo 2026</div>
+            <img :src="raceStore.activeEdition.trophyUrl" alt="Trofeo" class="w-full max-w-2xl border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.6)] cursor-zoom-in" loading="lazy" @click="zoomImage($event.target as HTMLImageElement)" />
+          </div>
         </div>
 
         <p class="text-xs text-white/30 mt-6">* Los premios no son acumulativos, salvo para la categoría Local. Medalla para los 3 primeros de cada categoría infantil. Bolsa del corredor infantil para todos los participantes en las carreras de promoción.</p>
@@ -459,17 +497,18 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
       <div class="max-w-6xl mx-auto">
         <div class="font-barlow-condensed font-semibold text-sm tracking-[0.3em] uppercase text-naranja mb-3">¿Todo listo?</div>
         <h2 class="font-barlow-condensed font-black text-[clamp(2rem,4.5vw,3.8rem)] leading-[0.95] uppercase mb-4">
-          {{ countdown.expired ? 'GRACIAS' : '¡ASEGURA' }} <span class="text-naranja">{{ countdown.expired ? 'A TODOS!' : 'TU DORSAL!' }}</span>
+          {{ isExpired ? 'GRACIAS' : '¡ASEGURA' }} <span class="text-naranja">{{ isExpired ? 'A TODOS!' : 'TU DORSAL!' }}</span>
         </h2>
         <p class="text-white/45 max-w-[480px] mx-auto mb-8 leading-relaxed">
-          {{ countdown.expired ? 'Gracias a todos los participantes, voluntarios y patrocinadores que hicieron posible esta edición.' : 'Plazas limitadas a 150 corredores. Inscripciones abiertas hasta el 2 de julio de 2026 o hasta completar el aforo.' }}
+          {{ isExpired ? 'Gracias a todos los participantes, voluntarios y patrocinadores que hicieron posible esta edición.' : 'Plazas limitadas a 150 corredores. Inscripciones abiertas hasta el 2 de julio de 2026 o hasta completar el aforo.' }}
         </p>
-        <a v-if="!countdown.expired" href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank" class="font-barlow-condensed font-bold text-lg tracking-widest uppercase bg-naranja text-negro px-10 py-4 hover:bg-amarillo transition-colors inline-block">
+        <a v-if="!isExpired" href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank" class="font-barlow-condensed font-bold text-lg tracking-widest uppercase bg-naranja text-negro px-10 py-4 hover:bg-amarillo transition-colors inline-block">
           Inscríbete en Deporticket →
         </a>
-        <div v-if="!countdown.expired" class="mt-4 text-sm text-white/25">9 € + gestión · Categorías infantiles gratuitas · Camiseta conmemorativa incluida</div>
+        <div v-if="!isExpired" class="mt-4 text-sm text-white/25">9 € + gestión · Categorías infantiles gratuitas · Camiseta conmemorativa incluida</div>
       </div>
     </section>
+
     </div>
   </template>
 </template>

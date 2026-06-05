@@ -6,6 +6,7 @@ namespace App\Infrastructure\Http\Controller\Api\Admin;
 
 use App\Application\Race\Create\CreateRaceEditionCommand;
 use App\Application\Race\Delete\DeleteRaceEditionCommand;
+use App\Application\Race\DeleteImage\DeleteRaceEditionImageCommand;
 use App\Application\Race\Update\UpdateRaceEditionCommand;
 use App\Application\Race\UploadImage\UploadRaceEditionImageCommand;
 use App\Domain\Media\Port\StoragePort;
@@ -46,6 +47,7 @@ class AdminRaceController extends AbstractController
             posterUrl: $data['posterUrl'] ?? null,
             registrationUrl: $data['registrationUrl'] ?? null,
             shirtUrl: $data['shirtUrl'] ?? null,
+            trophyUrl: $data['trophyUrl'] ?? null,
         );
 
         $envelope = $this->commandBus->dispatch($command);
@@ -79,6 +81,7 @@ class AdminRaceController extends AbstractController
             posterUrl: array_key_exists('posterUrl', $data) ? $this->normalizePath($data['posterUrl']) : null,
             registrationUrl: array_key_exists('registrationUrl', $data) ? ($data['registrationUrl'] ?? '') : null,
             shirtUrl: array_key_exists('shirtUrl', $data) ? $this->normalizePath($data['shirtUrl']) : null,
+            trophyUrl: array_key_exists('trophyUrl', $data) ? $this->normalizePath($data['trophyUrl']) : null,
             inscriptionInfo: array_key_exists('inscriptionInfo', $data) ? ($data['inscriptionInfo'] ?? '') : null,
             solidarityCause: array_key_exists('solidarityCause', $data) ? ($data['solidarityCause'] ?? '') : null,
             solidarityUrl: array_key_exists('solidarityUrl', $data) ? ($data['solidarityUrl'] ?? '') : null,
@@ -113,6 +116,12 @@ class AdminRaceController extends AbstractController
         return $this->handleImageUpload($id, $request, 'shirt');
     }
 
+    #[Route('/editions/{id}/trophy', methods: ['POST'])]
+    public function uploadTrophy(string $id, Request $request): JsonResponse
+    {
+        return $this->handleImageUpload($id, $request, 'trophy');
+    }
+
     private function handleImageUpload(string $id, Request $request, string $type): JsonResponse
     {
         $file = $request->files->get('file');
@@ -132,8 +141,33 @@ class AdminRaceController extends AbstractController
 
         return $this->json(['data' => [
             'id' => $id,
-            ($type === 'poster' ? 'posterUrl' : 'shirtUrl') => $url,
+            match ($type) {
+                'poster' => 'posterUrl',
+                'shirt' => 'shirtUrl',
+                'trophy' => 'trophyUrl',
+            } => $url,
         ]]);
+    }
+
+    #[Route('/editions/{id}/poster', methods: ['DELETE'])]
+    public function deletePoster(string $id): JsonResponse
+    {
+        $this->commandBus->dispatch(new DeleteRaceEditionImageCommand(editionId: $id, type: 'poster'));
+        return $this->json(['data' => ['deleted' => true]]);
+    }
+
+    #[Route('/editions/{id}/shirt', methods: ['DELETE'])]
+    public function deleteShirt(string $id): JsonResponse
+    {
+        $this->commandBus->dispatch(new DeleteRaceEditionImageCommand(editionId: $id, type: 'shirt'));
+        return $this->json(['data' => ['deleted' => true]]);
+    }
+
+    #[Route('/editions/{id}/trophy', methods: ['DELETE'])]
+    public function deleteTrophy(string $id): JsonResponse
+    {
+        $this->commandBus->dispatch(new DeleteRaceEditionImageCommand(editionId: $id, type: 'trophy'));
+        return $this->json(['data' => ['deleted' => true]]);
     }
 
     #[Route('/editions/{id}', methods: ['DELETE'])]

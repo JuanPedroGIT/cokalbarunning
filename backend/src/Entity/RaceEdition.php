@@ -46,6 +46,9 @@ class RaceEdition
     private ?string $shirtUrl = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    private ?string $trophyUrl = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $inscriptionInfo = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -175,6 +178,17 @@ class RaceEdition
     public function setShirtUrl(?string $shirtUrl): static
     {
         $this->shirtUrl = $shirtUrl;
+        return $this;
+    }
+
+    public function getTrophyUrl(): ?string
+    {
+        return $this->trophyUrl;
+    }
+
+    public function setTrophyUrl(?string $trophyUrl): static
+    {
+        $this->trophyUrl = $trophyUrl;
         return $this;
     }
 

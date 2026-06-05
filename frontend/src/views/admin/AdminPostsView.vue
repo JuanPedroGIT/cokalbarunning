@@ -127,25 +127,25 @@ onMounted(fetchPosts)
         </div>
       </div>
 
-      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[480px]">
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
-              <th class="p-3 font-medium">Titulo</th>
-              <th class="p-3 font-medium">Etiqueta</th>
-              <th class="p-3 font-medium">Publicado</th>
-              <th class="p-3 text-right font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium">Título</th>
+              <th class="p-2 md:p-3 font-medium">Etiqueta</th>
+              <th class="p-2 md:p-3 font-medium">Publicado</th>
+              <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="p in posts" :key="p.id" class="border-t border-white/5 hover:bg-[#1a1a1a] transition">
-              <td class="p-3">{{ p.title }}</td>
-              <td class="p-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#FF5C00]/10 text-[#FF5C00]">{{ p.tag }}</span></td>
-              <td class="p-3">
+              <td class="p-2 md:p-3">{{ p.title }}</td>
+              <td class="p-2 md:p-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#FF5C00]/10 text-[#FF5C00]">{{ p.tag }}</span></td>
+              <td class="p-2 md:p-3">
                 <span v-if="p.isPublished" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Si</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
               </td>
-              <td class="p-3 text-right">
+              <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(p)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm font-medium transition">Editar</button>
                   <span class="text-white/10">|</span>

@@ -24,13 +24,14 @@ final class UpdateRaceEditionHandler
             throw new \InvalidArgumentException('Edition not found');
         }
 
-        if ($command->name !== null || $command->description !== null || $command->date !== null || $command->location !== null || $command->shirtUrl !== null) {
+        if ($command->name !== null || $command->description !== null || $command->date !== null || $command->location !== null || $command->shirtUrl !== null || $command->trophyUrl !== null) {
             $edition->update(
                 name: $command->name ?? $edition->name(),
                 description: $command->description ?? $edition->description(),
                 date: $command->date !== null ? new \DateTimeImmutable($command->date) : $edition->date(),
                 location: $command->location ?? $edition->location(),
                 shirtUrl: $command->shirtUrl !== null ? ($command->shirtUrl ?: null) : $edition->shirtUrl(),
+                trophyUrl: $command->trophyUrl !== null ? ($command->trophyUrl ?: null) : $edition->trophyUrl(),
             );
         }
 
@@ -52,6 +53,10 @@ final class UpdateRaceEditionHandler
 
         if ($command->shirtUrl !== null) {
             $edition->setShirtUrl($command->shirtUrl ?: null);
+        }
+
+        if ($command->trophyUrl !== null) {
+            $edition->setTrophyUrl($command->trophyUrl ?: null);
         }
 
         if ($command->inscriptionInfo !== null) {

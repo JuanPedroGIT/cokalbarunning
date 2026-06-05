@@ -36,6 +36,11 @@ final class DeleteRaceEditionHandler
             $this->storage->delete($shirtUrl);
         }
 
+        $trophyUrl = $edition->trophyUrl();
+        if ($trophyUrl !== null) {
+            $this->storage->delete($trophyUrl);
+        }
+
         $this->repository->remove($edition);
     }
 }

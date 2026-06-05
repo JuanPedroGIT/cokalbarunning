@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { RaceDocument } from '@/stores/document.store'
 
 const props = defineProps<{
@@ -24,15 +25,10 @@ const typeIcons: Record<string, string> = {
 const grouped = computed(() => {
   const groups: Record<string, RaceDocument[]> = {}
   for (const doc of props.documents) {
-    if (!groups[doc.type]) groups[doc.type] = []
-    groups[doc.type].push(doc)
+    ;(groups[doc.type] ??= []).push(doc)
   }
   return groups
 })
-</script>
-
-<script lang="ts">
-import { computed } from 'vue'
 </script>
 
 <template>

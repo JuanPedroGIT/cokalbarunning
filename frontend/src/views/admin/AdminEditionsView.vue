@@ -14,7 +14,9 @@ interface Edition {
   posterUrl: string | null
   registrationUrl: string | null
   shirtUrl: string | null
+  trophyUrl: string | null
   resultsUrl: string | null
+  resultsDocumentId: string | null
   inscriptionInfo: string | null
   solidarityCause: string | null
   solidarityUrl: string | null
@@ -31,16 +33,24 @@ const form = ref<Partial<Edition>>({
   posterUrl: null,
   registrationUrl: null,
   shirtUrl: null,
+  trophyUrl: null,
   inscriptionInfo: '', solidarityCause: '', solidarityUrl: '',
 })
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const posterFile = ref<File | null>(null)
 const shirtFile = ref<File | null>(null)
+const trophyFile = ref<File | null>(null)
 const resultFile = ref<File | null>(null)
 const uploadingPosterId = ref<string | null>(null)
 const uploadingShirtId = ref<string | null>(null)
+const uploadingTrophyId = ref<string | null>(null)
 const uploadingResultId = ref<string | null>(null)
+const expandedId = ref<string | null>(null)
+const editionDocuments = ref<Record<string, any[]>>({})
+const editionPhotos = ref<Record<string, any[]>>({})
+const docFiles = ref<Record<string, File | null>>({})
+const uploadingDoc = ref<{ editionId: string; type: string } | null>(null)
 
 async function fetchEditions() {
   const res = await api.get('/editions')
@@ -80,6 +90,17 @@ async function uploadShirt(id: string) {
   } finally { uploadingShirtId.value = null }
 }
 
+async function uploadTrophy(id: string) {
+  if (!trophyFile.value) return
+  uploadingTrophyId.value = id
+  const fd = new FormData(); fd.append('file', trophyFile.value)
+  try {
+    await api.post(`/admin/editions/${id}/trophy`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    trophyFile.value = null
+    await fetchEditions()
+  } finally { uploadingTrophyId.value = null }
+}
+
 async function uploadResult(id: string, year: number) {
   if (!resultFile.value) return
   uploadingResultId.value = id
@@ -97,6 +118,80 @@ async function uploadResult(id: string, year: number) {
   } finally { uploadingResultId.value = null }
 }
 
+async function deletePoster(id: string) {
+  if (!confirm('¿Eliminar cartel?')) return
+  await api.delete(`/admin/editions/${id}/poster`)
+  await fetchEditions()
+}
+
+async function deleteShirt(id: string) {
+  if (!confirm('¿Eliminar camiseta?')) return
+  await api.delete(`/admin/editions/${id}/shirt`)
+  await fetchEditions()
+}
+
+async function deleteTrophy(id: string) {
+  if (!confirm('¿Eliminar trofeo?')) return
+  await api.delete(`/admin/editions/${id}/trophy`)
+  await fetchEditions()
+}
+
+async function deleteResults(documentId: string) {
+  if (!confirm('¿Eliminar resultados?')) return
+  await api.delete(`/admin/documents/${documentId}`)
+  await fetchEditions()
+}
+
+async function toggleExpand(id: string) {
+  if (expandedId.value === id) {
+    expandedId.value = null
+    return
+  }
+  expandedId.value = id
+  await Promise.all([fetchEditionDocuments(id), fetchEditionPhotos(id)])
+}
+
+async function fetchEditionDocuments(id: string) {
+  const res = await api.get(`/admin/documents?editionId=${id}`)
+  editionDocuments.value[id] = res.data.data || []
+}
+
+async function fetchEditionPhotos(id: string) {
+  const res = await api.get(`/admin/photos?editionId=${id}`)
+  editionPhotos.value[id] = res.data.data || []
+}
+
+async function uploadDocument(id: string, type: string) {
+  const key = `${id}-${type}`
+  const file = docFiles.value[key]
+  if (!file) return
+  uploadingDoc.value = { editionId: id, type }
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('name', file.name)
+  fd.append('type', type)
+  fd.append('editionId', id)
+  try {
+    await api.post('/admin/documents', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    docFiles.value[key] = null
+    await fetchEditionDocuments(id)
+  } finally {
+    uploadingDoc.value = null
+  }
+}
+
+async function deleteDocument(docId: string, editionId: string) {
+  if (!confirm('¿Eliminar documento?')) return
+  await api.delete(`/admin/documents/${docId}`)
+  await fetchEditionDocuments(editionId)
+}
+
+async function deletePhoto(photoId: string, editionId: string) {
+  if (!confirm('¿Eliminar foto?')) return
+  await api.delete(`/admin/photos/${photoId}`)
+  await fetchEditionPhotos(editionId)
+}
+
 function edit(e: Edition) {
   editingId.value = e.id
   form.value = { ...e }
@@ -112,7 +207,7 @@ function resetForm() {
   editingId.value = null
   form.value = {
     year: new Date().getFullYear(), name: '', description: '', date: '',
-    location: '', isActive: true, posterUrl: null, registrationUrl: null, shirtUrl: null, inscriptionInfo: '', solidarityCause: '', solidarityUrl: '',
+    location: '', isActive: true, posterUrl: null, registrationUrl: null, shirtUrl: null, trophyUrl: null, inscriptionInfo: '', solidarityCause: '', solidarityUrl: '',
   }
 }
 
@@ -181,27 +276,28 @@ onMounted(() => { fetchEditions() })
       </div>
 
       <!-- Tabla -->
-      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[640px]">
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
-              <th class="p-3 font-medium">Ano</th>
-              <th class="p-3 font-medium">Nombre</th>
-              <th class="p-3 font-medium">Lugar</th>
-              <th class="p-3 font-medium">Activa</th>
-              <th class="p-3 font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium">Año</th>
+              <th class="p-2 md:p-3 font-medium">Nombre</th>
+              <th class="p-2 md:p-3 font-medium">Lugar</th>
+              <th class="p-2 md:p-3 font-medium">Activa</th>
+              <th class="p-2 md:p-3 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="e in editions" :key="e.id" :class="['border-t border-white/5 transition', editingId === e.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
-              <td class="p-3">{{ e.year }}</td>
-              <td class="p-3">{{ e.name }}</td>
-              <td class="p-3 text-gray-400">{{ e.location }}</td>
-              <td class="p-3">
+            <template v-for="e in editions" :key="e.id">
+            <tr :class="['border-t border-white/5 transition', editingId === e.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
+              <td class="p-2 md:p-3">{{ e.year }}</td>
+              <td class="p-2 md:p-3">{{ e.name }}</td>
+              <td class="p-2 md:p-3 text-gray-400">{{ e.location }}</td>
+              <td class="p-2 md:p-3">
                 <span v-if="e.isActive" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Activa</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">Inactiva</span>
               </td>
-              <td class="p-3">
+              <td class="p-2 md:p-3">
                 <div class="flex items-center gap-1 flex-wrap">
                   <button @click="edit(e)" class="text-[#FF5C00] hover:text-[#FFD600] text-xs font-medium bg-[#222] px-2 py-1 rounded border border-white/5 cursor-pointer">Editar</button>
 
@@ -215,20 +311,73 @@ onMounted(() => { fetchEditions() })
                     {{ uploadingShirtId === e.id ? '⏳' : '👕' }} Camiseta
                   </label>
 
+                  <input type="file" accept="image/*" class="hidden" :id="`trophy-${e.id}`" @change="ev => { trophyFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadTrophy(e.id) }" />
+                  <label :for="`trophy-${e.id}`" class="bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 text-xs px-2 py-1 rounded border border-pink-500/20 cursor-pointer transition">
+                    {{ uploadingTrophyId === e.id ? '⏳' : '🏆' }} Trofeo
+                  </label>
+
                   <input type="file" accept=".pdf" class="hidden" :id="`result-${e.id}`" @change="ev => { resultFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadResult(e.id, e.year) }" />
                   <label :for="`result-${e.id}`" class="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-xs px-2 py-1 rounded border border-amber-500/20 cursor-pointer transition">
                     {{ uploadingResultId === e.id ? '⏳' : '🏆' }} Resultados
                   </label>
 
+                  <button @click="toggleExpand(e.id)" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 text-xs px-2 py-1 rounded border border-gray-500/20 cursor-pointer transition">
+                    {{ expandedId === e.id ? '▲' : '▼' }} Docs/Fotos
+                  </button>
                   <button @click="remove(e.id)" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs px-2 py-1 rounded border border-red-500/20 cursor-pointer transition">🗑️</button>
                 </div>
                 <div class="flex gap-2 mt-1 text-xs">
                   <a v-if="e.posterUrl" :href="e.posterUrl" target="_blank" class="text-blue-400/70 hover:text-blue-300 underline">🖼️ Ver cartel</a>
+                  <button v-if="e.posterUrl" @click="deletePoster(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar cartel</button>
                   <a v-if="e.shirtUrl" :href="e.shirtUrl" target="_blank" class="text-purple-400/70 hover:text-purple-300 underline">👕 Ver camiseta</a>
-                  <a v-if="e.resultsUrl" :href="e.resultsUrl" target="_blank" class="text-amber-400/70 hover:text-amber-300 underline">🏆 Ver resultados</a>
+                  <button v-if="e.shirtUrl" @click="deleteShirt(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar camiseta</button>
+                  <a v-if="e.trophyUrl" :href="e.trophyUrl" target="_blank" class="text-pink-400/70 hover:text-pink-300 underline">🏆 Ver trofeo</a>
+                  <button v-if="e.trophyUrl" @click="deleteTrophy(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar trofeo</button>
+                  <a v-if="e.resultsUrl" :href="e.resultsUrl" target="_blank" class="text-amber-400/70 hover:text-amber-300 underline">📄 Ver resultados</a>
+                  <button v-if="e.resultsDocumentId" @click="deleteResults(e.resultsDocumentId)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar resultados</button>
                 </div>
               </td>
             </tr>
+            <tr v-if="expandedId === e.id">
+              <td colspan="5" class="p-3 bg-[#0f0f0f] border-t border-white/5">
+                <div class="space-y-4">
+                  <!-- Documentos -->
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Documentos</h4>
+                    <div v-if="(editionDocuments[e.id] || []).filter(d => d.type !== 'results').length" class="space-y-1 mb-2">
+                      <div v-for="doc in (editionDocuments[e.id] || []).filter(d => d.type !== 'results')" :key="doc.id" class="flex items-center justify-between bg-[#141414] rounded px-3 py-2 border border-white/5">
+                        <div class="flex items-center gap-2 text-xs">
+                          <span class="px-1.5 py-0.5 rounded bg-white/5 text-gray-400 uppercase">{{ doc.type }}</span>
+                          <a :href="doc.publicUrl" target="_blank" class="text-blue-400 hover:text-blue-300 underline">{{ doc.name }}</a>
+                        </div>
+                        <button @click="deleteDocument(doc.id, e.id)" class="text-red-400/70 hover:text-red-300 text-xs">🗑️</button>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-500 mb-2">Sin documentos adicionales</div>
+                    <div class="flex flex-wrap gap-2">
+                      <template v-for="type in ['route','profile','general','other']" :key="type">
+                        <input type="file" accept=".pdf,.doc,.docx" class="hidden" :id="`doc-${type}-${e.id}`" @change="ev => { docFiles[`${e.id}-${type}`] = (ev.target as HTMLInputElement).files?.[0] || null; uploadDocument(e.id, type) }" />
+                        <label :for="`doc-${type}-${e.id}`" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 text-xs px-2 py-1 rounded border border-gray-500/20 cursor-pointer transition">
+                          {{ uploadingDoc?.editionId === e.id && uploadingDoc?.type === type ? '⏳' : '📎' }} {{ type }}
+                        </label>
+                      </template>
+                    </div>
+                  </div>
+                  <!-- Fotos -->
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Fotos</h4>
+                    <div v-if="(editionPhotos[e.id] || []).length" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                      <div v-for="photo in (editionPhotos[e.id] || [])" :key="photo.id" class="relative group aspect-square rounded overflow-hidden border border-white/5 bg-[#141414]">
+                        <img :src="photo.thumbUrl || photo.originalUrl" class="w-full h-full object-cover" />
+                        <button @click="deletePhoto(photo.id, e.id)" class="absolute top-0.5 right-0.5 bg-red-500/80 text-white text-[10px] px-1 rounded opacity-0 group-hover:opacity-100 transition">🗑️</button>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-500">Sin fotos</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            </template>
             <tr v-if="!editions.length">
               <td colspan="5" class="p-6 text-center text-gray-500">No hay ediciones registradas</td>
             </tr>

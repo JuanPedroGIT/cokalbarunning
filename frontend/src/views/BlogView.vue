@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/services/api.service'
 import { ref } from 'vue'
+import { usePageMeta } from '@/composables/usePageMeta'
 
 interface Post {
   id: string
@@ -17,6 +18,12 @@ interface Post {
 const posts = ref<Post[]>([])
 const loading = ref(true)
 
+usePageMeta({
+  title: 'Blog',
+  description: 'Últimas noticias, resultados y novedades del club Cokalba Running y la carrera solidaria Un Nuevo Impulso.',
+  url: '/blog',
+})
+
 onMounted(async () => {
   try {
     const response = await api.get('/posts')
@@ -28,7 +35,7 @@ onMounted(async () => {
         id: '1',
         title: 'Abiertas las inscripciones de la IX edicion',
         slug: 'abiertas-inscripciones-ix-edicion',
-        excerpt: 'Este ano volvemos con mas categorias y el mismo espiritu solidario de siempre, a favor de la Asociacion Sindrome X-Fragil.',
+        excerpt: 'Este año volvemos con más categorías y el mismo espíritu solidario de siempre, a favor de la Asociación Síndrome X-Frágil.',
         tag: 'Carrera',
         publishedAt: '2026-05-15',
         coverImage: null,
@@ -46,7 +53,7 @@ onMounted(async () => {
         id: '3',
         title: 'Resumen de la VIII edicion: record de participantes',
         slug: 'resumen-viii-edicion',
-        excerpt: 'La pasada edicion batio todos los records. Gracias a todos los que lo hicisteis posible.',
+        excerpt: 'La pasada edición batió todos los récords. Gracias a todos los que lo hicisteis posible.',
         tag: 'Noticias',
         publishedAt: '2025-07-12',
         coverImage: null,

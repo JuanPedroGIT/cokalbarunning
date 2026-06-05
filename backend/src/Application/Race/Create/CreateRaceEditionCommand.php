@@ -16,6 +16,7 @@ final class CreateRaceEditionCommand
         public ?string $posterUrl = null,
         public ?string $registrationUrl = null,
         public ?string $shirtUrl = null,
+        public ?string $trophyUrl = null,
     ) {
     }
 }

@@ -35,9 +35,14 @@ class AdminRaceDocumentController extends AbstractController
     }
 
     #[Route('/documents', methods: ['GET'])]
-    public function list(): JsonResponse
+    public function list(Request $request): JsonResponse
     {
-        $envelope = $this->queryBus->dispatch(new GetGeneralDocumentsQuery());
+        $editionId = $request->query->get('editionId');
+        if ($editionId) {
+            $envelope = $this->queryBus->dispatch(new GetDocumentsByEditionQuery(editionId: (string) $editionId));
+        } else {
+            $envelope = $this->queryBus->dispatch(new GetGeneralDocumentsQuery());
+        }
         /** @var RaceDocumentResponseDto[] $dtos */
         $dtos = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 

@@ -32,23 +32,31 @@ final class UploadRaceEditionImageHandler
         $year = (int) $edition->year()->value();
         $ext = $file->guessExtension() ?: 'jpg';
 
-        $filename = $command->type === 'poster'
-            ? $this->pathGen->posterPath($year, $ext)
-            : $this->pathGen->shirtPath($year, $ext);
+        $filename = match ($command->type) {
+            'poster' => $this->pathGen->posterPath($year, $ext),
+            'shirt' => $this->pathGen->shirtPath($year, $ext),
+            'trophy' => $this->pathGen->trophyPath($year, $ext),
+            default => throw new \InvalidArgumentException('Invalid image type: ' . $command->type),
+        };
 
         // Delete previous
-        $previous = $command->type === 'poster' ? $edition->posterUrl() : $edition->shirtUrl();
+        $previous = match ($command->type) {
+            'poster' => $edition->posterUrl(),
+            'shirt' => $edition->shirtUrl(),
+            'trophy' => $edition->trophyUrl(),
+            default => null,
+        };
         if ($previous !== null) {
             $this->storage->delete($previous);
         }
 
         $this->storage->store($file, $filename);
 
-        if ($command->type === 'poster') {
-            $edition->setPosterUrl($filename);
-        } else {
-            $edition->setShirtUrl($filename);
-        }
+        match ($command->type) {
+            'poster' => $edition->setPosterUrl($filename),
+            'shirt' => $edition->setShirtUrl($filename),
+            'trophy' => $edition->setTrophyUrl($filename),
+        };
 
         $this->repository->save($edition);
 

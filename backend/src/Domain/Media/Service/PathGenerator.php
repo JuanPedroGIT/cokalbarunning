@@ -18,6 +18,11 @@ final class PathGenerator
         return self::CLUB . "/race/$year/docs/camiseta-" . \bin2hex(\random_bytes(16)) . ".$ext";
     }
 
+    public function trophyPath(int $year, string $ext): string
+    {
+        return self::CLUB . "/race/$year/docs/trofeo-" . \bin2hex(\random_bytes(16)) . ".$ext";
+    }
+
     public function photoPath(int $year, string $ext): string
     {
         return self::CLUB . "/race/$year/images/" . \bin2hex(\random_bytes(16)) . ".$ext";

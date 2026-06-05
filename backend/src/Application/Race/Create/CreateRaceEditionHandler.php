@@ -31,6 +31,7 @@ final class CreateRaceEditionHandler
             posterUrl: $command->posterUrl,
             registrationUrl: $command->registrationUrl,
             shirtUrl: $command->shirtUrl,
+            trophyUrl: $command->trophyUrl,
         );
 
         $this->repository->save($edition);

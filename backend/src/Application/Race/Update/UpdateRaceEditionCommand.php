@@ -17,6 +17,7 @@ final class UpdateRaceEditionCommand
         public ?string $posterUrl = null,
         public ?string $registrationUrl = null,
         public ?string $shirtUrl = null,
+        public ?string $trophyUrl = null,
         public ?string $inscriptionInfo = null,
         public ?string $solidarityCause = null,
         public ?string $solidarityUrl = null,

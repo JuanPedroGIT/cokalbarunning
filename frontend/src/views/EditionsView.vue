@@ -3,12 +3,19 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRaceStore } from '@/stores/race.store'
 import { useImageZoom } from '@/composables/useImageZoom'
+import { usePageMeta } from '@/composables/usePageMeta'
 
 const raceStore = useRaceStore()
 const { zoomImage } = useImageZoom()
 
 onMounted(() => {
   raceStore.fetchEditions()
+})
+
+usePageMeta({
+  title: 'Ediciones Anteriores',
+  description: 'Historial de ediciones de la Carrera Solidaria Un Nuevo Impulso en Coca de Alba. Consulta resultados y galerías de años anteriores.',
+  url: '/ediciones',
 })
 </script>
 

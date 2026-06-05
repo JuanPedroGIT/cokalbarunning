@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { usePhotoStore } from '@/stores/photo.store'
 import { useRaceStore } from '@/stores/race.store'
 import GallerySection from '@/components/gallery/GallerySection.vue'
+import { usePageMeta } from '@/composables/usePageMeta'
 
 const photoStore = usePhotoStore()
 const raceStore = useRaceStore()
@@ -10,6 +11,12 @@ const filterEditionId = ref<string | null>(null)
 
 watch(filterEditionId, (newVal) => {
   photoStore.fetchAllPhotos(newVal || undefined)
+})
+
+usePageMeta({
+  title: 'Galería de Fotos',
+  description: 'Revive los mejores momentos de la Carrera Solidaria Un Nuevo Impulso en Coca de Alba.',
+  url: '/galeria',
 })
 
 onMounted(async () => {

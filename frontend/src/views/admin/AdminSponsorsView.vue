@@ -149,22 +149,22 @@ onMounted(() => { fetchSponsors() })
       </div>
 
       <!-- Tabla -->
-      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[640px]">
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
-              <th class="p-3 font-medium">Nombre</th>
-              <th class="p-3 font-medium">Logo</th>
-              <th class="p-3 font-medium">Nivel</th>
-              <th class="p-3 font-medium">Mensaje</th>
-              <th class="p-3 font-medium">Activo</th>
-              <th class="p-3 text-right font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium">Nombre</th>
+              <th class="p-2 md:p-3 font-medium">Logo</th>
+              <th class="p-2 md:p-3 font-medium">Nivel</th>
+              <th class="p-2 md:p-3 font-medium hidden md:table-cell">Mensaje</th>
+              <th class="p-2 md:p-3 font-medium">Activo</th>
+              <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="s in sponsors" :key="s.id" :class="['border-t border-white/5 transition', editingId === s.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
-              <td class="p-3 font-medium">{{ s.name }}</td>
-              <td class="p-3">
+              <td class="p-2 md:p-3 font-medium">{{ s.name }}</td>
+              <td class="p-2 md:p-3">
                 <div class="flex items-center gap-2">
                   <img v-if="s.logoUrl" :src="s.logoUrl" class="h-8 w-auto object-contain bg-white/5 rounded" :alt="s.name" />
                   <input type="file" accept="image/*" :id="`logo-${s.id}`" class="hidden" @change="onLogoFileChange(s.id, $event)" />
@@ -183,12 +183,12 @@ onMounted(() => { fetchSponsors() })
                   }"
                 >{{ s.tier }}</span>
               </td>
-              <td class="p-3 text-gray-500 text-xs max-w-[200px] truncate">{{ s.message ? '✔️' : '—' }}</td>
-              <td class="p-3">
+              <td class="p-2 md:p-3 text-gray-500 text-xs max-w-[200px] truncate hidden md:table-cell">{{ s.message ? '✔️' : '—' }}</td>
+              <td class="p-2 md:p-3">
                 <span v-if="s.isActive" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Si</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
               </td>
-              <td class="p-3 text-right">
+              <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(s)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm font-medium transition cursor-pointer">Editar</button>
                   <span class="text-white/10">|</span>

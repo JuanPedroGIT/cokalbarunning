@@ -31,10 +31,12 @@ final class GetAllEditionsQueryHandler
 
         foreach ($editions as $edition) {
             $resultsUrl = null;
+            $resultsDocumentId = null;
             $docs = $this->documentRepository->findByEditionId($edition->id()->value());
             foreach ($docs as $doc) {
                 if ($doc->type()->value() === 'results') {
                     $resultsUrl = $this->storage->url($doc->filePath());
+                    $resultsDocumentId = $doc->id();
                     break;
                 }
             }
@@ -49,8 +51,10 @@ final class GetAllEditionsQueryHandler
                 posterUrl: $edition->posterUrl() !== null ? $this->storage->url($edition->posterUrl()) : null,
                 registrationUrl: $edition->registrationUrl(),
                 shirtUrl: $edition->shirtUrl() !== null ? $this->storage->url($edition->shirtUrl()) : null,
+                trophyUrl: $edition->trophyUrl() !== null ? $this->storage->url($edition->trophyUrl()) : null,
                 description: $edition->description(),
                 resultsUrl: $resultsUrl,
+                resultsDocumentId: $resultsDocumentId,
                 inscriptionInfo: $edition->inscriptionInfo(),
                 solidarityCause: $edition->solidarityCause(),
                 solidarityUrl: $edition->solidarityUrl(),

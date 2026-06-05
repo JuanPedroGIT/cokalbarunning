@@ -28,6 +28,7 @@ final class RaceEditionMapper
             posterUrl: $orm->getPosterUrl(),
             registrationUrl: $orm->getRegistrationUrl(),
             shirtUrl: $orm->getShirtUrl(),
+            trophyUrl: $orm->getTrophyUrl(),
             inscriptionInfo: $orm->getInscriptionInfo(),
             solidarityCause: $orm->getSolidarityCause(),
             solidarityUrl: $orm->getSolidarityUrl(),
@@ -53,6 +54,7 @@ final class RaceEditionMapper
         $target->setPosterUrl($domain->posterUrl());
         $target->setRegistrationUrl($domain->registrationUrl());
         $target->setShirtUrl($domain->shirtUrl());
+        $target->setTrophyUrl($domain->trophyUrl());
         $target->setInscriptionInfo($domain->inscriptionInfo());
         $target->setSolidarityCause($domain->solidarityCause());
         $target->setSolidarityUrl($domain->solidarityUrl());

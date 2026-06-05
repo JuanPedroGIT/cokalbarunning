@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { usePageMeta } from '@/composables/usePageMeta'
 </script>
 
 <template>

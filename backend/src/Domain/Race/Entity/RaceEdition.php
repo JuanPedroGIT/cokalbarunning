@@ -24,6 +24,7 @@ final class RaceEdition
         private ?string $posterUrl = null,
         private ?string $registrationUrl = null,
         private ?string $shirtUrl = null,
+        private ?string $trophyUrl = null,
         private ?string $inscriptionInfo = null,
         private ?string $solidarityCause = null,
         private ?string $solidarityUrl = null,
@@ -125,6 +126,16 @@ final class RaceEdition
         $this->shirtUrl = $shirtUrl;
     }
 
+    public function trophyUrl(): ?string
+    {
+        return $this->trophyUrl;
+    }
+
+    public function setTrophyUrl(?string $trophyUrl): void
+    {
+        $this->trophyUrl = $trophyUrl;
+    }
+
     public function activate(): void
     {
         $this->isActive = true;
@@ -140,7 +151,7 @@ final class RaceEdition
         $this->year = $year;
     }
 
-    public function update(string $name, string $description, DateTimeImmutable $date, string $location, ?string $shirtUrl = null): void
+    public function update(string $name, string $description, DateTimeImmutable $date, string $location, ?string $shirtUrl = null, ?string $trophyUrl = null): void
     {
         $this->name = $name;
         $this->description = $description;
@@ -148,6 +159,9 @@ final class RaceEdition
         $this->location = $location;
         if ($shirtUrl !== null) {
             $this->shirtUrl = $shirtUrl;
+        }
+        if ($trophyUrl !== null) {
+            $this->trophyUrl = $trophyUrl;
         }
     }
 

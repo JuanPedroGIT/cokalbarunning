@@ -22,8 +22,10 @@ final readonly class RaceEditionResponseDto
         public ?string $posterUrl,
         public ?string $registrationUrl,
         public ?string $shirtUrl = null,
+        public ?string $trophyUrl = null,
         public ?string $description = null,
         public ?string $resultsUrl = null,
+        public ?string $resultsDocumentId = null,
         public ?string $inscriptionInfo = null,
         public ?string $solidarityCause = null,
         public ?string $solidarityUrl = null,
@@ -50,6 +52,7 @@ final readonly class RaceEditionResponseDto
             posterUrl: self::buildUrl($edition->posterUrl(), $storage),
             registrationUrl: $edition->registrationUrl(),
             shirtUrl: self::buildUrl($edition->shirtUrl(), $storage),
+            trophyUrl: self::buildUrl($edition->trophyUrl(), $storage),
             description: $edition->description(),
             inscriptionInfo: $edition->inscriptionInfo(),
             solidarityCause: $edition->solidarityCause(),
@@ -69,6 +72,7 @@ final readonly class RaceEditionResponseDto
             posterUrl: self::buildUrl($edition->posterUrl(), $storage),
             registrationUrl: $edition->registrationUrl(),
             shirtUrl: self::buildUrl($edition->shirtUrl(), $storage),
+            trophyUrl: self::buildUrl($edition->trophyUrl(), $storage),
             description: $edition->description(),
             inscriptionInfo: $edition->inscriptionInfo(),
             solidarityCause: $edition->solidarityCause(),
@@ -98,6 +102,7 @@ final readonly class RaceEditionResponseDto
             'posterUrl' => $this->posterUrl,
             'registrationUrl' => $this->registrationUrl,
             'shirtUrl' => $this->shirtUrl,
+            'trophyUrl' => $this->trophyUrl,
         ];
 
         if ($this->description !== null) {
@@ -105,6 +110,9 @@ final readonly class RaceEditionResponseDto
         }
         if ($this->resultsUrl !== null) {
             $data['resultsUrl'] = $this->resultsUrl;
+        }
+        if ($this->resultsDocumentId !== null) {
+            $data['resultsDocumentId'] = $this->resultsDocumentId;
         }
         if ($this->inscriptionInfo !== null) {
             $data['inscriptionInfo'] = $this->inscriptionInfo;

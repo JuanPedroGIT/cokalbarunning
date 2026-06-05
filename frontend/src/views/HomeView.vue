@@ -6,12 +6,14 @@ import { useImageZoom } from '@/composables/useImageZoom'
 import { useSponsorStore } from '@/stores/sponsor.store'
 import { useRaceStore } from '@/stores/race.store'
 import api from '@/services/api.service'
+import { usePageMeta } from '@/composables/usePageMeta'
+import { useHead } from '@vueuse/head'
 
 interface ClubMember {
   id: string; name: string; description: string | null; bio: string | null; photoUrl: string | null
 }
 interface LatestPost {
-  title: string; slug: string; excerpt: string; coverImage: string | null
+  title: string; slug: string; excerpt: string; coverImage: string | null; publishedAt: string
 }
 
 const sponsorStore = useSponsorStore()
@@ -26,6 +28,35 @@ const { zoomImage } = useImageZoom()
 const loading = ref(true)
 const clubMembers = ref<ClubMember[]>([])
 const latestPost = ref<LatestPost | null>(null)
+
+usePageMeta({
+  title: 'Un Nuevo Impulso',
+  description: 'Carrera solidaria de Coca de Alba. Un Nuevo Impulso. Corre por una buena causa y ayuda a impulsar el futuro de muchas personas.',
+  url: '/',
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SportsActivityLocation',
+        name: 'Cokalba Running',
+        alternateName: 'Un Nuevo Impulso',
+        description: 'Club de atletismo y carrera solidaria de Coca de Alba. Fomentamos el deporte y la solidaridad en la comunidad.',
+        url: 'https://cokalba-running.com',
+        logo: 'https://cokalba-running.com/favicon.ico',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Coca de Alba',
+          addressRegion: 'Salamanca',
+          addressCountry: 'ES',
+        },
+      }),
+    },
+  ],
+})
 
 const mainSponsor = computed(() => sponsorStore.sponsors.find(s => s.tier === 'principal') || null)
 const otherSponsors = computed(() => sponsorStore.sponsors.filter(s => s.tier !== 'principal'))
@@ -252,7 +283,7 @@ onMounted(async () => {
           <div v-if="otherSponsors.length > 0" class="font-barlow-condensed font-bold text-xs tracking-[0.25em] uppercase text-white/25 text-center mb-5">
             Colaboradores y patrocinadores
           </div>
-          <div v-if="otherSponsors.length > 0" class="flex flex-wrap justify-center gap-px bg-white/[0.07] border border-white/[0.07]">
+          <div v-if="otherSponsors.length > 0" class="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-px bg-white/[0.07] border border-white/[0.07]">
             <component
               v-for="s in otherSponsors"
               :key="s.id"
@@ -260,7 +291,7 @@ onMounted(async () => {
               :href="s.website"
               :target="s.website ? '_blank' : undefined"
               :rel="s.website ? 'noopener noreferrer' : undefined"
-              class="bg-white flex items-center justify-center w-[220px] min-h-[130px] p-2.5 hover:bg-gray-100 transition-colors"
+              class="bg-white flex items-center justify-center w-full md:w-[220px] min-h-[100px] md:min-h-[130px] p-2.5 hover:bg-gray-100 transition-colors"
             >
               <img
                 v-if="s.logoUrl"
@@ -284,6 +315,7 @@ onMounted(async () => {
         </div>
       </div>
     </section>
+
   </template>
   </div>
 </template>

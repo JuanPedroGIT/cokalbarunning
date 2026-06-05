@@ -107,24 +107,24 @@ onMounted(fetch)
         </div>
       </div>
 
-      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="bg-[#141414] rounded-lg border border-white/5 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[480px]">
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
-              <th class="p-3 font-medium">Email</th>
-              <th class="p-3 font-medium">Nombre</th>
-              <th class="p-3 font-medium">Roles</th>
-              <th class="p-3 text-right font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium">Email</th>
+              <th class="p-2 md:p-3 font-medium">Nombre</th>
+              <th class="p-2 md:p-3 font-medium">Roles</th>
+              <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="u in users" :key="u.id" :class="['border-t border-white/5 transition', editingId === u.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
-              <td class="p-3 font-medium">{{ u.email }}</td>
-              <td class="p-3 text-gray-400">{{ u.firstName }} {{ u.lastName }}</td>
-              <td class="p-3">
+              <td class="p-2 md:p-3 font-medium">{{ u.email }}</td>
+              <td class="p-2 md:p-3 text-gray-400">{{ u.firstName }} {{ u.lastName }}</td>
+              <td class="p-2 md:p-3">
                 <span v-for="r in u.roles" :key="r" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mr-1" :class="r === 'ROLE_ADMIN' ? 'bg-naranja/20 text-naranja' : r === 'ROLE_EDITOR' ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'">{{ r.replace('ROLE_', '') }}</span>
               </td>
-              <td class="p-3 text-right">
+              <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(u)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm transition cursor-pointer">Editar</button>
                   <span class="text-white/10">|</span>

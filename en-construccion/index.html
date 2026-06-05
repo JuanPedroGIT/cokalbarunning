@@ -10,7 +10,7 @@
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#FF5C00">
 <meta name="msapplication-TileColor" content="#FF5C00">
-
+<script defer src="https://cloud.umami.is/script.js" data-website-id="0a6f2d54-f40e-47ad-a075-bebbe5a648d9"></script>
 <!-- Performance -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -294,12 +294,14 @@ h1 .l3{-webkit-text-stroke:2px rgba(255,255,255,.3);color:transparent;font-size:
   text-transform:uppercase;margin-bottom:.4rem}
 .premio-desc{font-size:.84rem;color:rgba(255,255,255,.45);line-height:1.5}
 
-/* Camiseta destacada en premios */
-.camiseta-premio{margin-top:3rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center}
-.camiseta-premio img{width:66%;max-width:800px;display:block;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.6);cursor:zoom-in}
+/* Camiseta y trofeo destacados en premios */
+.camiseta-premio{margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.camiseta-item{display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center}
+.camiseta-item img{width:66%;max-width:800px;display:block;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.6);cursor:zoom-in}
 .camiseta-label{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#FF5C00}
 @media(max-width:900px){
-  .camiseta-premio img{width:90%}
+  .camiseta-premio{grid-template-columns:1fr}
+  .camiseta-item img{width:90%}
 }
 
 /* ── FOOTER ── */
@@ -323,8 +325,24 @@ footer{position:relative;z-index:1;background:#141414;
 @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 
+/* ── NOTICIAS ── */
+.news-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;margin-top:2rem}
+.news-img{width:100%;display:block;border-radius:4px;border:1px solid rgba(255,255,255,.06);box-shadow:0 15px 50px rgba(0,0,0,.5)}
+.news-content{display:flex;flex-direction:column;gap:1rem}
+.news-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.05;text-transform:uppercase;margin-bottom:.5rem}
+.news-sub{color:rgba(255,255,255,.55);font-size:1.05rem;line-height:1.6;font-weight:300;margin-bottom:.5rem}
+.news-body{color:rgba(255,255,255,.65);line-height:1.75;font-size:.95rem}
+.news-body strong{color:rgba(255,255,255,.85);font-weight:500}
+.news-body p{margin-bottom:1rem}
+.news-quote{background:rgba(255,255,255,.03);border-left:3px solid #FF5C00;padding:1rem 1.2rem;margin:.5rem 0;color:rgba(255,255,255,.6);font-size:.92rem;line-height:1.65}
+.news-cta{margin-top:.5rem}
+.news-sig{font-weight:600;color:rgba(255,255,255,.7)}
+
 /* ── MOBILE ── */
 @media(max-width:900px){
+  .news-grid{grid-template-columns:1fr;gap:1.5rem;min-width:0}
+  .news-title{word-break:break-word}
+  .news-cta .btn-main{white-space:normal;text-align:center;font-size:.85rem;padding:.8rem 1.2rem}
   nav{padding:.8rem 1.2rem}
   .nav-toggle{display:flex}
   .nav-wip{display:none}
@@ -477,6 +495,40 @@ footer{position:relative;z-index:1;background:#141414;
   </div>
 </div>
 </div>
+
+<div class="divider"></div>
+
+<!-- NOTICIAS -->
+<section id="noticias" class="section sec-bg">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-tag">Última hora</div>
+      <h2 class="sec-title">NOTICIAS <span class="ac">DEL CLUB</span></h2>
+    </div>
+    <div class="news-grid reveal">
+      <div>
+        <img src="camiseta-seleccion.jpeg" alt="Camiseta de la Selección" class="news-img" loading="lazy">
+      </div>
+      <div class="news-content">
+        <div class="news-title">¡Sorteamos la camiseta de la Selección!</div>
+        <div class="news-sub">El Mundial de fútbol está a la vuelta de la esquina y queremos que animes a la selección con la equipación oficial. ¡Inscríbete antes del 15 de junio y llévatela gratis!</div>
+        <div class="news-body">
+          <p>Se acerca el mundial de fútbol y en la organización de la <strong>IX Carrera Solidaria "Un Nuevo Impulso"</strong> hemos pensado que la mejor forma de apoyar y animar a la selección es vistiendo su camiseta oficial. Como sabemos perfectamente que conseguir la equipación original vale una pasta, ¡nosotros os regalamos una!</p>
+          <p>Queremos premiar vuestro compromiso con la causa, por lo que <strong>sortearemos la camiseta oficial durante el tradicional ágape</strong> que celebraremos con todos los participantes al terminar la carrera.</p>
+          <div class="news-quote">
+            ⚠️ <strong>¡MUY IMPORTANTE!</strong> Para entrar en el sorteo, debes estar inscrito antes del <strong>15 de junio a las 23:59 horas</strong>. Por favor, tened en cuenta que esta fecha límite es estricta: ¡no vengáis pidiendo entrar en el sorteo después de ese día!
+          </div>
+          <p>Contamos inicialmente con dos tallas disponibles (S y L). Pero ojo, os lanzamos un reto: si os portáis bien, demostráis vuestro espíritu solidario y logramos una gran participación, <strong>¡sortearemos las dos camisetas!</strong></p>
+          <p>No te quedes fuera de esta gran jornada de deporte, solidaridad y buen ambiente. Por si estás un poco perdido, aquí mismo te dejamos el enlace directo para asegurar tu plaza:</p>
+          <div class="news-cta">
+            <a href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank" class="btn-main">👉 Haz clic aquí para inscribirte antes del 15 de junio</a>
+          </div>
+          <p class="news-sig">¡Nos vemos en la meta y en el ágape!<br>– La Organización de la IX Carrera Solidaria "Un Nuevo Impulso"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="divider"></div>
 
@@ -808,8 +860,14 @@ footer{position:relative;z-index:1;background:#141414;
     </div>
 
     <div class="camiseta-premio reveal">
-      <div class="camiseta-label">Camiseta conmemorativa 2026</div>
-      <img src="2026/camiseta-2026.jpeg" alt="Camiseta conmemorativa Cokalba Running 2026" loading="lazy">
+      <div class="camiseta-item">
+        <div class="camiseta-label">Camiseta conmemorativa 2026</div>
+        <img src="2026/camiseta-2026.jpeg" alt="Camiseta conmemorativa Cokalba Running 2026" loading="lazy">
+      </div>
+      <div class="camiseta-item">
+        <div class="camiseta-label">Trofeo 2026</div>
+        <img src="2026/trofeo.jpeg" alt="Trofeo Cokalba Running 2026" loading="lazy">
+      </div>
     </div>
 
     <p style="font-size:.82rem;color:rgba(255,255,255,.3);margin-top:1.5rem">
