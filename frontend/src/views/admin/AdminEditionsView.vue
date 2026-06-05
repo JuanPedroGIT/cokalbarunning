@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import ImageDropZone from '@/components/ui/ImageDropZone.vue'
 
 interface Edition {
   id: string
@@ -22,6 +23,7 @@ interface Edition {
   solidarityUrl: string | null
 }
 
+
 const editions = ref<Edition[]>([])
 const form = ref<Partial<Edition>>({
   year: new Date().getFullYear(),
@@ -34,23 +36,17 @@ const form = ref<Partial<Edition>>({
   registrationUrl: null,
   shirtUrl: null,
   trophyUrl: null,
-  inscriptionInfo: '', solidarityCause: '', solidarityUrl: '',
+  inscriptionInfo: '',
+  solidarityCause: '',
+  solidarityUrl: '',
 })
+
 const router = useRouter()
 const editingId = ref<string | null>(null)
-const posterFile = ref<File | null>(null)
-const shirtFile = ref<File | null>(null)
-const trophyFile = ref<File | null>(null)
-const resultFile = ref<File | null>(null)
-const uploadingPosterId = ref<string | null>(null)
-const uploadingShirtId = ref<string | null>(null)
-const uploadingTrophyId = ref<string | null>(null)
-const uploadingResultId = ref<string | null>(null)
-const expandedId = ref<string | null>(null)
-const editionDocuments = ref<Record<string, any[]>>({})
-const editionPhotos = ref<Record<string, any[]>>({})
-const docFiles = ref<Record<string, File | null>>({})
-const uploadingDoc = ref<{ editionId: string; type: string } | null>(null)
+const uploadingPoster = ref(false)
+const uploadingShirt = ref(false)
+const uploadingTrophy = ref(false)
+const uploadingResult = ref(false)
 
 async function fetchEditions() {
   const res = await api.get('/editions')
@@ -68,128 +64,112 @@ async function save() {
   await fetchEditions()
 }
 
-async function uploadPoster(id: string) {
-  if (!posterFile.value) return
-  uploadingPosterId.value = id
-  const fd = new FormData(); fd.append('file', posterFile.value)
-  try {
-    await api.post(`/admin/editions/${id}/poster`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    posterFile.value = null
-    await fetchEditions()
-  } finally { uploadingPosterId.value = null }
-}
-
-async function uploadShirt(id: string) {
-  if (!shirtFile.value) return
-  uploadingShirtId.value = id
-  const fd = new FormData(); fd.append('file', shirtFile.value)
-  try {
-    await api.post(`/admin/editions/${id}/shirt`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    shirtFile.value = null
-    await fetchEditions()
-  } finally { uploadingShirtId.value = null }
-}
-
-async function uploadTrophy(id: string) {
-  if (!trophyFile.value) return
-  uploadingTrophyId.value = id
-  const fd = new FormData(); fd.append('file', trophyFile.value)
-  try {
-    await api.post(`/admin/editions/${id}/trophy`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    trophyFile.value = null
-    await fetchEditions()
-  } finally { uploadingTrophyId.value = null }
-}
-
-async function uploadResult(id: string, year: number) {
-  if (!resultFile.value) return
-  uploadingResultId.value = id
-  const fd = new FormData()
-  fd.append('file', resultFile.value)
-  fd.append('name', `Clasificación ${year}`)
-  fd.append('type', 'results')
-  fd.append('editionId', id)
-
-  // Delete existing
-  try {
-    await api.post('/admin/documents', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    resultFile.value = null
-    await fetchEditions()
-  } finally { uploadingResultId.value = null }
-}
-
-async function deletePoster(id: string) {
-  if (!confirm('¿Eliminar cartel?')) return
-  await api.delete(`/admin/editions/${id}/poster`)
-  await fetchEditions()
-}
-
-async function deleteShirt(id: string) {
-  if (!confirm('¿Eliminar camiseta?')) return
-  await api.delete(`/admin/editions/${id}/shirt`)
-  await fetchEditions()
-}
-
-async function deleteTrophy(id: string) {
-  if (!confirm('¿Eliminar trofeo?')) return
-  await api.delete(`/admin/editions/${id}/trophy`)
-  await fetchEditions()
-}
-
-async function deleteResults(documentId: string) {
-  if (!confirm('¿Eliminar resultados?')) return
-  await api.delete(`/admin/documents/${documentId}`)
-  await fetchEditions()
-}
-
-async function toggleExpand(id: string) {
-  if (expandedId.value === id) {
-    expandedId.value = null
-    return
-  }
-  expandedId.value = id
-  await Promise.all([fetchEditionDocuments(id), fetchEditionPhotos(id)])
-}
-
-async function fetchEditionDocuments(id: string) {
-  const res = await api.get(`/admin/documents?editionId=${id}`)
-  editionDocuments.value[id] = res.data.data || []
-}
-
-async function fetchEditionPhotos(id: string) {
-  const res = await api.get(`/admin/photos?editionId=${id}`)
-  editionPhotos.value[id] = res.data.data || []
-}
-
-async function uploadDocument(id: string, type: string) {
-  const key = `${id}-${type}`
-  const file = docFiles.value[key]
-  if (!file) return
-  uploadingDoc.value = { editionId: id, type }
+async function uploadPoster(file: File) {
+  if (!editingId.value) return
+  uploadingPoster.value = true
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('name', file.name)
-  fd.append('type', type)
-  fd.append('editionId', id)
   try {
-    await api.post('/admin/documents', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    docFiles.value[key] = null
-    await fetchEditionDocuments(id)
+    await api.post(`/admin/editions/${editingId.value}/poster`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const res = await api.get(`/editions`)
+    const updated = res.data.data.find((e: Edition) => e.id === editingId.value)
+    if (updated) form.value.posterUrl = updated.posterUrl
   } finally {
-    uploadingDoc.value = null
+    uploadingPoster.value = false
   }
 }
 
-async function deleteDocument(docId: string, editionId: string) {
-  if (!confirm('¿Eliminar documento?')) return
-  await api.delete(`/admin/documents/${docId}`)
-  await fetchEditionDocuments(editionId)
+async function deletePoster() {
+  if (!editingId.value) return
+  if (!confirm('¿Eliminar cartel?')) return
+  await api.delete(`/admin/editions/${editingId.value}/poster`)
+  form.value.posterUrl = null
+  await fetchEditions()
 }
 
-async function deletePhoto(photoId: string, editionId: string) {
-  if (!confirm('¿Eliminar foto?')) return
-  await api.delete(`/admin/photos/${photoId}`)
-  await fetchEditionPhotos(editionId)
+async function uploadShirt(file: File) {
+  if (!editingId.value) return
+  uploadingShirt.value = true
+  const fd = new FormData()
+  fd.append('file', file)
+  try {
+    await api.post(`/admin/editions/${editingId.value}/shirt`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const res = await api.get(`/editions`)
+    const updated = res.data.data.find((e: Edition) => e.id === editingId.value)
+    if (updated) form.value.shirtUrl = updated.shirtUrl
+  } finally {
+    uploadingShirt.value = false
+  }
+}
+
+async function deleteShirt() {
+  if (!editingId.value) return
+  if (!confirm('¿Eliminar camiseta?')) return
+  await api.delete(`/admin/editions/${editingId.value}/shirt`)
+  form.value.shirtUrl = null
+  await fetchEditions()
+}
+
+async function uploadTrophy(file: File) {
+  if (!editingId.value) return
+  uploadingTrophy.value = true
+  const fd = new FormData()
+  fd.append('file', file)
+  try {
+    await api.post(`/admin/editions/${editingId.value}/trophy`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const res = await api.get(`/editions`)
+    const updated = res.data.data.find((e: Edition) => e.id === editingId.value)
+    if (updated) form.value.trophyUrl = updated.trophyUrl
+  } finally {
+    uploadingTrophy.value = false
+  }
+}
+
+async function deleteTrophy() {
+  if (!editingId.value) return
+  if (!confirm('¿Eliminar trofeo?')) return
+  await api.delete(`/admin/editions/${editingId.value}/trophy`)
+  form.value.trophyUrl = null
+  await fetchEditions()
+}
+
+async function uploadResult(file: File) {
+  if (!editingId.value) return
+  uploadingResult.value = true
+  const year = form.value.year ?? new Date().getFullYear()
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('name', `Clasificación ${year}`)
+  fd.append('type', 'results')
+  fd.append('editionId', editingId.value)
+  try {
+    await api.post('/admin/documents', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const res = await api.get(`/editions`)
+    const updated = res.data.data.find((e: Edition) => e.id === editingId.value)
+    if (updated) {
+      form.value.resultsUrl = updated.resultsUrl
+      form.value.resultsDocumentId = updated.resultsDocumentId
+    }
+  } finally {
+    uploadingResult.value = false
+  }
+}
+
+async function deleteResults() {
+  if (!editingId.value || !form.value.resultsDocumentId) return
+  if (!confirm('¿Eliminar resultados?')) return
+  await api.delete(`/admin/documents/${form.value.resultsDocumentId}`)
+  form.value.resultsUrl = null
+  form.value.resultsDocumentId = null
+  await fetchEditions()
 }
 
 function edit(e: Edition) {
@@ -200,51 +180,93 @@ function edit(e: Edition) {
 async function remove(id: string) {
   if (!confirm('Eliminar edicion?')) return
   await api.delete(`/admin/editions/${id}`)
+  if (editingId.value === id) resetForm()
   await fetchEditions()
 }
 
 function resetForm() {
   editingId.value = null
   form.value = {
-    year: new Date().getFullYear(), name: '', description: '', date: '',
-    location: '', isActive: true, posterUrl: null, registrationUrl: null, shirtUrl: null, trophyUrl: null, inscriptionInfo: '', solidarityCause: '', solidarityUrl: '',
+    year: new Date().getFullYear(),
+    name: '',
+    description: '',
+    date: '',
+    location: '',
+    isActive: true,
+    posterUrl: null,
+    registrationUrl: null,
+    shirtUrl: null,
+    trophyUrl: null,
+    inscriptionInfo: '',
+    solidarityCause: '',
+    solidarityUrl: '',
   }
 }
 
-onMounted(() => { fetchEditions() })
+onMounted(() => {
+  fetchEditions()
+})
 </script>
 
 <template>
   <div class="relative z-10 min-h-screen bg-[#0A0A0A] text-white">
     <header class="bg-[#141414] p-4 flex items-center gap-4 border-b border-white/5">
-      <button @click="router.back()" class="text-sm bg-[#222] text-white px-3 py-1.5 rounded hover:bg-[#333] transition cursor-pointer border border-white/10">← Volver</button>
+      <button
+        @click="router.back()"
+        class="text-sm bg-[#222] text-white px-3 py-1.5 rounded hover:bg-[#333] transition cursor-pointer border border-white/10"
+      >
+        ← Volver
+      </button>
       <h1 class="text-xl font-bold uppercase tracking-wider">Ediciones</h1>
     </header>
 
-    <main class="max-w-5xl mx-auto p-6 space-y-6">
+    <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       <!-- Formulario -->
-      <div class="bg-[#141414] rounded-lg border border-white/5 p-6 space-y-4">
-        <h2 class="text-lg font-semibold border-b border-white/5 pb-3">{{ editingId ? 'Editar' : 'Nueva' }} Edicion</h2>
+      <div class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4">
+        <h2 class="text-lg font-semibold border-b border-white/5 pb-3">
+          {{ editingId ? 'Editar' : 'Nueva' }} Edicion
+        </h2>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs text-gray-400 mb-1">Ano</label>
-            <input v-model.number="form.year" type="number" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <label class="block text-xs text-gray-400 mb-1">Año</label>
+            <input
+              v-model.number="form.year"
+              type="number"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Nombre</label>
-            <input v-model="form.name" placeholder="IX Carrera Solidaria..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <input
+              v-model="form.name"
+              placeholder="IX Carrera Solidaria..."
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Fecha</label>
-            <input v-model="form.date" type="date" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <input
+              v-model="form.date"
+              type="date"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Lugar</label>
-            <input v-model="form.location" placeholder="Coca de Alba, Salamanca" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <input
+              v-model="form.location"
+              placeholder="Coca de Alba, Salamanca"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">URL inscripcion</label>
-            <input v-model="form.registrationUrl" placeholder="https://..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            <input
+              v-model="form.registrationUrl"
+              placeholder="https://..."
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
           </div>
           <div class="flex items-end">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -253,25 +275,163 @@ onMounted(() => { fetchEditions() })
             </label>
           </div>
         </div>
+
         <div>
           <label class="block text-xs text-gray-400 mb-1">Descripcion</label>
-          <textarea v-model="form.description" placeholder="Descripcion de la carrera..." rows="3" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"></textarea>
+          <textarea
+            v-model="form.description"
+            placeholder="Descripcion de la carrera..."
+            rows="3"
+            class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+          ></textarea>
         </div>
-        <div>
-          <label class="block text-xs text-gray-400 mb-1">Info de inscripcion</label>
-          <input v-model="form.inscriptionInfo" placeholder="Inscripciones hasta el 2 de julio..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Info de inscripcion</label>
+            <input
+              v-model="form.inscriptionInfo"
+              placeholder="Inscripciones hasta el 2 de julio..."
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Causa solidaria</label>
+            <input
+              v-model="form.solidarityCause"
+              placeholder="A favor de Asociación Síndrome X-Frágil"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-xs text-gray-400 mb-1">Causa solidaria</label>
-          <input v-model="form.solidarityCause" placeholder="A favor de Asociación Síndrome X-Frágil" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
-        </div>
+
         <div>
           <label class="block text-xs text-gray-400 mb-1">URL causa solidaria</label>
-          <input v-model="form.solidarityUrl" placeholder="https://www.xfragil.net/" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+          <input
+            v-model="form.solidarityUrl"
+            placeholder="https://www.xfragil.net/"
+            class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+          />
         </div>
-        <div class="flex gap-2 pt-2">
-          <button @click="save" class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition cursor-pointer">Guardar</button>
-          <button v-if="editingId" @click="resetForm" class="bg-[#222] px-4 py-2 rounded hover:bg-[#333] transition cursor-pointer">Cancelar</button>
+
+        <!-- Archivos (solo edicion) -->
+        <template v-if="editingId">
+          <div class="border-t border-white/5 pt-4 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+              Archivos de la edicion
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Cartel -->
+              <div class="space-y-2">
+                <label class="block text-xs text-gray-400">Cartel</label>
+                <div v-if="form.posterUrl" class="relative rounded-lg overflow-hidden border border-white/5 bg-[#0A0A0A]">
+                  <img :src="form.posterUrl" alt="Cartel" class="w-full aspect-square object-cover" />
+                  <button
+                    @click="deletePoster"
+                    class="absolute top-1.5 right-1.5 bg-red-500/90 text-white text-[10px] px-1.5 py-0.5 rounded cursor-pointer"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+                <div v-else>
+                  <ImageDropZone
+                    :label="uploadingPoster ? 'Subiendo...' : 'Arrastra el cartel o haz clic'"
+                    :compact="true"
+                    @select="uploadPoster"
+                  />
+                </div>
+              </div>
+
+              <!-- Camiseta -->
+              <div class="space-y-2">
+                <label class="block text-xs text-gray-400">Camiseta</label>
+                <div v-if="form.shirtUrl" class="relative rounded-lg overflow-hidden border border-white/5 bg-[#0A0A0A]">
+                  <img :src="form.shirtUrl" alt="Camiseta" class="w-full aspect-square object-cover" />
+                  <button
+                    @click="deleteShirt"
+                    class="absolute top-1.5 right-1.5 bg-red-500/90 text-white text-[10px] px-1.5 py-0.5 rounded cursor-pointer"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+                <div v-else>
+                  <ImageDropZone
+                    :label="uploadingShirt ? 'Subiendo...' : 'Arrastra la camiseta o haz clic'"
+                    :compact="true"
+                    @select="uploadShirt"
+                  />
+                </div>
+              </div>
+
+              <!-- Trofeo -->
+              <div class="space-y-2">
+                <label class="block text-xs text-gray-400">Trofeo</label>
+                <div v-if="form.trophyUrl" class="relative rounded-lg overflow-hidden border border-white/5 bg-[#0A0A0A]">
+                  <img :src="form.trophyUrl" alt="Trofeo" class="w-full aspect-square object-cover" />
+                  <button
+                    @click="deleteTrophy"
+                    class="absolute top-1.5 right-1.5 bg-red-500/90 text-white text-[10px] px-1.5 py-0.5 rounded cursor-pointer"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+                <div v-else>
+                  <ImageDropZone
+                    :label="uploadingTrophy ? 'Subiendo...' : 'Arrastra el trofeo o haz clic'"
+                    :compact="true"
+                    @select="uploadTrophy"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultados PDF -->
+            <div class="space-y-2 pt-2">
+              <label class="block text-xs text-gray-400">Clasificaciones (PDF)</label>
+              <div v-if="form.resultsUrl" class="flex items-center gap-3 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2">
+                <a
+                  :href="form.resultsUrl"
+                  target="_blank"
+                  class="text-sm text-amber-400 hover:text-amber-300 underline truncate flex-1"
+                >
+                  📄 Ver clasificaciones
+                </a>
+                <button
+                  @click="deleteResults"
+                  class="text-red-400 hover:text-red-300 text-xs font-medium cursor-pointer"
+                >
+                  Eliminar
+                </button>
+              </div>
+              <div v-else>
+                <ImageDropZone
+                  :label="uploadingResult ? 'Subiendo...' : 'Arrastra el PDF de clasificaciones o haz clic'"
+                  :compact="true"
+                  accept=".pdf"
+                  @select="uploadResult"
+                />
+              </div>
+            </div>
+          </div>
+
+
+        </template>
+
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button
+            @click="save"
+            class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition cursor-pointer"
+          >
+            Guardar
+          </button>
+          <button
+            v-if="editingId"
+            @click="resetForm"
+            class="bg-[#222] px-4 py-2 rounded hover:bg-[#333] transition cursor-pointer"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
 
@@ -284,102 +444,58 @@ onMounted(() => { fetchEditions() })
               <th class="p-2 md:p-3 font-medium">Nombre</th>
               <th class="p-2 md:p-3 font-medium">Lugar</th>
               <th class="p-2 md:p-3 font-medium">Activa</th>
-              <th class="p-2 md:p-3 font-medium">Acciones</th>
+              <th class="p-2 md:p-3 font-medium text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <template v-for="e in editions" :key="e.id">
-            <tr :class="['border-t border-white/5 transition', editingId === e.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
+            <tr
+              v-for="e in editions"
+              :key="e.id"
+              :class="[
+                'border-t border-white/5 transition',
+                editingId === e.id
+                  ? 'bg-naranja/10 border-l-2 border-l-naranja'
+                  : 'hover:bg-[#1a1a1a]',
+              ]"
+            >
               <td class="p-2 md:p-3">{{ e.year }}</td>
               <td class="p-2 md:p-3">{{ e.name }}</td>
               <td class="p-2 md:p-3 text-gray-400">{{ e.location }}</td>
               <td class="p-2 md:p-3">
-                <span v-if="e.isActive" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Activa</span>
-                <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">Inactiva</span>
+                <span
+                  v-if="e.isActive"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400"
+                >
+                  Activa
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400"
+                >
+                  Inactiva
+                </span>
               </td>
-              <td class="p-2 md:p-3">
-                <div class="flex items-center gap-1 flex-wrap">
-                  <button @click="edit(e)" class="text-[#FF5C00] hover:text-[#FFD600] text-xs font-medium bg-[#222] px-2 py-1 rounded border border-white/5 cursor-pointer">Editar</button>
-
-                  <input type="file" accept="image/*" class="hidden" :id="`poster-${e.id}`" @change="ev => { posterFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadPoster(e.id) }" />
-                  <label :for="`poster-${e.id}`" class="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs px-2 py-1 rounded border border-blue-500/20 cursor-pointer transition">
-                    {{ uploadingPosterId === e.id ? '⏳' : '🖼️' }} Cartel
-                  </label>
-
-                  <input type="file" accept="image/*" class="hidden" :id="`shirt-${e.id}`" @change="ev => { shirtFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadShirt(e.id) }" />
-                  <label :for="`shirt-${e.id}`" class="bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs px-2 py-1 rounded border border-purple-500/20 cursor-pointer transition">
-                    {{ uploadingShirtId === e.id ? '⏳' : '👕' }} Camiseta
-                  </label>
-
-                  <input type="file" accept="image/*" class="hidden" :id="`trophy-${e.id}`" @change="ev => { trophyFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadTrophy(e.id) }" />
-                  <label :for="`trophy-${e.id}`" class="bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 text-xs px-2 py-1 rounded border border-pink-500/20 cursor-pointer transition">
-                    {{ uploadingTrophyId === e.id ? '⏳' : '🏆' }} Trofeo
-                  </label>
-
-                  <input type="file" accept=".pdf" class="hidden" :id="`result-${e.id}`" @change="ev => { resultFile = (ev.target as HTMLInputElement).files?.[0] || null; uploadResult(e.id, e.year) }" />
-                  <label :for="`result-${e.id}`" class="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-xs px-2 py-1 rounded border border-amber-500/20 cursor-pointer transition">
-                    {{ uploadingResultId === e.id ? '⏳' : '🏆' }} Resultados
-                  </label>
-
-                  <button @click="toggleExpand(e.id)" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 text-xs px-2 py-1 rounded border border-gray-500/20 cursor-pointer transition">
-                    {{ expandedId === e.id ? '▲' : '▼' }} Docs/Fotos
+              <td class="p-2 md:p-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    @click="edit(e)"
+                    class="text-[#FF5C00] hover:text-[#FFD600] text-xs font-medium bg-[#222] px-3 py-1.5 rounded border border-white/5 cursor-pointer transition"
+                  >
+                    Editar
                   </button>
-                  <button @click="remove(e.id)" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs px-2 py-1 rounded border border-red-500/20 cursor-pointer transition">🗑️</button>
-                </div>
-                <div class="flex gap-2 mt-1 text-xs">
-                  <a v-if="e.posterUrl" :href="e.posterUrl" target="_blank" class="text-blue-400/70 hover:text-blue-300 underline">🖼️ Ver cartel</a>
-                  <button v-if="e.posterUrl" @click="deletePoster(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar cartel</button>
-                  <a v-if="e.shirtUrl" :href="e.shirtUrl" target="_blank" class="text-purple-400/70 hover:text-purple-300 underline">👕 Ver camiseta</a>
-                  <button v-if="e.shirtUrl" @click="deleteShirt(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar camiseta</button>
-                  <a v-if="e.trophyUrl" :href="e.trophyUrl" target="_blank" class="text-pink-400/70 hover:text-pink-300 underline">🏆 Ver trofeo</a>
-                  <button v-if="e.trophyUrl" @click="deleteTrophy(e.id)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar trofeo</button>
-                  <a v-if="e.resultsUrl" :href="e.resultsUrl" target="_blank" class="text-amber-400/70 hover:text-amber-300 underline">📄 Ver resultados</a>
-                  <button v-if="e.resultsDocumentId" @click="deleteResults(e.resultsDocumentId)" class="text-red-400/70 hover:text-red-300 underline text-xs">🗑️ Eliminar resultados</button>
+                  <button
+                    @click="remove(e.id)"
+                    class="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs px-3 py-1.5 rounded border border-red-500/20 cursor-pointer transition"
+                  >
+                    Eliminar
+                  </button>
                 </div>
               </td>
             </tr>
-            <tr v-if="expandedId === e.id">
-              <td colspan="5" class="p-3 bg-[#0f0f0f] border-t border-white/5">
-                <div class="space-y-4">
-                  <!-- Documentos -->
-                  <div>
-                    <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Documentos</h4>
-                    <div v-if="(editionDocuments[e.id] || []).filter(d => d.type !== 'results').length" class="space-y-1 mb-2">
-                      <div v-for="doc in (editionDocuments[e.id] || []).filter(d => d.type !== 'results')" :key="doc.id" class="flex items-center justify-between bg-[#141414] rounded px-3 py-2 border border-white/5">
-                        <div class="flex items-center gap-2 text-xs">
-                          <span class="px-1.5 py-0.5 rounded bg-white/5 text-gray-400 uppercase">{{ doc.type }}</span>
-                          <a :href="doc.publicUrl" target="_blank" class="text-blue-400 hover:text-blue-300 underline">{{ doc.name }}</a>
-                        </div>
-                        <button @click="deleteDocument(doc.id, e.id)" class="text-red-400/70 hover:text-red-300 text-xs">🗑️</button>
-                      </div>
-                    </div>
-                    <div v-else class="text-xs text-gray-500 mb-2">Sin documentos adicionales</div>
-                    <div class="flex flex-wrap gap-2">
-                      <template v-for="type in ['route','profile','general','other']" :key="type">
-                        <input type="file" accept=".pdf,.doc,.docx" class="hidden" :id="`doc-${type}-${e.id}`" @change="ev => { docFiles[`${e.id}-${type}`] = (ev.target as HTMLInputElement).files?.[0] || null; uploadDocument(e.id, type) }" />
-                        <label :for="`doc-${type}-${e.id}`" class="bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 text-xs px-2 py-1 rounded border border-gray-500/20 cursor-pointer transition">
-                          {{ uploadingDoc?.editionId === e.id && uploadingDoc?.type === type ? '⏳' : '📎' }} {{ type }}
-                        </label>
-                      </template>
-                    </div>
-                  </div>
-                  <!-- Fotos -->
-                  <div>
-                    <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Fotos</h4>
-                    <div v-if="(editionPhotos[e.id] || []).length" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                      <div v-for="photo in (editionPhotos[e.id] || [])" :key="photo.id" class="relative group aspect-square rounded overflow-hidden border border-white/5 bg-[#141414]">
-                        <img :src="photo.thumbUrl || photo.originalUrl" class="w-full h-full object-cover" />
-                        <button @click="deletePhoto(photo.id, e.id)" class="absolute top-0.5 right-0.5 bg-red-500/80 text-white text-[10px] px-1 rounded opacity-0 group-hover:opacity-100 transition">🗑️</button>
-                      </div>
-                    </div>
-                    <div v-else class="text-xs text-gray-500">Sin fotos</div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            </template>
             <tr v-if="!editions.length">
-              <td colspan="5" class="p-6 text-center text-gray-500">No hay ediciones registradas</td>
+              <td colspan="5" class="p-6 text-center text-gray-500">
+                No hay ediciones registradas
+              </td>
             </tr>
           </tbody>
         </table>
