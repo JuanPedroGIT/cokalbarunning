@@ -14,6 +14,7 @@ final class UpdateBlogPostCommand
         public ?string $tag = null,
         public ?string $publishedAt = null,
         public ?string $coverImage = null,
+        public ?int $priority = null,
     ) {
     }
 }

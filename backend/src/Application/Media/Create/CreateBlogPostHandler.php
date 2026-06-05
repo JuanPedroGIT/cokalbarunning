@@ -33,7 +33,12 @@ final class CreateBlogPostHandler
             createdAt: new \DateTimeImmutable(),
             publishedAt: $command->publishedAt ? new \DateTimeImmutable($command->publishedAt) : null,
             coverImage: $command->coverImage ?: null,
+            priority: $command->priority,
         );
+
+        if ($command->priority !== null) {
+            $this->repository->clearPriority($command->priority, $id);
+        }
 
         $this->repository->save($post);
 

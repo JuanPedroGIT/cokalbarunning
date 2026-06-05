@@ -21,7 +21,7 @@ final class GetLatestPostQueryHandler
 
     public function __invoke(GetLatestPostQuery $query): ?BlogPostResponseDto
     {
-        $post = $this->repository->findLatestPublished();
+        $post = $this->repository->findFeatured();
 
         return $post !== null ? BlogPostResponseDto::fromDomain($post, $this->storage) : null;
     }

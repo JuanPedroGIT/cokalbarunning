@@ -66,7 +66,7 @@ onMounted(async () => {
     sponsorStore.fetchSponsors(),
     raceStore.fetchActiveEdition(),
     (async () => { try { const res = await api.get('/club-members'); clubMembers.value = res.data.data } catch {} })(),
-    (async () => { try { const res = await api.get('/posts/latest'); latestPost.value = res.data.data } catch {} })(),
+    (async () => { try { const res = await api.get('/posts/featured'); latestPost.value = res.data.data } catch {} })(),
   ])
   loading.value = false
 })
@@ -139,7 +139,7 @@ onMounted(async () => {
       </div>
 
       <!-- Última noticia (igual que en Blog) -->
-      <RouterLink v-if="latestPost" :to="`/blog/${latestPost.slug}`" class="relative z-10 w-full group block no-underline bg-negro overflow-hidden" :class="raceStore.activeEdition ? 'lg:max-w-none' : 'lg:col-span-2'">
+      <article v-if="latestPost" class="relative z-10 w-full group block bg-negro overflow-hidden" :class="raceStore.activeEdition ? 'lg:max-w-none' : 'lg:col-span-2'">
         <div class="h-64 lg:h-80 bg-gris-medio relative overflow-hidden">
           <img
             v-if="latestPost.coverImage"
@@ -155,9 +155,14 @@ onMounted(async () => {
           <div class="font-barlow-condensed text-xs font-semibold tracking-[0.2em] uppercase text-naranja">Última noticia</div>
           <div class="font-barlow-condensed font-bold text-lg uppercase leading-tight mt-2 group-hover:text-naranja transition-colors">{{ latestPost.title }}</div>
           <div class="text-sm text-white/50 leading-relaxed mt-2">{{ latestPost.excerpt }}</div>
-          <div class="text-sm text-gris-texto mt-4">{{ latestPost.publishedAt ? new Date(latestPost.publishedAt).toLocaleDateString('es-ES') : '' }}</div>
+          <div class="flex items-center justify-between mt-4">
+            <div class="text-sm text-gris-texto">{{ latestPost.publishedAt ? new Date(latestPost.publishedAt).toLocaleDateString('es-ES') : '' }}</div>
+            <RouterLink :to="`/blog/${latestPost.slug}`" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-naranja text-negro px-5 py-2 hover:bg-amarillo transition-colors inline-block">
+              Ver noticia
+            </RouterLink>
+          </div>
         </div>
-      </RouterLink>
+      </article>
       <!-- Fallback cartel si no hay noticias ni carrera -->
       <div v-else class="relative z-10 w-full lg:max-w-none" :class="raceStore.activeEdition ? '' : 'lg:col-span-2 max-w-md mx-auto'">
         <div class="aspect-[3/4] flex items-center justify-center overflow-hidden">

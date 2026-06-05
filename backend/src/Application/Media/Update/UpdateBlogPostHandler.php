@@ -42,6 +42,11 @@ final class UpdateBlogPostHandler
             $post->updatePublishedAt($command->publishedAt !== '' ? new \DateTimeImmutable($command->publishedAt) : null);
         }
 
+        if ($command->priority !== null) {
+            $this->repository->clearPriority($command->priority, $post->id());
+            $post->updatePriority($command->priority);
+        }
+
         $this->repository->save($post);
     }
 

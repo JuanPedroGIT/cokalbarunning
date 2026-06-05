@@ -20,6 +20,7 @@ final class BlogPostMapper
             tag: $orm->getTag(),
             publishedAt: $orm->getPublishedAt(),
             coverImage: $orm->getCoverImage(),
+            priority: $orm->getPriority(),
             createdAt: $orm->getCreatedAt(),
         );
     }
@@ -35,6 +36,7 @@ final class BlogPostMapper
         $target->setTag($domain->tag());
         $target->setPublishedAt($domain->publishedAt());
         $target->setCoverImage($domain->coverImage());
+        $target->setPriority($domain->priority());
 
         if ($orm === null) {
             $target->setCreatedAt($domain->createdAt());

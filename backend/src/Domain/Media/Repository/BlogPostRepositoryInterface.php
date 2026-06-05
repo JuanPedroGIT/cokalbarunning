@@ -23,4 +23,11 @@ interface BlogPostRepositoryInterface
     public function findAll(): array;
 
     public function findLatestPublished(): ?BlogPost;
+
+    public function findByPriority(int $priority): ?BlogPost;
+
+    public function findFeatured(): ?BlogPost;
+
+    /** Quita la prioridad de otros posts que tengan este valor, excepto el indicado. */
+    public function clearPriority(int $priority, ?string $excludeId = null): void;
 }

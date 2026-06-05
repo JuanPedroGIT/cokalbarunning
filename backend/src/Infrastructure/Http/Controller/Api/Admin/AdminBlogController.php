@@ -59,6 +59,7 @@ class AdminBlogController extends AbstractController
             tag: $data['tag'] ?? 'General',
             publishedAt: $data['publishedAt'] ?? null,
             coverImage: $data['coverImage'] ?? null,
+            priority: array_key_exists('priority', $data) ? ($data['priority'] !== null ? (int) $data['priority'] : null) : null,
         );
 
         $envelope = $this->commandBus->dispatch($command);
@@ -89,6 +90,7 @@ class AdminBlogController extends AbstractController
             tag: $data['tag'] ?? null,
             publishedAt: array_key_exists('publishedAt', $data) ? $data['publishedAt'] : null,
             coverImage: array_key_exists('coverImage', $data) ? $data['coverImage'] : null,
+            priority: array_key_exists('priority', $data) ? ($data['priority'] !== null ? (int) $data['priority'] : null) : null,
         );
 
         $this->commandBus->dispatch($command);

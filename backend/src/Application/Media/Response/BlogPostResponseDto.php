@@ -20,6 +20,7 @@ final readonly class BlogPostResponseDto
         public ?string $createdAt = null,
         public ?string $content = null,
         public ?bool $isPublished = null,
+        public ?int $priority = null,
     ) {
     }
 
@@ -40,6 +41,7 @@ final readonly class BlogPostResponseDto
             tag: $post->tag(),
             publishedAt: $post->publishedAt()?->format('Y-m-d'),
             coverImage: self::buildUrl($post->coverImage(), $storage),
+            priority: $post->priority(),
         );
     }
 
@@ -53,6 +55,7 @@ final readonly class BlogPostResponseDto
             tag: $post->tag(),
             publishedAt: $post->publishedAt()?->format('Y-m-d'),
             coverImage: self::buildUrl($post->coverImage(), $storage),
+            priority: $post->priority(),
             content: $post->content(),
         );
     }
@@ -70,6 +73,7 @@ final readonly class BlogPostResponseDto
             createdAt: $post->createdAt()->format('Y-m-d H:i:s'),
             content: $post->content(),
             isPublished: $post->isPublished(),
+            priority: $post->priority(),
         );
     }
 
@@ -111,6 +115,9 @@ final readonly class BlogPostResponseDto
         }
         if ($this->isPublished !== null) {
             $data['isPublished'] = $this->isPublished;
+        }
+        if ($this->priority !== null) {
+            $data['priority'] = $this->priority;
         }
 
         return $data;

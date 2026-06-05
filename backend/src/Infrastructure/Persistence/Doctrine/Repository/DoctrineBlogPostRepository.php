@@ -105,4 +105,50 @@ final class DoctrineBlogPostRepository implements BlogPostRepositoryInterface
 
         return $orm !== null ? $this->mapper->toDomain($orm) : null;
     }
+
+    public function findByPriority(int $priority): ?BlogPost
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('p')
+            ->from(OrmBlogPost::class, 'p')
+            ->where('p.priority = :priority')
+            ->setParameter('priority', $priority)
+            ->setMaxResults(1);
+
+        $orm = $qb->getQuery()->getOneOrNullResult();
+
+        return $orm !== null ? $this->mapper->toDomain($orm) : null;
+    }
+
+    public function findFeatured(): ?BlogPost
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('p')
+            ->from(OrmBlogPost::class, 'p')
+            ->where('p.priority = 1')
+            ->andWhere('p.publishedAt IS NOT NULL')
+            ->andWhere('p.publishedAt <= :now')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->setMaxResults(1);
+
+        $orm = $qb->getQuery()->getOneOrNullResult();
+
+        return $orm !== null ? $this->mapper->toDomain($orm) : null;
+    }
+
+    public function clearPriority(int $priority, ?string $excludeId = null): void
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->update(OrmBlogPost::class, 'p')
+            ->set('p.priority', 'NULL')
+            ->where('p.priority = :priority')
+            ->setParameter('priority', $priority);
+
+        if ($excludeId !== null) {
+            $qb->andWhere('p.id != :excludeId')
+               ->setParameter('excludeId', $excludeId);
+        }
+
+        $qb->getQuery()->execute();
+    }
 }

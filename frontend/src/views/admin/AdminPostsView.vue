@@ -13,10 +13,11 @@ interface Post {
   publishedAt: string | null
   isPublished: boolean
   coverImage: string | null
+  priority: number | null
 }
 
 const posts = ref<Post[]>([])
-const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null })
+const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null })
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const coverFile = ref<File | null>(null)
@@ -65,7 +66,7 @@ async function remove(id: string) {
 function resetForm() {
   editingId.value = null
   coverFile.value = null
-  form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null }
+  form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null }
 }
 
 onMounted(fetchPosts)
@@ -94,7 +95,7 @@ onMounted(fetchPosts)
           <textarea v-model="form.content" placeholder="Contenido completo..." rows="6" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition font-mono text-sm"></textarea>
           <p class="text-[0.65rem] text-gray-500 mt-1">Se admite HTML: &lt;p&gt;, &lt;h2&gt;, &lt;strong&gt;, &lt;a&gt;, &lt;img&gt;, etc.</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div>
             <label class="block text-xs text-gray-400 mb-1">Etiqueta</label>
             <input v-model="form.tag" placeholder="noticias, entrenamiento..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
@@ -107,6 +108,17 @@ onMounted(fetchPosts)
               class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition [color-scheme:dark]"
               @input="ev => form.publishedAt = (ev.target as HTMLInputElement).value || null"
             />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Prioridad</label>
+            <select v-model.number="form.priority" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition">
+              <option :value="null">Ninguna</option>
+              <option :value="1">1 - Principal (Home)</option>
+              <option :value="2">2</option>
+              <option :value="3">3</option>
+              <option :value="4">4</option>
+              <option :value="5">5</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Imagen portada</label>
@@ -133,6 +145,7 @@ onMounted(fetchPosts)
             <tr>
               <th class="p-2 md:p-3 font-medium">Título</th>
               <th class="p-2 md:p-3 font-medium">Etiqueta</th>
+              <th class="p-2 md:p-3 font-medium">Prioridad</th>
               <th class="p-2 md:p-3 font-medium">Publicado</th>
               <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
@@ -141,6 +154,10 @@ onMounted(fetchPosts)
             <tr v-for="p in posts" :key="p.id" class="border-t border-white/5 hover:bg-[#1a1a1a] transition">
               <td class="p-2 md:p-3">{{ p.title }}</td>
               <td class="p-2 md:p-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#FF5C00]/10 text-[#FF5C00]">{{ p.tag }}</span></td>
+              <td class="p-2 md:p-3">
+                <span v-if="p.priority" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-400">{{ p.priority }}</span>
+                <span v-else class="text-gray-500">—</span>
+              </td>
               <td class="p-2 md:p-3">
                 <span v-if="p.isPublished" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Si</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
@@ -154,7 +171,7 @@ onMounted(fetchPosts)
               </td>
             </tr>
             <tr v-if="!posts.length">
-              <td colspan="4" class="p-6 text-center text-gray-500">No hay entradas</td>
+              <td colspan="5" class="p-6 text-center text-gray-500">No hay entradas</td>
             </tr>
           </tbody>
         </table>

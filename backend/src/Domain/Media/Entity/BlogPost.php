@@ -18,6 +18,7 @@ final class BlogPost
         private DateTimeImmutable $createdAt,
         private ?DateTimeImmutable $publishedAt = null,
         private ?string $coverImage = null,
+        private ?int $priority = null,
     ) {
     }
 
@@ -61,6 +62,11 @@ final class BlogPost
         return $this->coverImage;
     }
 
+    public function priority(): ?int
+    {
+        return $this->priority;
+    }
+
     public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
@@ -94,5 +100,10 @@ final class BlogPost
         $this->content = $content;
         $this->tag = $tag;
         $this->coverImage = $coverImage;
+    }
+
+    public function updatePriority(?int $priority): void
+    {
+        $this->priority = $priority;
     }
 }

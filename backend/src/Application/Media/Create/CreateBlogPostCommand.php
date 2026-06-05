@@ -13,6 +13,7 @@ final class CreateBlogPostCommand
         public string $tag,
         public ?string $publishedAt = null,
         public ?string $coverImage = null,
+        public ?int $priority = null,
     ) {
     }
 }

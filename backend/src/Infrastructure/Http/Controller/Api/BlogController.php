@@ -21,8 +21,8 @@ class BlogController extends AbstractController
     {
     }
 
-    #[Route('/posts/latest', methods: ['GET'])]
-    public function latest(): JsonResponse
+    #[Route('/posts/featured', methods: ['GET'])]
+    public function featured(): JsonResponse
     {
         $envelope = $this->queryBus->dispatch(new GetLatestPostQuery());
         /** @var BlogPostResponseDto|null $dto */

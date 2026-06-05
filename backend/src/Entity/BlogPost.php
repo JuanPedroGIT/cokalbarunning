@@ -43,6 +43,9 @@ class BlogPost
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $updatedBy = null;
 
+    #[ORM\Column(type: Types::INTEGER, nullable: true, unique: true)]
+    private ?int $priority = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -148,6 +151,9 @@ class BlogPost
     public function setCreatedBy(?string $v): static { $this->createdBy = $v; return $this; }
     public function getUpdatedBy(): ?string { return $this->updatedBy; }
     public function setUpdatedBy(?string $v): static { $this->updatedBy = $v; return $this; }
+
+    public function getPriority(): ?int { return $this->priority; }
+    public function setPriority(?int $v): static { $this->priority = $v; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable
     {
