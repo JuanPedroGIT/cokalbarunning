@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['cokalba-running.com', 'www.cokalba-running.com', 'localhost', 'app.localhost'],
+    allowedHosts: ['en-construccion.cokalba-running.com','cokalba-running.com', 'www.cokalba-running.com', 'localhost', 'app.localhost'],
     watch: {
       usePolling: true,
     },

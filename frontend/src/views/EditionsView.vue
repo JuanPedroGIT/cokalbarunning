@@ -53,19 +53,19 @@ usePageMeta({
           <div class="font-barlow-condensed font-bold text-lg uppercase leading-tight">{{ edition.name }}</div>
           <div class="text-gris-texto text-sm">{{ edition.date }} &middot; {{ edition.location }}</div>
 
-          <div class="mt-auto pt-4 flex gap-2 items-center">
+          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
             <a
               v-if="edition.resultsUrl"
               :href="edition.resultsUrl"
               target="_blank"
-              class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-naranja border border-naranja/40 px-4 py-2 hover:bg-naranja hover:text-negro transition-colors"
+              class="font-barlow-condensed font-bold text-[0.6rem] sm:text-xs tracking-widest uppercase text-naranja border border-naranja/40 px-2 sm:px-4 py-1.5 sm:py-2 hover:bg-naranja hover:text-negro transition-colors text-center"
             >
-              Ver Resultados
+              Resultados
             </a>
-            <span v-else class="text-gris-texto text-xs italic">Resultados no disponibles</span>
+            <span v-else class="text-gris-texto text-[0.6rem] sm:text-xs italic text-center">Resultados no disponibles</span>
             <RouterLink
               :to="`/galeria?edicion=${edition.id}`"
-              class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-white/50 border border-white/20 px-4 py-2 hover:border-naranja hover:text-naranja transition-colors"
+              class="font-barlow-condensed font-bold text-[0.6rem] sm:text-xs tracking-widest uppercase text-white/50 border border-white/20 px-2 sm:px-4 py-1.5 sm:py-2 hover:border-naranja hover:text-naranja transition-colors text-center"
             >
               Galería
             </RouterLink>

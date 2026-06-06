@@ -75,10 +75,9 @@ onMounted(async () => {
     <div v-if="loading" class="text-white/50 text-center py-20">Cargando...</div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <RouterLink
+      <article
         v-for="post in posts"
         :key="post.id"
-        :to="`/blog/${post.slug}`"
         class="bg-negro overflow-hidden group">
         <div class="h-44 bg-gris-medio relative overflow-hidden">
           <img v-if="post.coverImage" :src="post.coverImage" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -89,9 +88,14 @@ onMounted(async () => {
           <div class="font-barlow-condensed text-xs font-semibold tracking-[0.2em] uppercase text-naranja">{{ post.tag }}</div>
           <div class="font-barlow-condensed font-bold text-lg uppercase leading-tight mt-2 group-hover:text-naranja transition-colors">{{ post.title }}</div>
           <div class="text-sm text-white/50 leading-relaxed mt-2">{{ post.excerpt }}</div>
-          <div class="text-sm text-gris-texto mt-4">{{ post.publishedAt }}</div>
+          <div class="flex items-center justify-between mt-4">
+            <div class="text-sm text-gris-texto">{{ post.publishedAt }}</div>
+            <RouterLink :to="`/blog/${post.slug}`" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-naranja text-negro px-5 py-2 hover:bg-amarillo transition-colors inline-block">
+              Ver noticia
+            </RouterLink>
+          </div>
         </div>
-      </RouterLink>
+      </article>
     </div>
   </section>
 </template>
