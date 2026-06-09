@@ -16,15 +16,57 @@ interface Post {
   priority: number | null
 }
 
+interface SocialPublishLog {
+  id: string
+  postId: string
+  network: string
+  status: string
+  publishedAt: string | null
+  externalUrl: string | null
+  publishedBy: string | null
+}
+
 const posts = ref<Post[]>([])
 const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null })
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const coverFile = ref<File | null>(null)
+const socialPublishes = ref<Record<string, SocialPublishLog>>({})
+const publishingIds = ref<Set<string>>(new Set())
 
 async function fetchPosts() {
   const res = await api.get('/admin/posts')
   posts.value = res.data.data
+}
+
+async function fetchSocialPublishes() {
+  const res = await api.get('/admin/social-publishes')
+  const logs: SocialPublishLog[] = res.data.data
+  socialPublishes.value = logs.reduce((acc, log) => {
+    acc[log.postId] = log
+    return acc
+  }, {} as Record<string, SocialPublishLog>)
+}
+
+function getInstagramStatus(postId: string): 'none' | 'pending' | 'published' {
+  const log = socialPublishes.value[postId]
+  if (!log) return 'none'
+  if (log.status === 'published') return 'published'
+  if (log.status === 'pending') return 'pending'
+  return 'none'
+}
+
+async function publishToInstagram(id: string) {
+  if (!confirm('¿Publicar esta noticia en Instagram?')) return
+  publishingIds.value.add(id)
+  try {
+    await api.post(`/admin/posts/${id}/publish-instagram`)
+    await fetchSocialPublishes()
+  } catch (err: any) {
+    alert(err.response?.data?.error || 'Error al publicar en Instagram')
+  } finally {
+    publishingIds.value.delete(id)
+  }
 }
 
 async function save() {
@@ -69,7 +111,10 @@ function resetForm() {
   form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null }
 }
 
-onMounted(fetchPosts)
+onMounted(async () => {
+  await fetchPosts()
+  await fetchSocialPublishes()
+})
 </script>
 
 <template>
@@ -147,6 +192,7 @@ onMounted(fetchPosts)
               <th class="p-2 md:p-3 font-medium">Etiqueta</th>
               <th class="p-2 md:p-3 font-medium">Prioridad</th>
               <th class="p-2 md:p-3 font-medium">Publicado</th>
+              <th class="p-2 md:p-3 font-medium">Redes</th>
               <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
@@ -162,16 +208,29 @@ onMounted(fetchPosts)
                 <span v-if="p.isPublished" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Si</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
               </td>
+              <td class="p-2 md:p-3">
+                <span v-if="getInstagramStatus(p.id) === 'published'" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-500/10 text-pink-400">Instagram ✅</span>
+                <span v-else-if="getInstagramStatus(p.id) === 'pending'" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-400">Instagram ⏳</span>
+                <span v-else class="text-gray-500">—</span>
+              </td>
               <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(p)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm font-medium transition">Editar</button>
+                  <span class="text-white/10">|</span>
+                  <button
+                    @click="publishToInstagram(p.id)"
+                    :disabled="getInstagramStatus(p.id) === 'published' || publishingIds.has(p.id)"
+                    class="text-pink-400 hover:text-pink-300 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {{ publishingIds.has(p.id) ? 'Publicando...' : 'Instagram' }}
+                  </button>
                   <span class="text-white/10">|</span>
                   <button @click="remove(p.id)" class="text-red-400 hover:text-red-300 text-sm font-medium transition">Eliminar</button>
                 </div>
               </td>
             </tr>
             <tr v-if="!posts.length">
-              <td colspan="5" class="p-6 text-center text-gray-500">No hay entradas</td>
+              <td colspan="6" class="p-6 text-center text-gray-500">No hay entradas</td>
             </tr>
           </tbody>
         </table>

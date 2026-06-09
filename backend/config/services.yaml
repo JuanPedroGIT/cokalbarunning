@@ -74,5 +74,22 @@ services:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineResultRepository
         public: true
 
+    App\Domain\SocialPublishing\Repository\SocialPublishLogRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineSocialPublishLogRepository
+
+    App\Domain\SocialPublishing\Port\SocialPublisherPort:
+        alias: App\Infrastructure\SocialPublishing\N8n\N8nSocialPublisher
+
+    App\Infrastructure\SocialPublishing\N8n\N8nSocialPublisher:
+        arguments:
+            $webhookUrl: '%env(N8N_WEBHOOK_URL)%'
+            $authHeader: '%env(N8N_WEBHOOK_AUTH_HEADER)%'
+            $authToken: '%env(N8N_WEBHOOK_AUTH_TOKEN)%'
+            $websiteUrl: '%env(APP_PUBLIC_URL)%'
+
+    App\Infrastructure\Http\Controller\Api\Webhook\N8nWebhookController:
+        arguments:
+            $callbackToken: '%env(N8N_CALLBACK_TOKEN)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

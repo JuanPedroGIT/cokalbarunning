@@ -9,8 +9,12 @@ use App\Application\Media\Delete\DeleteBlogPostCommand;
 use App\Application\Media\Query\GetAllPostsQuery;
 use App\Application\Media\Response\BlogPostResponseDto;
 use App\Application\Media\Update\UpdateBlogPostCommand;
+use App\Application\SocialPublishing\Publish\PublishToNetworkCommand;
+use App\Application\SocialPublishing\Response\SocialPublishLogResponseDto;
 use App\Domain\Media\Port\StoragePort;
 use App\Domain\Media\Service\PathGenerator;
+use App\Domain\SocialPublishing\Exception\SocialPublishingException;
+use App\Domain\SocialPublishing\Repository\SocialPublishLogRepositoryInterface;
 use App\Entity\BlogPost;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,6 +33,7 @@ class AdminBlogController extends AbstractController
         private StoragePort $storage,
         private PathGenerator $pathGen,
         private EntityManagerInterface $em,
+        private SocialPublishLogRepositoryInterface $socialLogRepository,
     ) {
     }
 
@@ -134,5 +139,44 @@ class AdminBlogController extends AbstractController
         $this->commandBus->dispatch(new DeleteBlogPostCommand(id: $id));
 
         return $this->json(null, 204);
+    }
+
+    #[Route('/posts/{id}/publish-instagram', methods: ['POST'])]
+    public function publishInstagram(string $id): JsonResponse
+    {
+        $user = $this->getUser();
+        $publishedBy = $user?->getUserIdentifier() ?? null;
+
+        $command = new PublishToNetworkCommand(
+            postId: $id,
+            network: 'instagram',
+            publishedBy: $publishedBy,
+        );
+
+        try {
+            $envelope = $this->commandBus->dispatch($command);
+            $stamp = $envelope->last(HandledStamp::class);
+            $logId = $stamp ? $stamp->getResult() : null;
+        } catch (SocialPublishingException $e) {
+            $statusCode = match (true) {
+                str_contains($e->getMessage(), 'no existe') => 404,
+                str_contains($e->getMessage(), 'ya ha sido publicado') => 409,
+                default => 502,
+            };
+            return $this->json(['error' => $e->getMessage()], $statusCode);
+        }
+
+        return $this->json(['data' => ['logId' => $logId, 'status' => 'pending']]);
+    }
+
+    #[Route('/social-publishes', methods: ['GET'])]
+    public function listSocialPublishes(): JsonResponse
+    {
+        $logs = $this->socialLogRepository->findAll();
+        $dtos = SocialPublishLogResponseDto::fromDomainList($logs);
+
+        return $this->json([
+            'data' => SocialPublishLogResponseDto::listToArray($dtos),
+        ]);
     }
 }
