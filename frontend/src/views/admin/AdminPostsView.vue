@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import InstagramSvg from '@/assets/icons/instagram.svg?raw'
 
 interface Post {
   id: string
@@ -192,7 +193,6 @@ onMounted(async () => {
               <th class="p-2 md:p-3 font-medium">Etiqueta</th>
               <th class="p-2 md:p-3 font-medium">Prioridad</th>
               <th class="p-2 md:p-3 font-medium">Publicado</th>
-              <th class="p-2 md:p-3 font-medium">Redes</th>
               <th class="p-2 md:p-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
@@ -208,21 +208,25 @@ onMounted(async () => {
                 <span v-if="p.isPublished" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Si</span>
                 <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">No</span>
               </td>
-              <td class="p-2 md:p-3">
-                <span v-if="getInstagramStatus(p.id) === 'published'" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-500/10 text-pink-400">Instagram ✅</span>
-                <span v-else-if="getInstagramStatus(p.id) === 'pending'" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-400">Instagram ⏳</span>
-                <span v-else class="text-gray-500">—</span>
-              </td>
               <td class="p-2 md:p-3 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button @click="edit(p)" class="text-[#FF5C00] hover:text-[#FFD600] text-sm font-medium transition">Editar</button>
                   <span class="text-white/10">|</span>
                   <button
                     @click="publishToInstagram(p.id)"
-                    :disabled="getInstagramStatus(p.id) === 'published' || publishingIds.has(p.id)"
-                    class="text-pink-400 hover:text-pink-300 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    :disabled="getInstagramStatus(p.id) !== 'none' || publishingIds.has(p.id)"
+                    :title="getInstagramStatus(p.id) === 'published' ? 'Ya publicado en Instagram' : getInstagramStatus(p.id) === 'pending' ? 'Publicación en curso' : 'Publicar en Instagram'"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white hover:scale-105 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    {{ publishingIds.has(p.id) ? 'Publicando...' : 'Instagram' }}
+                    <span
+                      v-if="!publishingIds.has(p.id)"
+                      class="w-4 h-4"
+                      v-html="InstagramSvg"
+                    />
+                    <span
+                      v-else
+                      class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                    />
                   </button>
                   <span class="text-white/10">|</span>
                   <button @click="remove(p.id)" class="text-red-400 hover:text-red-300 text-sm font-medium transition">Eliminar</button>
@@ -230,7 +234,7 @@ onMounted(async () => {
               </td>
             </tr>
             <tr v-if="!posts.length">
-              <td colspan="6" class="p-6 text-center text-gray-500">No hay entradas</td>
+              <td colspan="5" class="p-6 text-center text-gray-500">No hay entradas</td>
             </tr>
           </tbody>
         </table>

@@ -35,6 +35,7 @@ final class N8nSocialPublisher implements SocialPublisherPort
             'url_imagen' => $post->coverImage() !== null ? $this->storage->url($post->coverImage()) : null,
             'network' => $log->network(),
             'log_id' => $log->id(),
+            'status' => $log->status(),
         ];
 
         $headers = ['Content-Type' => 'application/json'];
