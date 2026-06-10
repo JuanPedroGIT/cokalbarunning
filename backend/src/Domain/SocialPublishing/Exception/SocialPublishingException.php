@@ -37,4 +37,9 @@ final class SocialPublishingException extends Exception
     {
         return new self('Token de callback inválido.');
     }
+
+    public static function missingCoverImage(): self
+    {
+        return new self('El post no tiene imagen de portada, es obligatoria para publicar en Instagram.');
+    }
 }

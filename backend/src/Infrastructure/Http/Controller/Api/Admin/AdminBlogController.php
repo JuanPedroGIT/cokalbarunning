@@ -161,6 +161,7 @@ class AdminBlogController extends AbstractController
             $statusCode = match (true) {
                 str_contains($e->getMessage(), 'no existe') => 404,
                 str_contains($e->getMessage(), 'ya ha sido publicado') => 409,
+                str_contains($e->getMessage(), 'imagen de portada') => 400,
                 default => 502,
             };
             return $this->json(['error' => $e->getMessage()], $statusCode);

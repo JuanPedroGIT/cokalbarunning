@@ -214,8 +214,8 @@ onMounted(async () => {
                   <span class="text-white/10">|</span>
                   <button
                     @click="publishToInstagram(p.id)"
-                    :disabled="getInstagramStatus(p.id) !== 'none' || publishingIds.has(p.id)"
-                    :title="getInstagramStatus(p.id) === 'published' ? 'Ya publicado en Instagram' : getInstagramStatus(p.id) === 'pending' ? 'Publicación en curso' : 'Publicar en Instagram'"
+                    :disabled="getInstagramStatus(p.id) !== 'none' || publishingIds.has(p.id) || !p.coverImage"
+                    :title="!p.coverImage ? 'Falta imagen de portada' : getInstagramStatus(p.id) === 'published' ? 'Ya publicado en Instagram' : getInstagramStatus(p.id) === 'pending' ? 'Publicación en curso' : 'Publicar en Instagram'"
                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white hover:scale-105 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     <span

@@ -29,6 +29,10 @@ final class PublishToNetworkHandler
             throw SocialPublishingException::postNotFound();
         }
 
+        if ($post->coverImage() === null) {
+            throw SocialPublishingException::missingCoverImage();
+        }
+
         $existing = $this->logRepository->findByPostAndNetwork($command->postId, $command->network);
         if ($existing !== null && $existing->status() === 'published') {
             throw SocialPublishingException::alreadyPublished($command->network);
