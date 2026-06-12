@@ -34,6 +34,9 @@ class BlogPost
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $publishedAt = null;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $bannerEndAt = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $coverImage = null;
 
@@ -45,6 +48,9 @@ class BlogPost
 
     #[ORM\Column(type: Types::INTEGER, nullable: true, unique: true)]
     private ?int $priority = null;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
+    private int $type = 1;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -131,6 +137,17 @@ class BlogPost
         return $this;
     }
 
+    public function getBannerEndAt(): ?\DateTimeImmutable
+    {
+        return $this->bannerEndAt;
+    }
+
+    public function setBannerEndAt(?\DateTimeImmutable $bannerEndAt): static
+    {
+        $this->bannerEndAt = $bannerEndAt;
+        return $this;
+    }
+
     public function isPublished(): bool
     {
         return $this->publishedAt !== null && $this->publishedAt <= new \DateTimeImmutable();
@@ -154,6 +171,9 @@ class BlogPost
 
     public function getPriority(): ?int { return $this->priority; }
     public function setPriority(?int $v): static { $this->priority = $v; return $this; }
+
+    public function getType(): int { return $this->type; }
+    public function setType(int $v): static { $this->type = $v; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable
     {

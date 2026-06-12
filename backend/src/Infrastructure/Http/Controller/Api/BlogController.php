@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Http\Controller\Api;
 
+use App\Application\Media\Query\GetActiveBannerQuery;
 use App\Application\Media\Query\GetLatestPostQuery;
 use App\Application\Media\Query\GetPostBySlugQuery;
 use App\Application\Media\Query\GetPublishedPostsQuery;
@@ -25,6 +26,16 @@ class BlogController extends AbstractController
     public function featured(): JsonResponse
     {
         $envelope = $this->queryBus->dispatch(new GetLatestPostQuery());
+        /** @var BlogPostResponseDto|null $dto */
+        $dto = $envelope->last(HandledStamp::class)?->getResult();
+
+        return $this->json(['data' => $dto?->toArray() ?? null]);
+    }
+
+    #[Route('/banner', methods: ['GET'])]
+    public function banner(): JsonResponse
+    {
+        $envelope = $this->queryBus->dispatch(new GetActiveBannerQuery());
         /** @var BlogPostResponseDto|null $dto */
         $dto = $envelope->last(HandledStamp::class)?->getResult();
 

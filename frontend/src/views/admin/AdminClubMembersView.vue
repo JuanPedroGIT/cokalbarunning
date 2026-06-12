@@ -27,8 +27,7 @@ const users = ref<AdminUser[]>([])
 const form = ref<Partial<ClubMember>>({ name: '', description: '', bio: '', isActive: true, sortOrder: 0, userId: null })
 const router = useRouter()
 const editingId = ref<string | null>(null)
-const photoFiles = ref<Record<string, File | null>>({})
-const draggingId = ref<string | null>(null)
+const uploadingPhoto = ref(false)
 
 async function fetch() {
   const [membersRes, usersRes] = await Promise.all([
@@ -44,11 +43,7 @@ async function save() {
   if (editingId.value) {
     await api.put(`/admin/club-members/${editingId.value}`, payload)
   } else {
-    const res = await api.post('/admin/club-members', payload)
-    if (photoFiles.value['new'] && res.data.data.id) {
-      await uploadPhotoDirect(res.data.data.id, photoFiles.value['new'])
-      photoFiles.value['new'] = null
-    }
+    await api.post('/admin/club-members', payload)
   }
   resetForm()
   await fetch()
@@ -63,49 +58,37 @@ function edit(m: ClubMember) {
 async function remove(id: string) {
   if (!confirm('Eliminar miembro?')) return
   await api.delete(`/admin/club-members/${id}`)
+  if (editingId.value === id) resetForm()
   await fetch()
 }
 
-const photoInputs = ref<Record<string, HTMLInputElement>>({})
-
-function triggerPhotoInput(memberId: string) {
-  photoInputs.value[memberId]?.click()
-}
-
-function onPhotoDrop(memberId: string, e: DragEvent) {
-  draggingId.value = null
-  const file = e.dataTransfer?.files[0]
-  if (file && file.type.startsWith('image/')) {
-    uploadPhotoDirect(memberId, file)
-  }
-}
-
-function onPhotoFileChange(memberId: string, e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) uploadPhotoDirect(memberId, file)
-}
-
-async function uploadPhotoDirect(memberId: string, file: File) {
+async function uploadPhoto(file: File) {
+  if (!editingId.value) return
+  uploadingPhoto.value = true
   const fd = new FormData()
   fd.append('file', file)
-  await api.post(`/admin/club-members/${memberId}/photo`, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  await fetch()
+  try {
+    await api.post(`/admin/club-members/${editingId.value}/photo`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const res = await api.get('/admin/club-members')
+    const updated = res.data.data.find((m: ClubMember) => m.id === editingId.value)
+    if (updated) form.value.photoUrl = updated.photoUrl
+  } finally {
+    uploadingPhoto.value = false
+  }
 }
 
-function onPhotoSelect(memberId: string, file: File) {
-  if (memberId !== 'new') {
-    uploadPhotoDirect(memberId, file)
-  } else {
-    photoFiles.value['new'] = file
-  }
+async function deletePhoto() {
+  if (!editingId.value) return
+  if (!confirm('¿Eliminar foto?')) return
+  await api.put(`/admin/club-members/${editingId.value}`, { photoUrl: '' })
+  form.value.photoUrl = null
+  await fetch()
 }
 
 function resetForm() {
   editingId.value = null
-  photoFiles.value['new'] = null
   form.value = { name: '', description: '', bio: '', isActive: true, sortOrder: 0, userId: null }
 }
 
@@ -137,9 +120,32 @@ onMounted(fetch)
             <label class="block text-xs text-gray-400 mb-1">Biografía</label>
             <textarea v-model="form.bio" rows="3" placeholder="Breve biografía del miembro..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition resize-none"></textarea>
           </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs text-gray-400 mb-1">Foto</label>
-            <ImageDropZone @select="onPhotoSelect('new', $event)" />
+          <!-- Foto (solo edicion) -->
+          <div v-if="editingId" class="sm:col-span-2">
+            <label class="block text-xs text-gray-400 mb-2">Foto</label>
+            <div class="flex items-start gap-4">
+              <div
+                v-if="form.photoUrl"
+                class="relative w-36 h-36 rounded-lg overflow-hidden border border-white/10 bg-white/5 shrink-0"
+              >
+                <img :src="form.photoUrl" alt="Foto" class="w-full h-full object-cover" />
+                <button
+                  @click="deletePhoto"
+                  class="absolute top-2 right-2 bg-red-500/90 hover:bg-red-500 text-white text-[10px] px-2 py-1 rounded cursor-pointer transition"
+                >
+                  Eliminar
+                </button>
+              </div>
+              <div v-else class="w-36 h-36">
+                <ImageDropZone
+                  :label="uploadingPhoto ? 'Subiendo...' : 'Arrastra la foto o haz clic'"
+                  :compact="true"
+                  class="h-full"
+                  @select="uploadPhoto"
+                />
+              </div>
+              <p class="text-[0.65rem] text-gray-500 mt-1">Formato cuadrado recomendado.</p>
+            </div>
           </div>
           <div>
             <label class="block text-xs text-gray-400 mb-1">Usuario asignado</label>
@@ -184,43 +190,19 @@ onMounted(fetch)
             <tr v-for="m in members" :key="m.id" :class="['border-t border-white/5 transition', editingId === m.id ? 'bg-naranja/10 border-l-2 border-l-naranja' : 'hover:bg-[#1a1a1a]']">
               <td class="p-2 md:p-3 font-medium">{{ m.name }}</td>
               <td class="p-2 md:p-3">
-                <div
-                  class="relative h-10 w-10 rounded-full overflow-hidden cursor-pointer group shrink-0"
-                  @click="triggerPhotoInput(m.id)"
-                  @drop.prevent="onPhotoDrop(m.id, $event)"
-                  @dragover.prevent="draggingId = m.id"
-                  @dragleave="draggingId = null"
-                >
+                <div class="relative h-12 w-12 rounded-lg overflow-hidden shrink-0 bg-white/5 border border-white/10">
                   <img
                     v-if="m.photoUrl"
                     :src="m.photoUrl"
                     class="h-full w-full object-cover"
-                    :class="draggingId === m.id ? 'opacity-40' : ''"
                     :alt="m.name"
                   />
                   <div
                     v-else
-                    class="h-full w-full bg-white/5 flex items-center justify-center text-white/15 text-xs"
-                    :class="draggingId === m.id ? 'opacity-40' : ''"
+                    class="h-full w-full flex items-center justify-center text-white/15 text-xs"
                   >
                     👤
                   </div>
-                  <div
-                    class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    :class="draggingId === m.id ? 'opacity-100' : ''"
-                  >
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                    </svg>
-                  </div>
-                  <input
-                    :ref="(el) => { if (el) photoInputs[m.id] = el as HTMLInputElement }"
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="onPhotoFileChange(m.id, $event)"
-                  />
                 </div>
               </td>
               <td class="p-2 md:p-3 text-gray-400 text-xs hidden md:table-cell">{{ m.description || '—' }}</td>

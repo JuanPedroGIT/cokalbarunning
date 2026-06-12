@@ -63,8 +63,10 @@ class AdminBlogController extends AbstractController
             content: $data['content'] ?? '',
             tag: $data['tag'] ?? 'General',
             publishedAt: $data['publishedAt'] ?? null,
+            bannerEndAt: $data['bannerEndAt'] ?? null,
             coverImage: $data['coverImage'] ?? null,
             priority: array_key_exists('priority', $data) ? ($data['priority'] !== null ? (int) $data['priority'] : null) : null,
+            type: array_key_exists('type', $data) ? (int) $data['type'] : 1,
         );
 
         $envelope = $this->commandBus->dispatch($command);
@@ -94,8 +96,10 @@ class AdminBlogController extends AbstractController
             content: $data['content'] ?? null,
             tag: $data['tag'] ?? null,
             publishedAt: array_key_exists('publishedAt', $data) ? $data['publishedAt'] : null,
+            bannerEndAt: array_key_exists('bannerEndAt', $data) ? $data['bannerEndAt'] : null,
             coverImage: array_key_exists('coverImage', $data) ? $data['coverImage'] : null,
             priority: array_key_exists('priority', $data) ? ($data['priority'] !== null ? (int) $data['priority'] : null) : null,
+            type: array_key_exists('type', $data) ? (int) $data['type'] : null,
         );
 
         $this->commandBus->dispatch($command);
@@ -162,6 +166,7 @@ class AdminBlogController extends AbstractController
                 str_contains($e->getMessage(), 'no existe') => 404,
                 str_contains($e->getMessage(), 'ya ha sido publicado') => 409,
                 str_contains($e->getMessage(), 'imagen de portada') => 400,
+                str_contains($e->getMessage(), 'tipo de noticia') => 400,
                 default => 502,
             };
             return $this->json(['error' => $e->getMessage()], $statusCode);

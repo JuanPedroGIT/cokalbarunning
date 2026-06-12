@@ -21,6 +21,8 @@ final readonly class BlogPostResponseDto
         public ?string $content = null,
         public ?bool $isPublished = null,
         public ?int $priority = null,
+        public ?int $type = null,
+        public ?string $bannerEndAt = null,
     ) {
     }
 
@@ -42,6 +44,8 @@ final readonly class BlogPostResponseDto
             publishedAt: $post->publishedAt()?->format('Y-m-d'),
             coverImage: self::buildUrl($post->coverImage(), $storage),
             priority: $post->priority(),
+            type: $post->type(),
+            bannerEndAt: $post->bannerEndAt()?->format('Y-m-d'),
         );
     }
 
@@ -56,6 +60,8 @@ final readonly class BlogPostResponseDto
             publishedAt: $post->publishedAt()?->format('Y-m-d'),
             coverImage: self::buildUrl($post->coverImage(), $storage),
             priority: $post->priority(),
+            type: $post->type(),
+            bannerEndAt: $post->bannerEndAt()?->format('Y-m-d'),
             content: $post->content(),
         );
     }
@@ -74,6 +80,8 @@ final readonly class BlogPostResponseDto
             content: $post->content(),
             isPublished: $post->isPublished(),
             priority: $post->priority(),
+            type: $post->type(),
+            bannerEndAt: $post->bannerEndAt()?->format('Y-m-d H:i:s'),
         );
     }
 
@@ -118,6 +126,12 @@ final readonly class BlogPostResponseDto
         }
         if ($this->priority !== null) {
             $data['priority'] = $this->priority;
+        }
+        if ($this->type !== null) {
+            $data['type'] = $this->type;
+        }
+        if ($this->bannerEndAt !== null) {
+            $data['bannerEndAt'] = $this->bannerEndAt;
         }
 
         return $data;

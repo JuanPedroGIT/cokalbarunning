@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\SocialPublishing\Publish;
 
+use App\Domain\Media\Entity\BlogPost;
 use App\Domain\Media\Repository\BlogPostRepositoryInterface;
 use App\Domain\SocialPublishing\Entity\SocialPublishLog;
 use App\Domain\SocialPublishing\Exception\SocialPublishingException;
@@ -27,6 +28,10 @@ final class PublishToNetworkHandler
         $post = $this->postRepository->findById($command->postId);
         if ($post === null) {
             throw SocialPublishingException::postNotFound();
+        }
+
+        if ($post->type() === BlogPost::TYPE_BANNER) {
+            throw SocialPublishingException::postTypeNotAllowedForNetwork();
         }
 
         if ($post->coverImage() === null) {

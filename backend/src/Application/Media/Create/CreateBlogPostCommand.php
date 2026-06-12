@@ -12,8 +12,10 @@ final class CreateBlogPostCommand
         public string $content,
         public string $tag,
         public ?string $publishedAt = null,
+        public ?string $bannerEndAt = null,
         public ?string $coverImage = null,
         public ?int $priority = null,
+        public int $type = 1,
     ) {
     }
 }

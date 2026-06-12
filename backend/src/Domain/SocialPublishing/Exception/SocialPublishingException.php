@@ -42,4 +42,9 @@ final class SocialPublishingException extends Exception
     {
         return new self('El post no tiene imagen de portada, es obligatoria para publicar en Instagram.');
     }
+
+    public static function postTypeNotAllowedForNetwork(): self
+    {
+        return new self('Este tipo de noticia no se puede publicar en redes sociales.');
+    }
 }

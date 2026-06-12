@@ -8,6 +8,20 @@ use DateTimeImmutable;
 
 final class BlogPost
 {
+    public const TYPE_NEWS = 1;
+    public const TYPE_BANNER = 2;
+    public const TYPE_RACE = 3;
+    public const TYPE_CLUB = 4;
+    public const TYPE_OTHER = 5;
+
+    public const VALID_TYPES = [
+        self::TYPE_NEWS,
+        self::TYPE_BANNER,
+        self::TYPE_RACE,
+        self::TYPE_CLUB,
+        self::TYPE_OTHER,
+    ];
+
     public function __construct(
         private string $id,
         private string $title,
@@ -17,8 +31,10 @@ final class BlogPost
         private string $tag,
         private DateTimeImmutable $createdAt,
         private ?DateTimeImmutable $publishedAt = null,
+        private ?DateTimeImmutable $bannerEndAt = null,
         private ?string $coverImage = null,
         private ?int $priority = null,
+        private int $type = self::TYPE_NEWS,
     ) {
     }
 
@@ -57,6 +73,11 @@ final class BlogPost
         return $this->publishedAt;
     }
 
+    public function bannerEndAt(): ?DateTimeImmutable
+    {
+        return $this->bannerEndAt;
+    }
+
     public function coverImage(): ?string
     {
         return $this->coverImage;
@@ -67,6 +88,11 @@ final class BlogPost
         return $this->priority;
     }
 
+    public function type(): int
+    {
+        return $this->type;
+    }
+
     public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
@@ -74,7 +100,20 @@ final class BlogPost
 
     public function isPublished(): bool
     {
-        return $this->publishedAt !== null && $this->publishedAt <= new DateTimeImmutable();
+        if ($this->publishedAt === null) {
+            return false;
+        }
+
+        $now = new DateTimeImmutable();
+        if ($this->publishedAt > $now) {
+            return false;
+        }
+
+        if ($this->bannerEndAt !== null && $this->bannerEndAt < $now) {
+            return false;
+        }
+
+        return true;
     }
 
     public function publish(): void
@@ -92,6 +131,11 @@ final class BlogPost
         $this->publishedAt = $publishedAt;
     }
 
+    public function updateBannerEndAt(?DateTimeImmutable $bannerEndAt): void
+    {
+        $this->bannerEndAt = $bannerEndAt;
+    }
+
     public function update(string $title, string $slug, string $excerpt, string $content, string $tag, ?string $coverImage): void
     {
         $this->title = $title;
@@ -100,6 +144,11 @@ final class BlogPost
         $this->content = $content;
         $this->tag = $tag;
         $this->coverImage = $coverImage;
+    }
+
+    public function updateType(int $type): void
+    {
+        $this->type = $type;
     }
 
     public function updatePriority(?int $priority): void

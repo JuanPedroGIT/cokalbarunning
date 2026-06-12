@@ -28,6 +28,8 @@ interface BlogPostRepositoryInterface
 
     public function findFeatured(): ?BlogPost;
 
+    public function findLatestPublishedByType(int $type): ?BlogPost;
+
     /** Quita la prioridad de otros posts que tengan este valor, excepto el indicado. */
     public function clearPriority(int $priority, ?string $excludeId = null): void;
 }

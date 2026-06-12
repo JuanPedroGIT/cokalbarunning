@@ -12,9 +12,19 @@ interface Post {
   content: string
   tag: string
   publishedAt: string | null
+  bannerEndAt: string | null
   isPublished: boolean
   coverImage: string | null
   priority: number | null
+  type: number
+}
+
+const POST_TYPE_LABELS: Record<number, string> = {
+  1: 'Noticia',
+  2: 'Banner',
+  3: 'Carrera',
+  4: 'Club',
+  5: 'Otro',
 }
 
 interface SocialPublishLog {
@@ -28,7 +38,7 @@ interface SocialPublishLog {
 }
 
 const posts = ref<Post[]>([])
-const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null })
+const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, bannerEndAt: null, priority: null, type: 1 })
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const coverFile = ref<File | null>(null)
@@ -109,7 +119,7 @@ async function remove(id: string) {
 function resetForm() {
   editingId.value = null
   coverFile.value = null
-  form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, priority: null }
+  form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, bannerEndAt: null, priority: null, type: 1 }
 }
 
 onMounted(async () => {
@@ -147,12 +157,31 @@ onMounted(async () => {
             <input v-model="form.tag" placeholder="noticias, entrenamiento..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
           </div>
           <div>
+            <label class="block text-xs text-gray-400 mb-1">Tipo</label>
+            <select v-model.number="form.type" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition">
+              <option :value="1">Noticia</option>
+              <option :value="2">Banner informativo</option>
+              <option :value="3">Carrera</option>
+              <option :value="4">Club</option>
+              <option :value="5">Otro</option>
+            </select>
+          </div>
+          <div>
             <label class="block text-xs text-gray-400 mb-1">Fecha publicacion</label>
             <input
               :value="form.publishedAt ? form.publishedAt.slice(0, 10) : ''"
               type="date"
               class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition [color-scheme:dark]"
               @input="ev => form.publishedAt = (ev.target as HTMLInputElement).value || null"
+            />
+          </div>
+          <div v-if="form.type === 2">
+            <label class="block text-xs text-gray-400 mb-1">Fecha fin del banner <span class="text-red-400">*</span></label>
+            <input
+              :value="form.bannerEndAt ? form.bannerEndAt.slice(0, 10) : ''"
+              type="date"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition [color-scheme:dark]"
+              @input="ev => form.bannerEndAt = (ev.target as HTMLInputElement).value || null"
             />
           </div>
           <div>
@@ -190,6 +219,7 @@ onMounted(async () => {
           <thead class="bg-[#1a1a1a] text-gray-400">
             <tr>
               <th class="p-2 md:p-3 font-medium">Título</th>
+              <th class="p-2 md:p-3 font-medium">Tipo</th>
               <th class="p-2 md:p-3 font-medium">Etiqueta</th>
               <th class="p-2 md:p-3 font-medium">Prioridad</th>
               <th class="p-2 md:p-3 font-medium">Publicado</th>
@@ -199,6 +229,7 @@ onMounted(async () => {
           <tbody>
             <tr v-for="p in posts" :key="p.id" class="border-t border-white/5 hover:bg-[#1a1a1a] transition">
               <td class="p-2 md:p-3">{{ p.title }}</td>
+              <td class="p-2 md:p-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400">{{ POST_TYPE_LABELS[p.type] ?? 'Noticia' }}</span></td>
               <td class="p-2 md:p-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#FF5C00]/10 text-[#FF5C00]">{{ p.tag }}</span></td>
               <td class="p-2 md:p-3">
                 <span v-if="p.priority" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-400">{{ p.priority }}</span>
@@ -214,8 +245,8 @@ onMounted(async () => {
                   <span class="text-white/10">|</span>
                   <button
                     @click="publishToInstagram(p.id)"
-                    :disabled="getInstagramStatus(p.id) !== 'none' || publishingIds.has(p.id) || !p.coverImage"
-                    :title="!p.coverImage ? 'Falta imagen de portada' : getInstagramStatus(p.id) === 'published' ? 'Ya publicado en Instagram' : getInstagramStatus(p.id) === 'pending' ? 'Publicación en curso' : 'Publicar en Instagram'"
+                    :disabled="getInstagramStatus(p.id) !== 'none' || publishingIds.has(p.id) || !p.coverImage || p.type === 2"
+                    :title="p.type === 2 ? 'Las noticias tipo banner no se publican en Instagram' : !p.coverImage ? 'Falta imagen de portada' : getInstagramStatus(p.id) === 'published' ? 'Ya publicado en Instagram' : getInstagramStatus(p.id) === 'pending' ? 'Publicación en curso' : 'Publicar en Instagram'"
                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white hover:scale-105 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     <span
@@ -234,7 +265,7 @@ onMounted(async () => {
               </td>
             </tr>
             <tr v-if="!posts.length">
-              <td colspan="5" class="p-6 text-center text-gray-500">No hay entradas</td>
+              <td colspan="6" class="p-6 text-center text-gray-500">No hay entradas</td>
             </tr>
           </tbody>
         </table>

@@ -39,7 +39,7 @@ final class ClubMember
         $this->name = $name;
         $this->description = $description;
         $this->bio = $bio;
-        $this->photoPath = $photoPath ?? $this->photoPath;
+        $this->photoPath = $photoPath !== null ? ($photoPath !== '' ? $photoPath : null) : $this->photoPath;
         $this->isActive = $isActive;
         $this->sortOrder = $sortOrder;
         $this->userId = $userId ?? $this->userId;

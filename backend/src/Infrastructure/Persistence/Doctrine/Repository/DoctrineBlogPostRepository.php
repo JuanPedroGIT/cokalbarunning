@@ -68,7 +68,9 @@ final class DoctrineBlogPostRepository implements BlogPostRepositoryInterface
             ->from(OrmBlogPost::class, 'p')
             ->where('p.publishedAt IS NOT NULL')
             ->andWhere('p.publishedAt <= :now')
+            ->andWhere('p.type != :bannerType')
             ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('bannerType', BlogPost::TYPE_BANNER)
             ->orderBy('p.publishedAt', 'DESC');
 
         return array_map(
@@ -97,6 +99,28 @@ final class DoctrineBlogPostRepository implements BlogPostRepositoryInterface
             ->from(OrmBlogPost::class, 'p')
             ->where('p.publishedAt IS NOT NULL')
             ->andWhere('p.publishedAt <= :now')
+            ->andWhere('p.type != :bannerType')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('bannerType', BlogPost::TYPE_BANNER)
+            ->orderBy('p.publishedAt', 'DESC')
+            ->setMaxResults(1);
+
+        $orm = $qb->getQuery()->getOneOrNullResult();
+
+        return $orm !== null ? $this->mapper->toDomain($orm) : null;
+    }
+
+    public function findLatestPublishedByType(int $type): ?BlogPost
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('p')
+            ->from(OrmBlogPost::class, 'p')
+            ->where('p.type = :type')
+            ->andWhere('p.publishedAt IS NOT NULL')
+            ->andWhere('p.publishedAt <= :now')
+            ->andWhere('p.bannerEndAt IS NOT NULL')
+            ->andWhere('p.bannerEndAt >= :now')
+            ->setParameter('type', $type)
             ->setParameter('now', new \DateTimeImmutable())
             ->orderBy('p.publishedAt', 'DESC')
             ->setMaxResults(1);
@@ -128,7 +152,9 @@ final class DoctrineBlogPostRepository implements BlogPostRepositoryInterface
             ->where('p.priority = 1')
             ->andWhere('p.publishedAt IS NOT NULL')
             ->andWhere('p.publishedAt <= :now')
+            ->andWhere('p.type != :bannerType')
             ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('bannerType', BlogPost::TYPE_BANNER)
             ->setMaxResults(1);
 
         $orm = $qb->getQuery()->getOneOrNullResult();

@@ -32,8 +32,10 @@ final class CreateBlogPostHandler
             tag: $command->tag,
             createdAt: new \DateTimeImmutable(),
             publishedAt: $command->publishedAt ? new \DateTimeImmutable($command->publishedAt) : null,
+            bannerEndAt: $command->bannerEndAt ? new \DateTimeImmutable($command->bannerEndAt) : null,
             coverImage: $command->coverImage ?: null,
             priority: $command->priority,
+            type: $command->type,
         );
 
         if ($command->priority !== null) {

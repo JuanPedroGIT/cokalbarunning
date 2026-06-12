@@ -1,7 +1,34 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-05-31
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog)
+> **Última actualización:** 2026-06-12
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2)
+
+---
+
+## Banner Informativo — Noticias Tipo 2 (2026-06-12)
+
+Tracking: `13_BANNER_NOTICIA_TIPO2.md`.
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| BN1 | Campo `type` en `BlogPost` + 5 tipos + migración | ✅ |
+| BN2 | Endpoint público `GET /api/v1/banner` con rango de fechas | ✅ |
+| BN3 | Excluir tipo 2 de blog, destacada Home e Instagram | ✅ |
+| BN4 | Componente `InfoBanner.vue` en `App.vue` | ✅ |
+| BN5 | Selector de tipo + fecha fin del banner + bloqueo Instagram en admin | ✅ |
+| BN6 | `vue-tsc` verde; migraciones aplicadas | ✅ |
+
+---
+
+## Edición foto miembros del club (2026-06-12)
+
+Tracking: `14_CLUB_MEMBER_PHOTO.md`.
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| CM1 | Backend: permitir borrar foto con `photoUrl: ''` | ✅ |
+| CM2 | Frontend: foto solo editable en edición, igual que sponsors | ✅ |
+| CM3 | `vue-tsc` verde | ✅ |
 
 ---
 

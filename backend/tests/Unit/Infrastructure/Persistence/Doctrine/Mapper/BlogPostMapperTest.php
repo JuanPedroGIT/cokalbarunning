@@ -28,7 +28,9 @@ final class BlogPostMapperTest extends TestCase
         $orm->setContent('Full content');
         $orm->setTag('News');
         $orm->setPublishedAt(new \DateTimeImmutable('2025-07-01 10:00:00'));
+        $orm->setBannerEndAt(new \DateTimeImmutable('2027-07-10 10:00:00'));
         $orm->setCoverImage('cover.jpg');
+        $orm->setType(2);
 
         $domain = $this->mapper->toDomain($orm);
 
@@ -39,7 +41,9 @@ final class BlogPostMapperTest extends TestCase
         self::assertSame('Full content', $domain->content());
         self::assertSame('News', $domain->tag());
         self::assertSame('2025-07-01 10:00:00', $domain->publishedAt()?->format('Y-m-d H:i:s'));
+        self::assertSame('2027-07-10 10:00:00', $domain->bannerEndAt()?->format('Y-m-d H:i:s'));
         self::assertSame('cover.jpg', $domain->coverImage());
+        self::assertSame(2, $domain->type());
         self::assertTrue($domain->isPublished());
     }
 
@@ -56,7 +60,9 @@ final class BlogPostMapperTest extends TestCase
         $domain = $this->mapper->toDomain($orm);
 
         self::assertNull($domain->publishedAt());
+        self::assertNull($domain->bannerEndAt());
         self::assertNull($domain->coverImage());
+        self::assertSame(1, $domain->type());
         self::assertFalse($domain->isPublished());
     }
 
@@ -70,7 +76,9 @@ final class BlogPostMapperTest extends TestCase
             content: 'New content',
             tag: 'Update',
             publishedAt: new \DateTimeImmutable('2025-08-15'),
+            bannerEndAt: new \DateTimeImmutable('2025-08-20'),
             coverImage: 'new-cover.jpg',
+            type: 3,
             createdAt: new \DateTimeImmutable('2025-01-01'),
         );
 
@@ -83,7 +91,9 @@ final class BlogPostMapperTest extends TestCase
         self::assertSame('New content', $orm->getContent());
         self::assertSame('Update', $orm->getTag());
         self::assertSame('2025-08-15', $orm->getPublishedAt()?->format('Y-m-d'));
+        self::assertSame('2025-08-20', $orm->getBannerEndAt()?->format('Y-m-d'));
         self::assertSame('new-cover.jpg', $orm->getCoverImage());
+        self::assertSame(3, $orm->getType());
     }
 
     public function testToOrmUpdatesExistingEntity(): void

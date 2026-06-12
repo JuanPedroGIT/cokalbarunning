@@ -21,6 +21,13 @@ final readonly class ClubMemberResponseDto
     ) {
     }
 
+    private static function buildUrl(?string $path, StoragePort $storage): ?string
+    {
+        if ($path === null) return null;
+        if (str_starts_with($path, 'http')) return $path;
+        return $storage->url($path);
+    }
+
     public static function fromDomain(ClubMember $member, StoragePort $storage): self
     {
         return new self(
@@ -28,7 +35,7 @@ final readonly class ClubMemberResponseDto
             name: $member->name(),
             description: $member->description(),
             bio: $member->bio(),
-            photoUrl: $member->photoPath() !== null ? $storage->url($member->photoPath()) : null,
+            photoUrl: self::buildUrl($member->photoPath(), $storage),
             isActive: $member->isActive(),
             sortOrder: $member->sortOrder(),
             userId: $member->userId(),

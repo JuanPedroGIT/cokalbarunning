@@ -13,8 +13,10 @@ final class UpdateBlogPostCommand
         public ?string $content = null,
         public ?string $tag = null,
         public ?string $publishedAt = null,
+        public ?string $bannerEndAt = null,
         public ?string $coverImage = null,
         public ?int $priority = null,
+        public ?int $type = null,
     ) {
     }
 }

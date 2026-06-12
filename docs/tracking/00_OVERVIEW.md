@@ -36,6 +36,8 @@ El objetivo es poder trabajar en esta feature larga sin saturar el contexto de l
 | `10_FIX_FRONTEND_MOBILE.md` | Fix de responsive en frontend: hero, countdown, grid de fotos |
 | `11_TROPHY_URL.md` | Fix de URL de trofeo y camiseta en ediciones |
 | `12_ERROR_PERMISOS_VAR_DOCKER.md` | Error recurrente: 502/500 en API por permisos de `var/` en Docker |
+| `13_BANNER_NOTICIA_TIPO2.md` | Banner informativo global: noticias tipo 2, exclusiones y admin |
+| `14_CLUB_MEMBER_PHOTO.md` | Edición de foto de miembros del club igual que sponsors |
 
 ## Reglas de oro
 

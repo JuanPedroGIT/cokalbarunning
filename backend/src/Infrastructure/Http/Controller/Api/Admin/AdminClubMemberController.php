@@ -78,6 +78,7 @@ class AdminClubMemberController extends AbstractController
             name: $data['name'] ?? null,
             description: array_key_exists('description', $data) ? $data['description'] : null,
             bio: array_key_exists('bio', $data) ? $data['bio'] : null,
+            photoPath: array_key_exists('photoUrl', $data) ? ($data['photoUrl'] !== null ? (string) $data['photoUrl'] : null) : null,
             isActive: $data['isActive'] ?? null,
             sortOrder: $data['sortOrder'] ?? null,
             userId: array_key_exists('userId', $data) ? $data['userId'] : null,

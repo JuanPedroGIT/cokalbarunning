@@ -19,8 +19,10 @@ final class BlogPostMapper
             content: $orm->getContent(),
             tag: $orm->getTag(),
             publishedAt: $orm->getPublishedAt(),
+            bannerEndAt: $orm->getBannerEndAt(),
             coverImage: $orm->getCoverImage(),
             priority: $orm->getPriority(),
+            type: $orm->getType(),
             createdAt: $orm->getCreatedAt(),
         );
     }
@@ -35,8 +37,10 @@ final class BlogPostMapper
         $target->setContent($domain->content());
         $target->setTag($domain->tag());
         $target->setPublishedAt($domain->publishedAt());
+        $target->setBannerEndAt($domain->bannerEndAt());
         $target->setCoverImage($domain->coverImage());
         $target->setPriority($domain->priority());
+        $target->setType($domain->type());
 
         if ($orm === null) {
             $target->setCreatedAt($domain->createdAt());
