@@ -33,7 +33,9 @@ final class ClubMemberMapper
         $target->setPhotoPath($domain->photoPath());
         $target->setIsActive($domain->isActive());
         $target->setSortOrder($domain->sortOrder());
-        $target->setUserId($domain->userId());
+        if ($domain->userId() !== null) {
+            $target->setUserId($domain->userId());
+        }
         return $target;
     }
 }

@@ -54,6 +54,9 @@ services:
     App\Domain\Club\Repository\SponsorRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineSponsorRepository
 
+    App\Domain\Club\Repository\ClubMemberRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineClubMemberRepository
+
     App\Domain\Media\Repository\PhotoRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrinePhotoRepository
 
@@ -65,10 +68,6 @@ services:
 
     App\Domain\Race\Repository\RaceDocumentRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineRaceDocumentRepository
-
-    App\Domain\Registration\Repository\RunnerRepositoryInterface:
-        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineRunnerRepository
-        public: true
 
     App\Domain\Results\Repository\ResultRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineResultRepository

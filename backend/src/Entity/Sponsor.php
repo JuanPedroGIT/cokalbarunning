@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Repository\SponsorRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SponsorRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'sponsors')]
 class Sponsor
 {

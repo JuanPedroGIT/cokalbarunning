@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Repository\ResultRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ResultRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'results')]
 #[ORM\Index(columns: ['race_edition_id'], name: 'idx_result_edition')]
 class Result

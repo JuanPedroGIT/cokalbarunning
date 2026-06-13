@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Repository\SocialPublishLogRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SocialPublishLogRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'social_publish_logs')]
 #[ORM\UniqueConstraint(name: 'uniq_post_network', columns: ['post_id', 'network'])]
 #[ORM\Index(name: 'idx_status', columns: ['status'])]

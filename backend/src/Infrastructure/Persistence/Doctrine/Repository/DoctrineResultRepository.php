@@ -42,8 +42,21 @@ final class DoctrineResultRepository implements ResultRepositoryInterface
     public function saveBulk(array $results): void
     {
         foreach ($results as $result) {
-            $this->save($result);
+            $existing = $this->em->getRepository(OrmResult::class)->find($result->id());
+            $orm = $this->mapper->toOrm($result, $existing);
+
+            $raceEdition = $this->em->getReference(OrmRaceEdition::class, $result->raceEditionId()->value());
+            $runner = $this->em->getReference(OrmRunner::class, $result->runner()->id());
+            $category = $this->em->getReference(OrmCategory::class, $result->category()->id());
+
+            $orm->setRaceEdition($raceEdition);
+            $orm->setRunner($runner);
+            $orm->setCategory($category);
+
+            $this->em->persist($orm);
         }
+
+        $this->em->flush();
     }
 
     public function remove(Result $result): void

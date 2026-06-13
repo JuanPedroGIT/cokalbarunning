@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Repository\BlogPostRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: BlogPostRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'blog_posts')]
 class BlogPost
 {

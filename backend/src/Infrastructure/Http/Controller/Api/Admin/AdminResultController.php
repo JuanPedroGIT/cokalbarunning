@@ -6,7 +6,9 @@ namespace App\Infrastructure\Http\Controller\Api\Admin;
 
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
+use App\Domain\Results\Entity\Result as DomainResult;
 use App\Domain\Results\Repository\ResultRepositoryInterface;
+use App\Domain\Results\ValueObject\Position;
 use App\Entity\Category;
 use App\Entity\RaceEdition;
 use App\Entity\Result;
@@ -196,27 +198,27 @@ class AdminResultController extends AbstractController
 
     private function recalculatePositions(string $editionId): void
     {
-        $results = $this->em->getRepository(Result::class)->findByRaceEdition($editionId);
+        $results = $this->resultRepository->findByRaceEdition(RaceEditionId::fromString($editionId));
 
-        usort($results, fn (Result $a, Result $b) => $a->getFinishTimeSeconds() <=> $b->getFinishTimeSeconds());
+        usort($results, fn (DomainResult $a, DomainResult $b) => $a->finishTime()->seconds() <=> $b->finishTime()->seconds());
 
         $overall = 1;
         $byGender = ['M' => 1, 'F' => 1];
         $byCategory = [];
 
         foreach ($results as $result) {
-            $result->setPosition($overall++);
+            $result->setPosition(new Position($overall++));
 
-            $gender = $result->getRunner()->getGender() ?? 'M';
-            $result->setGenderPosition($byGender[$gender]++);
+            $gender = $result->runner()->gender() ?? 'M';
+            $result->setGenderPosition(new Position($byGender[$gender]++));
 
-            $catKey = $result->getCategory()->getId();
+            $catKey = $result->category()->id();
             if (!isset($byCategory[$catKey])) {
                 $byCategory[$catKey] = 1;
             }
-            $result->setCategoryPosition($byCategory[$catKey]++);
+            $result->setCategoryPosition(new Position($byCategory[$catKey]++));
         }
 
-        $this->em->flush();
+        $this->resultRepository->saveBulk($results);
     }
 }
