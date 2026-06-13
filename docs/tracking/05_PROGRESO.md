@@ -1,7 +1,7 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-12
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2)
+> **Última actualización:** 2026-06-13
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email
 
 ---
 
@@ -17,6 +17,24 @@ Tracking: `13_BANNER_NOTICIA_TIPO2.md`.
 | BN4 | Componente `InfoBanner.vue` en `App.vue` | ✅ |
 | BN5 | Selector de tipo + fecha fin del banner + bloqueo Instagram en admin | ✅ |
 | BN6 | `vue-tsc` verde; migraciones aplicadas | ✅ |
+
+---
+
+## Envío de dorsales por email (2026-06-13)
+
+Tracking: `15_BIB_EMAILS.md`.
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| BE1 | Backend: entidad `EmailSendLog` + migración | ✅ |
+| BE2 | Backend: domain, repository, CQRS, CSV parser | ✅ |
+| BE3 | Backend: plantilla Twig + comando CLI + controller | ✅ |
+| BE4 | Backend: tests PHPUnit verdes (134 tests) | ✅ |
+| BE5 | Frontend: vista `AdminBibEmailsView.vue` | ✅ |
+| BE6 | Frontend: ruta `/admin/bib-emails` + enlace dashboard | ✅ |
+| BE7 | Frontend: `vue-tsc` y build verdes | ✅ |
+| BE8 | Backend: endpoint `/bib-emails/sent-counts` + contador global | ✅ |
+| BE9 | Backend: registrar `sent_by` desde el comando CLI | ✅ |
 
 ---
 
@@ -195,6 +213,7 @@ Tracking: `07_FIX_PATHS_PRD.md`. Alineado con estructura PRD (`carrera/{YYYY}/im
 |-------|-----------|
 | 2026-05-28 | 113 tests, 353 assertions ✅ |
 | 2026-05-30 | 113 tests, 353 assertions ✅ (tras limpiar edition_id de sponsors) |
+| 2026-06-13 | 134 tests, 441 assertions ✅ (Bib Email Sender + fix club-member test) |
 
 ---
 

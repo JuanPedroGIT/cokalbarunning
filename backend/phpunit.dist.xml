@@ -21,6 +21,15 @@
         <env name="APP_SECRET" value="$ecretf0rt3st" />
         <env name="R2_PUBLIC_URL" value="http://localhost/uploads" />
         <env name="DATABASE_URL" value="postgresql://cokalba:secret@postgres:5432/cokalba_running_test?serverVersion=16&amp;charset=utf8" />
+        <env name="MAILER_DSN" value="null://null" />
+        <env name="MAILER_SENDER_EMAIL" value="test@example.com" />
+        <env name="MESSENGER_TRANSPORT_DSN" value="sync://" />
+        <env name="BIB_EMAIL_DELAY_SECONDS" value="0" />
+
+        <!-- ###+ symfony/google-mailer ### -->
+        <!-- Gmail SHOULD NOT be used on production, use it in development only. -->
+        <!-- MAILER_DSN=gmail://USERNAME:PASSWORD@default -->
+        <!-- ###- symfony/google-mailer ### -->
     </php>
 
     <testsuites>

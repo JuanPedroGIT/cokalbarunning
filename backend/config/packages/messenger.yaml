@@ -3,7 +3,7 @@ framework:
         failure_transport: failed
 
         transports:
-            async: 'sync://'
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
             failed: 'doctrine://default?queue_name=failed'
 
         default_bus: messenger.bus.default
@@ -12,7 +12,8 @@ framework:
             messenger.bus.default: []
 
         routing:
-            Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+            # Symfony Mailer se envia sincronamente desde el comando CLI.
+            App\Application\Race\BibEmail\SendBibEmailMessage: async
             # App\Application\Results\ImportResults\ImportResultsCommand: async
             # App\Application\Media\GenerateThumbnail\GenerateThumbnailCommand: async
             # App\Application\Notification\SendEmail\SendEmailCommand: async

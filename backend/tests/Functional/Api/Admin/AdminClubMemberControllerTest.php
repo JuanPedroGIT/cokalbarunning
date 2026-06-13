@@ -93,11 +93,14 @@ final class AdminClubMemberControllerTest extends WebTestCase
         ]));
 
         $this->assertResponseStatusCodeSame(201);
+        $created = json_decode($client->getResponse()->getContent(), true);
+        $createdId = $created['data']['id'];
 
         $client->request('GET', '/api/v1/admin/club-members');
         $list = json_decode($client->getResponse()->getContent(), true);
-        $member = array_values(array_filter($list['data'], fn ($m) => $m['name'] === 'Assigned Member'))[0];
-        $this->assertSame($userId, $member['userId']);
+        $members = array_values(array_filter($list['data'], fn ($m) => $m['id'] === $createdId));
+        $this->assertNotEmpty($members);
+        $this->assertSame($userId, $members[0]['userId']);
     }
 
     public function testUpdateMember(): void

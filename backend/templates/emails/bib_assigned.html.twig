@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu Dorsal - {{ editionName }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333333;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f4f6f8;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .email-container {
+            max-width: 600px;
+            background-color: #ffffff;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .header {
+            background-color: #1e293b;
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 4px solid #ff5a36;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 24px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .header p {
+            color: #94a3b8;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .content {
+            padding: 40px 35px;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #1e293b;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .content p {
+            font-size: 16px;
+            color: #475569;
+            margin-bottom: 25px;
+        }
+        .dorsal-box {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .dorsal-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+        .dorsal-number {
+            font-size: 54px;
+            font-weight: 800;
+            color: #ff5a36;
+            line-height: 1;
+            margin: 0;
+        }
+        .details-list {
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+            list-style: none;
+        }
+        .details-list li {
+            font-size: 15px;
+            color: #334155;
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .details-list li:last-child {
+            margin-bottom: 0;
+        }
+        .details-list li::before {
+            content: "•";
+            color: #ff5a36;
+            font-weight: bold;
+            font-size: 18px;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin: 0 0 10px 0;
+            line-height: 1.4;
+        }
+        .footer a {
+            color: #ff5a36;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="email-container">
+            <div class="header">
+                <h1>Un Nuevo Impulso</h1>
+                <p>Club Cokalba Running</p>
+            </div>
+
+            <div class="content">
+                <h2>¡Hola, {{ nombre }}!</h2>
+                <p>Ya falta muy poco para que volvamos a llenar las calles de ilusión, esfuerzo y, sobre todo, mucha solidaridad. Te confirmamos que tu inscripción para la <strong>{{ editionName }}</strong> en Coca de Alba está lista.</p>
+
+                <p>Para esta edición, tu identificación oficial en la línea de salida será la siguiente:</p>
+
+                <div class="dorsal-box">
+                    <div class="dorsal-label">Tu Dorsal Asignado</div>
+                    <div class="dorsal-number">{{ dorsal }}</div>
+                </div>
+
+                <p>Recuerda que cada zancada cuenta. Con tu participación estás apoyando directamente a la <strong>Asociación Síndrome X Frágil de Madrid</strong>, ayudando a dar visibilidad y mejorar la vida de muchas familias.</p>
+
+                <ul class="details-list">
+                    <li><strong>Fecha:</strong> {{ editionDate }}</li>
+                    <li><strong>Hora de salida:</strong> 09:00 h (Prueba absoluta)</li>
+                    <li><strong>Lugar:</strong> {{ editionLocation }}</li>
+                    <li><strong>Distancia:</strong> 9.735 varas castellanas (8.124 metros)</li>
+                </ul>
+
+                <p>¡Te deseamos una excelente carrera! Nos vemos muy pronto en la línea de salida para compartir una gran jornada de compañerismo y atletismo popular.</p>
+
+                <p style="margin-bottom: 0;">El equipo de organización,<br><strong>Club Cokalba Running</strong></p>
+            </div>
+
+            <div class="footer">
+                <p>Este correo electrónico fue enviado de forma automática referente a tu inscripción.<br>Ayuntamiento de Coca de Alba • Diputación de Salamanca • Cokalba Running</p>
+                <p><a href="https://cokalba-running.com" target="_blank">cokalba-running.com</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
