@@ -52,12 +52,13 @@ const router = createRouter({
       component: () => import('../views/admin/AdminEditionsView.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
-    {
-      path: '/admin/results',
-      name: 'admin-results',
-      component: () => import('../views/admin/AdminResultsImportView.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
+    // Bloqueado temporalmente
+    // {
+    //   path: '/admin/results',
+    //   name: 'admin-results',
+    //   component: () => import('../views/admin/AdminResultsImportView.vue'),
+    //   meta: { requiresAuth: true, requiresAdmin: true },
+    // },
     {
       path: '/admin/photos',
       name: 'admin-photos',

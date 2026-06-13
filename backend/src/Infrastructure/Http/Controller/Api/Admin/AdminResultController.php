@@ -33,6 +33,9 @@ class AdminResultController extends AbstractController
     #[Route('/editions/{id}/results/import', methods: ['POST'])]
     public function import(string $id, Request $request): JsonResponse
     {
+        return $this->json(['error' => 'La importacion de resultados esta temporalmente deshabilitada.'], 403);
+
+        // La logica siguiente esta deshabilitada temporalmente
         $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString($id));
         if (!$edition) {
             return $this->json(['error' => 'Edition not found'], 404);
