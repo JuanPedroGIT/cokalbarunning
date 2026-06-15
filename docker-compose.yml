@@ -15,6 +15,9 @@ services:
       CORS_ALLOW_ORIGIN: "^https?://(localhost|app\\.localhost)(:[0-9]+)?$"
     networks:
       - shared-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./backend:/var/www/backend
       - /var/www/backend/vendor

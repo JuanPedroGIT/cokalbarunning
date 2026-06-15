@@ -14,6 +14,9 @@ services:
       CORS_ALLOW_ORIGIN: '^https?://(localhost|cokalba-running\.com|.*\.cokalba-running\.com)$'
     networks:
       - shared-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./backend/public/uploads:/var/www/backend/public/uploads
       - ./backend/config/jwt:/var/www/backend/config/jwt
