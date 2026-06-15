@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRaceStore } from '@/stores/race.store'
 import { useImageZoom } from '@/composables/useImageZoom'
 import { usePageMeta } from '@/composables/usePageMeta'
+import api from '@/services/api.service'
+
+interface RunnerResult {
+  id: string
+  firstName: string
+  lastName: string
+  fullName: string
+  bibNumber: string | null
+}
 
 const raceStore = useRaceStore()
 const { zoomImage } = useImageZoom()
 
 const activeEdition = computed(() => raceStore.editions[0] ?? null)
+
+const searchName = ref('')
+const activeResults = ref<RunnerResult[]>([])
+const activeSearching = ref(false)
 
 onMounted(() => {
   raceStore.fetchEditions()
@@ -19,6 +32,23 @@ usePageMeta({
   description: 'Historial de ediciones de la Carrera Solidaria Un Nuevo Impulso en Coca de Alba. Consulta resultados, galerías y busca tu dorsal.',
   url: '/ediciones',
 })
+
+async function searchActiveBibs() {
+  const edition = activeEdition.value
+  if (!edition) return
+
+  activeSearching.value = true
+  try {
+    const response = await api.get('/runners', {
+      params: { editionId: edition.id, name: searchName.value.trim() },
+    })
+    activeResults.value = response.data.data
+  } catch {
+    activeResults.value = []
+  } finally {
+    activeSearching.value = false
+  }
+}
 </script>
 
 <template>
@@ -50,7 +80,7 @@ usePageMeta({
               {{ activeEdition.date }} &middot; {{ activeEdition.location }}
             </div>
 
-            <div class="flex flex-wrap gap-3 mt-auto">
+            <div class="flex flex-wrap gap-3 mb-6">
               <a
                 v-if="activeEdition.resultsUrl"
                 :href="activeEdition.resultsUrl"
@@ -72,6 +102,43 @@ usePageMeta({
               >
                 Galería
               </RouterLink>
+            </div>
+
+            <!-- Búsqueda de dorsal edición actual -->
+            <div v-if="activeEdition.showBibSearch" class="mt-auto">
+              <div class="flex gap-2">
+                <input
+                  v-model="searchName"
+                  type="text"
+                  placeholder="Escribe un nombre..."
+                  class="flex-1 bg-negro border border-white/20 px-4 py-2 text-white placeholder-white/30 focus:border-naranja focus:outline-none"
+                  @keyup.enter="searchActiveBibs"
+                />
+                <button
+                  type="button"
+                  class="font-barlow-condensed font-bold text-xs tracking-widest uppercase bg-naranja text-negro px-4 py-2 hover:bg-naranja/90 transition-colors"
+                  :disabled="activeSearching"
+                  @click="searchActiveBibs"
+                >
+                  {{ activeSearching ? '...' : 'Buscar' }}
+                </button>
+              </div>
+
+              <div v-if="activeResults.length > 0" class="mt-4 border border-white/10 bg-negro/50 max-h-64 overflow-y-auto">
+                <ul class="divide-y divide-white/5">
+                  <li
+                    v-for="runner in activeResults"
+                    :key="runner.id"
+                    class="px-4 py-3 flex justify-between items-center"
+                  >
+                    <span class="text-white">{{ runner.fullName }}</span>
+                    <span class="font-barlow-condensed font-bold text-naranja">Dorsal {{ runner.bibNumber ?? '-' }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div v-else-if="searchName.trim() && !activeSearching" class="mt-3 text-gris-texto text-sm">
+                No se encontraron resultados.
+              </div>
             </div>
           </div>
 
