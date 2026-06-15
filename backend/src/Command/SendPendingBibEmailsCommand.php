@@ -6,7 +6,6 @@ namespace App\Command;
 
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
-use App\Entity\EmailSendLog;
 use App\Entity\EmailSendLog as OrmEmailSendLog;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -31,6 +30,7 @@ final class SendPendingBibEmailsCommand extends Command
         private readonly Environment $twig,
         private readonly RaceEditionRepositoryInterface $raceEditionRepository,
         private readonly string $senderEmail,
+        private readonly int $delaySeconds,
     ) {
         parent::__construct();
     }
@@ -39,7 +39,7 @@ final class SendPendingBibEmailsCommand extends Command
     {
         $this
             ->addOption('edition-id', null, InputOption::VALUE_REQUIRED, 'UUID de la edicion a filtrar')
-            ->addOption('delay', null, InputOption::VALUE_REQUIRED, 'Segundos de espera entre envios', 3)
+            ->addOption('delay', null, InputOption::VALUE_REQUIRED, 'Segundos de espera entre envios', $this->delaySeconds)
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximo de emails a enviar', 0)
             ->addOption('user-id', null, InputOption::VALUE_REQUIRED, 'UUID del usuario admin que ejecuta el envio');
     }

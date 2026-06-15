@@ -12,6 +12,7 @@ final readonly class CreateEmailSendLogCommand
         public string $recipientName,
         public string $bibNumber,
         public ?string $raceEditionId = null,
+        public ?string $sentBy = null,
     ) {
     }
 }

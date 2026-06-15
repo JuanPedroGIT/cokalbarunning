@@ -26,6 +26,10 @@ final class CreateEmailSendLogHandler
             raceEditionId: $command->raceEditionId,
         );
 
+        if ($command->sentBy !== null && $command->sentBy !== '') {
+            $log->assignSentBy($command->sentBy);
+        }
+
         $this->repository->save($log);
 
         return $log->id();

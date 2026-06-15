@@ -9,11 +9,12 @@ use App\Application\Notification\Query\GetEmailSendLogsQuery;
 use App\Application\Notification\Response\EmailSendLogResponseDto;
 use App\Application\Race\BibEmail\BibEmailRecipientDto;
 use App\Application\Race\BibEmail\ParseBibEmailCsv;
-use App\Application\Race\BibEmail\SendBibEmailMessage;
 use App\Domain\Notification\Repository\EmailSendLogRepositoryInterface;
 use App\Domain\Race\Entity\RaceEdition;
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
+use App\Entity\Runner;
+use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -32,6 +33,7 @@ class AdminBibEmailController extends AbstractController
         private ParseBibEmailCsv $csvParser,
         private RaceEditionRepositoryInterface $raceEditionRepository,
         private EmailSendLogRepositoryInterface $emailSendLogRepository,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -147,6 +149,8 @@ class AdminBibEmailController extends AbstractController
             $isResend = $existing !== null && $existing->status()->isSent() && $force;
             $logId = Uuid::uuid4()->toString();
 
+            $this->upsertRunner($name, $email, $bibNumber, $raceEditionId);
+
             if ($existing === null || $isResend) {
                 $envelope = $this->commandBus->dispatch(new CreateEmailSendLogCommand(
                     id: $logId,
@@ -154,23 +158,22 @@ class AdminBibEmailController extends AbstractController
                     recipientName: $name,
                     bibNumber: $bibNumber,
                     raceEditionId: $raceEditionId,
+                    sentBy: $sentBy,
                 ));
                 $logId = $envelope->last(HandledStamp::class)?->getResult() ?? $logId;
-            } else {
+            } elseif ($existing !== null) {
+                $existing->markAsPending();
+                if ($sentBy !== null && $sentBy !== '') {
+                    $existing->assignSentBy($sentBy);
+                }
+                $this->emailSendLogRepository->save($existing);
                 $logId = $existing->id();
             }
 
-            $this->commandBus->dispatch(new SendBibEmailMessage(
-                logId: $logId,
-                recipientEmail: $email,
-                recipientName: $name,
-                bibNumber: $bibNumber,
-                raceEditionId: $raceEditionId,
-                sentBy: $sentBy,
-            ));
-
             $queued++;
         }
+
+        $this->entityManager->flush();
 
         return $this->json([
             'data' => [
@@ -224,7 +227,7 @@ class AdminBibEmailController extends AbstractController
         }
 
         $command = sprintf(
-            'cd /var/www/backend && nohup php bin/console app:bib-emails:send --delay=3%s%s > /var/www/backend/var/log/bib-emails-runner.log 2>&1 &',
+            'cd /var/www/backend && nohup php bin/console app:bib-emails:send%s%s > /var/www/backend/var/log/bib-emails-runner.log 2>&1 &',
             $editionOption,
             $userOption
         );
@@ -272,5 +275,51 @@ class AdminBibEmailController extends AbstractController
         }
 
         return $this->raceEditionRepository->findActive();
+    }
+
+    private function upsertRunner(string $fullName, string $email, string $bibNumber, ?string $raceEditionId): void
+    {
+        if ($email === '' || $raceEditionId === null) {
+            return;
+        }
+
+        [$firstName, $lastName] = $this->splitName($fullName);
+
+        $repository = $this->entityManager->getRepository(Runner::class);
+        $runner = $repository->findOneBy([
+            'email' => $email,
+            'raceEditionId' => $raceEditionId,
+        ]);
+
+        if ($runner === null) {
+            $runner = new Runner();
+            $runner->setId(Uuid::uuid4()->toString());
+        }
+
+        $runner->setFirstName($firstName);
+        $runner->setLastName($lastName);
+        $runner->setEmail($email);
+        $runner->setRaceEditionId($raceEditionId);
+        $runner->setBibNumber($bibNumber);
+
+        $this->entityManager->persist($runner);
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function splitName(string $fullName): array
+    {
+        $trimmed = trim($fullName);
+        $spacePos = strpos($trimmed, ' ');
+
+        if ($spacePos === false) {
+            return [$trimmed, ''];
+        }
+
+        return [
+            substr($trimmed, 0, $spacePos),
+            trim(substr($trimmed, $spacePos + 1)),
+        ];
     }
 }

@@ -23,6 +23,7 @@ interface PreviewItem {
 
 interface LogItem {
   id: string
+  raceEditionId: string | null
   recipientEmail: string
   recipientName: string
   bibNumber: string
@@ -103,6 +104,7 @@ const groupedLogs = computed(() => {
       lastStatus: log.status,
       lastErrorMessage: log.errorMessage,
       lastSentBy: log.sentBy,
+      createdAt: log.createdAt,
     }
     const key = groupKey(base)
     const existing = groups.get(key)
@@ -301,14 +303,14 @@ async function sendEmails() {
     const { queued, skipped } = res.data.data
     message.value = {
       type: 'success',
-      text: `${queued} correo(s) encolado(s). ${skipped} omitido(s) por ya enviado(s).`,
+      text: `${queued} correo(s) marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`,
     }
     await fetchLogs()
     await fetchSentCounts()
   } catch (err: any) {
     message.value = {
       type: 'error',
-      text: err.response?.data?.error ?? 'Error al encolar los correos',
+      text: err.response?.data?.error ?? 'Error al marcar los correos como pendientes',
     }
   } finally {
     sending.value = false

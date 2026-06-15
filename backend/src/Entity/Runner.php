@@ -24,6 +24,12 @@ class Runner
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(type: 'string', length: 36, nullable: true)]
+    private ?string $raceEditionId = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $bibNumber = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $club = null;
 
@@ -79,6 +85,28 @@ class Runner
     public function setEmail(?string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function getRaceEditionId(): ?string
+    {
+        return $this->raceEditionId;
+    }
+
+    public function setRaceEditionId(?string $raceEditionId): static
+    {
+        $this->raceEditionId = $raceEditionId;
+        return $this;
+    }
+
+    public function getBibNumber(): ?string
+    {
+        return $this->bibNumber;
+    }
+
+    public function setBibNumber(?string $bibNumber): static
+    {
+        $this->bibNumber = $bibNumber;
         return $this;
     }
 

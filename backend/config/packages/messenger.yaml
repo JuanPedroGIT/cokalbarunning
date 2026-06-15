@@ -12,8 +12,7 @@ framework:
             messenger.bus.default: []
 
         routing:
-            # Symfony Mailer se envia sincronamente desde el comando CLI.
-            App\Application\Race\BibEmail\SendBibEmailMessage: async
+            # El envio de emails de dorsales se realiza sincronamente desde el comando CLI.
             # App\Application\Results\ImportResults\ImportResultsCommand: async
             # App\Application\Media\GenerateThumbnail\GenerateThumbnailCommand: async
             # App\Application\Notification\SendEmail\SendEmailCommand: async

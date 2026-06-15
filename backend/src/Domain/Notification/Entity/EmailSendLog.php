@@ -104,6 +104,12 @@ final class EmailSendLog
         return $this->updatedAt;
     }
 
+    public function markAsPending(): void
+    {
+        $this->status = EmailStatus::pending();
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function markAsSent(): void
     {
         $this->status = EmailStatus::sent();

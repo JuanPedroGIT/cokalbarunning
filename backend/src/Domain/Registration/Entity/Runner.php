@@ -13,6 +13,8 @@ final class Runner
         private string $firstName,
         private string $lastName,
         private ?string $email = null,
+        private ?string $raceEditionId = null,
+        private ?string $bibNumber = null,
         private ?string $club = null,
         private ?DateTimeImmutable $birthDate = null,
         private ?string $gender = null,
@@ -42,6 +44,16 @@ final class Runner
     public function email(): ?string
     {
         return $this->email;
+    }
+
+    public function raceEditionId(): ?string
+    {
+        return $this->raceEditionId;
+    }
+
+    public function bibNumber(): ?string
+    {
+        return $this->bibNumber;
     }
 
     public function club(): ?string
@@ -76,5 +88,11 @@ final class Runner
         $this->club = $club;
         $this->birthDate = $birthDate;
         $this->gender = $gender;
+    }
+
+    public function assignEditionAndBib(string $raceEditionId, string $bibNumber): void
+    {
+        $this->raceEditionId = $raceEditionId;
+        $this->bibNumber = $bibNumber;
     }
 }

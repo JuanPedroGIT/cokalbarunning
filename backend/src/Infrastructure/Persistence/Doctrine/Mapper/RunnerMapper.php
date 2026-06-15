@@ -16,6 +16,8 @@ final class RunnerMapper
             firstName: $orm->getFirstName(),
             lastName: $orm->getLastName(),
             email: $orm->getEmail(),
+            raceEditionId: $orm->getRaceEditionId(),
+            bibNumber: $orm->getBibNumber(),
             club: $orm->getClub(),
             birthDate: $orm->getBirthDate(),
             gender: $orm->getGender(),
@@ -29,6 +31,8 @@ final class RunnerMapper
         $target->setFirstName($domain->firstName());
         $target->setLastName($domain->lastName());
         $target->setEmail($domain->email());
+        $target->setRaceEditionId($domain->raceEditionId());
+        $target->setBibNumber($domain->bibNumber());
         $target->setClub($domain->club());
         $target->setBirthDate($domain->birthDate());
         $target->setGender($domain->gender());

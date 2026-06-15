@@ -93,14 +93,10 @@ services:
     App\Domain\Notification\Repository\EmailSendLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineEmailSendLogRepository
 
-    App\Application\Race\BibEmail\SendBibEmailHandler:
-        arguments:
-            $senderEmail: '%env(MAILER_SENDER_EMAIL)%'
-            $delaySeconds: '%env(int:BIB_EMAIL_DELAY_SECONDS)%'
-
     App\Command\SendPendingBibEmailsCommand:
         arguments:
             $senderEmail: '%env(MAILER_SENDER_EMAIL)%'
+            $delaySeconds: '%env(int:BIB_EMAIL_DELAY_SECONDS)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

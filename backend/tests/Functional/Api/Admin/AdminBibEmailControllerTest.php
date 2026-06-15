@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api\Admin;
 
+use App\Entity\Runner;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
@@ -77,7 +78,7 @@ final class AdminBibEmailControllerTest extends WebTestCase
         $this->assertSame('not_sent', $data['data']['items'][0]['status']);
     }
 
-    public function testSendEndpointQueuesEmails(): void
+    public function testSendEndpointCreatesPendingLogs(): void
     {
         $client = $this->createAuthenticatedClient();
         $unique = uniqid();
@@ -103,6 +104,9 @@ final class AdminBibEmailControllerTest extends WebTestCase
         $emails = array_column($list['data'], 'recipientEmail');
         $this->assertContains("juan_{$unique}@example.com", $emails);
         $this->assertContains("ana_{$unique}@example.com", $emails);
+
+        $statuses = array_column($list['data'], 'status');
+        $this->assertContains('pending', $statuses);
     }
 
     public function testSendSkipsAlreadySentUnlessForced(): void
@@ -120,6 +124,16 @@ final class AdminBibEmailControllerTest extends WebTestCase
         ]));
 
         $this->assertResponseIsSuccessful();
+
+        // Simulamos que el comando CLI ya envio el email.
+        $em = $client->getContainer()->get(EntityManagerInterface::class);
+        $log = $em->getRepository(\App\Entity\EmailSendLog::class)->findOneBy([
+            'recipientEmail' => $email,
+            'bibNumber' => '001',
+        ]);
+        $this->assertNotNull($log);
+        $log->markAsSent();
+        $em->flush();
 
         $client->request('POST', '/api/v1/admin/bib-emails/send', [], [], [
             'CONTENT_TYPE' => 'application/json',
@@ -145,5 +159,37 @@ final class AdminBibEmailControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertSame(1, $data['data']['queued']);
         $this->assertSame(0, $data['data']['skipped']);
+    }
+
+    public function testSendCreatesRunnersForBibLookup(): void
+    {
+        $client = $this->createAuthenticatedClient();
+        $unique = uniqid();
+        $email = "juan_{$unique}@example.com";
+
+        $client->request('POST', '/api/v1/admin/bib-emails/send', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'items' => [
+                ['name' => 'Juan Pérez', 'email' => $email, 'bibNumber' => '001'],
+                ['name' => 'Ana', 'email' => "ana_{$unique}@example.com", 'bibNumber' => '002'],
+            ],
+        ]));
+
+        $this->assertResponseIsSuccessful();
+
+        $em = $client->getContainer()->get(EntityManagerInterface::class);
+        $runner = $em->getRepository(Runner::class)->findOneBy(['email' => $email]);
+
+        $this->assertNotNull($runner);
+        $this->assertSame('Juan', $runner->getFirstName());
+        $this->assertSame('Pérez', $runner->getLastName());
+        $this->assertSame('001', $runner->getBibNumber());
+        $this->assertNotNull($runner->getRaceEditionId());
+
+        $singleNameRunner = $em->getRepository(Runner::class)->findOneBy(['email' => "ana_{$unique}@example.com"]);
+        $this->assertNotNull($singleNameRunner);
+        $this->assertSame('Ana', $singleNameRunner->getFirstName());
+        $this->assertSame('', $singleNameRunner->getLastName());
     }
 }
