@@ -28,6 +28,7 @@ final class CreateRaceEditionHandler
             date: new \DateTimeImmutable($command->date),
             location: $command->location,
             isActive: $command->isActive,
+            showBibSearch: $command->showBibSearch,
             posterUrl: $command->posterUrl,
             registrationUrl: $command->registrationUrl,
             shirtUrl: $command->shirtUrl,

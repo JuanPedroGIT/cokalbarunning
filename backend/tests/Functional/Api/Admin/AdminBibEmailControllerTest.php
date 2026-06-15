@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api\Admin;
 
+use App\Entity\RaceEdition;
 use App\Entity\Runner;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,24 @@ final class AdminBibEmailControllerTest extends WebTestCase
         $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $response['token']);
 
         return $client;
+    }
+
+    private function createRaceEdition(EntityManagerInterface $em): RaceEdition
+    {
+        $edition = new RaceEdition();
+        $edition->setId(Uuid::uuid4()->toString());
+        $edition->setYear(2028);
+        $edition->setName('Test Edition');
+        $edition->setDescription('Test');
+        $edition->setDate(new \DateTimeImmutable('2028-07-05'));
+        $edition->setLocation('Coca de Alba');
+        $edition->setIsActive(true);
+        $edition->setShowBibSearch(false);
+
+        $em->persist($edition);
+        $em->flush();
+
+        return $edition;
     }
 
     public function testListRequiresAuth(): void
@@ -164,12 +183,15 @@ final class AdminBibEmailControllerTest extends WebTestCase
     public function testSendCreatesRunnersForBibLookup(): void
     {
         $client = $this->createAuthenticatedClient();
+        $em = $client->getContainer()->get(EntityManagerInterface::class);
+        $edition = $this->createRaceEdition($em);
         $unique = uniqid();
         $email = "juan_{$unique}@example.com";
 
         $client->request('POST', '/api/v1/admin/bib-emails/send', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
+            'editionId' => $edition->getId(),
             'items' => [
                 ['name' => 'Juan Pérez', 'email' => $email, 'bibNumber' => '001'],
                 ['name' => 'Ana', 'email' => "ana_{$unique}@example.com", 'bibNumber' => '002'],
@@ -191,5 +213,29 @@ final class AdminBibEmailControllerTest extends WebTestCase
         $this->assertNotNull($singleNameRunner);
         $this->assertSame('Ana', $singleNameRunner->getFirstName());
         $this->assertSame('', $singleNameRunner->getLastName());
+    }
+
+    public function testSendEnablesBibSearchOnEdition(): void
+    {
+        $client = $this->createAuthenticatedClient();
+        $em = $client->getContainer()->get(EntityManagerInterface::class);
+
+        $edition = $this->createRaceEdition($em);
+
+        $unique = uniqid();
+        $client->request('POST', '/api/v1/admin/bib-emails/send', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'editionId' => $edition->getId(),
+            'items' => [
+                ['name' => 'Juan Pérez', 'email' => "juan_{$unique}@example.com", 'bibNumber' => '001'],
+            ],
+        ]));
+
+        $this->assertResponseIsSuccessful();
+
+        $em->clear();
+        $updatedEdition = $em->getRepository(\App\Entity\RaceEdition::class)->find($edition->getId());
+        $this->assertTrue($updatedEdition->isShowBibSearch());
     }
 }

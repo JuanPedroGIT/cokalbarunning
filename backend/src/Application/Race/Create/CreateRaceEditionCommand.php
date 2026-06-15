@@ -13,6 +13,7 @@ final class CreateRaceEditionCommand
         public string $date,
         public string $location,
         public bool $isActive = true,
+        public bool $showBibSearch = false,
         public ?string $posterUrl = null,
         public ?string $registrationUrl = null,
         public ?string $shirtUrl = null,

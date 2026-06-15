@@ -73,4 +73,57 @@ final class AdminRaceControllerTest extends WebTestCase
         $this->assertTrue($data['data']['created']);
         $this->assertArrayHasKey('id', $data['data']);
     }
+
+    public function testCreateEditionWithShowBibSearch(): void
+    {
+        $client = $this->createAuthenticatedClient();
+        $client->request('POST', '/api/v1/admin/editions', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'year' => 2028,
+            'name' => 'XI Carrera Test',
+            'description' => 'Descripcion de prueba',
+            'date' => '2028-07-05',
+            'location' => 'Coca de Alba',
+            'isActive' => true,
+            'showBibSearch' => true,
+        ]));
+
+        $this->assertResponseStatusCodeSame(201);
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $edition = $em->getRepository(\App\Entity\RaceEdition::class)->findOneBy(['year' => 2028]);
+        $this->assertNotNull($edition);
+        $this->assertTrue($edition->isShowBibSearch());
+    }
+
+    public function testUpdateEditionShowBibSearch(): void
+    {
+        $client = $this->createAuthenticatedClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+
+        $edition = new \App\Entity\RaceEdition();
+        $edition->setId(Uuid::uuid4()->toString());
+        $edition->setYear(2028);
+        $edition->setName('XII Carrera Test');
+        $edition->setDescription('Descripcion');
+        $edition->setDate(new \DateTimeImmutable('2028-07-05'));
+        $edition->setLocation('Coca de Alba');
+        $edition->setIsActive(true);
+        $edition->setShowBibSearch(false);
+        $em->persist($edition);
+        $em->flush();
+
+        $client->request('PUT', '/api/v1/admin/editions/' . $edition->getId(), [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'showBibSearch' => true,
+        ]));
+
+        $this->assertResponseIsSuccessful();
+
+        $em->clear();
+        $updated = $em->getRepository(\App\Entity\RaceEdition::class)->find($edition->getId());
+        $this->assertTrue($updated->isShowBibSearch());
+    }
 }

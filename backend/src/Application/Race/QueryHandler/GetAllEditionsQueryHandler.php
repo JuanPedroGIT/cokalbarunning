@@ -48,6 +48,7 @@ final class GetAllEditionsQueryHandler
                 date: $edition->date()->format('Y-m-d'),
                 location: $edition->location(),
                 isActive: $edition->isActive(),
+                showBibSearch: $edition->showBibSearch(),
                 posterUrl: $edition->posterUrl() !== null ? $this->storage->url($edition->posterUrl()) : null,
                 registrationUrl: $edition->registrationUrl(),
                 shirtUrl: $edition->shirtUrl() !== null ? $this->storage->url($edition->shirtUrl()) : null,

@@ -25,6 +25,7 @@ final class RaceEditionMapper
             date: $orm->getDate(),
             location: $orm->getLocation(),
             isActive: $orm->isActive(),
+            showBibSearch: $orm->isShowBibSearch(),
             posterUrl: $orm->getPosterUrl(),
             registrationUrl: $orm->getRegistrationUrl(),
             shirtUrl: $orm->getShirtUrl(),
@@ -51,6 +52,7 @@ final class RaceEditionMapper
         $target->setDate($domain->date());
         $target->setLocation($domain->location());
         $target->setIsActive($domain->isActive());
+        $target->setShowBibSearch($domain->showBibSearch());
         $target->setPosterUrl($domain->posterUrl());
         $target->setRegistrationUrl($domain->registrationUrl());
         $target->setShirtUrl($domain->shirtUrl());

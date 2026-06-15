@@ -14,6 +14,7 @@ final class UpdateRaceEditionCommand
         public ?string $date = null,
         public ?string $location = null,
         public ?bool $isActive = null,
+        public ?bool $showBibSearch = null,
         public ?string $posterUrl = null,
         public ?string $registrationUrl = null,
         public ?string $shirtUrl = null,

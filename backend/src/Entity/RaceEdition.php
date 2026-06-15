@@ -35,6 +35,9 @@ class RaceEdition
     #[ORM\Column]
     private bool $isActive = true;
 
+    #[ORM\Column]
+    private bool $showBibSearch = false;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $posterUrl = null;
 
@@ -144,6 +147,17 @@ class RaceEdition
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function isShowBibSearch(): bool
+    {
+        return $this->showBibSearch;
+    }
+
+    public function setShowBibSearch(bool $showBibSearch): static
+    {
+        $this->showBibSearch = $showBibSearch;
         return $this;
     }
 

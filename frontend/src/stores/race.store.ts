@@ -10,6 +10,7 @@ export interface RaceEdition {
   date: string
   location: string
   isActive: boolean
+  showBibSearch: boolean
   posterUrl: string | null
   registrationUrl: string | null
   shirtUrl: string | null

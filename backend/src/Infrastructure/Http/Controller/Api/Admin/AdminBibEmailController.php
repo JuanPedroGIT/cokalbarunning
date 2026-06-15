@@ -173,6 +173,13 @@ class AdminBibEmailController extends AbstractController
             $queued++;
         }
 
+        if ($raceEditionId !== null && $queued > 0) {
+            $ormEdition = $this->entityManager->getRepository(\App\Entity\RaceEdition::class)->find($raceEditionId);
+            if ($ormEdition !== null && !$ormEdition->isShowBibSearch()) {
+                $ormEdition->setShowBibSearch(true);
+            }
+        }
+
         $this->entityManager->flush();
 
         return $this->json([

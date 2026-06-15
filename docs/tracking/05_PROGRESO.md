@@ -1,7 +1,7 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-13
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email
+> **Última actualización:** 2026-06-15
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones
 
 ---
 
@@ -35,6 +35,27 @@ Tracking: `15_BIB_EMAILS.md`.
 | BE7 | Frontend: `vue-tsc` y build verdes | ✅ |
 | BE8 | Backend: endpoint `/bib-emails/sent-counts` + contador global | ✅ |
 | BE9 | Backend: registrar `sent_by` desde el comando CLI | ✅ |
+
+---
+
+## Búsqueda de dorsal en /ediciones (2026-06-15)
+
+Tracking: `16_EDICIONES_BIB_SEARCH.md`.
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| ED1 | Backend: endpoint público `GET /api/v1/runners` | ✅ |
+| ED2 | Frontend: edición actual destacada arriba | ✅ |
+| ED3 | Frontend: layout cartel derecha / opciones izquierda | ✅ |
+| ED4 | Frontend: botones Resultados, Galería y Buscar dorsal | ✅ |
+| ED5 | Frontend: búsqueda por nombre con lista de resultados | ✅ |
+| ED6 | Tests PHPUnit verdes (139 tests) y build frontend verde | ✅ |
+| ED7 | Backend: campo `showBibSearch` en `RaceEdition` + migración | ✅ |
+| ED8 | Backend: activar `showBibSearch` al cargar CSV de dorsales | ✅ |
+| ED9 | Backend: crear/actualizar edición con `showBibSearch` | ✅ |
+| ED10 | Frontend: panel admin con checkbox `Mostrar búsqueda de dorsales` | ✅ |
+| ED11 | Frontend: mostrar buscador solo si `activeEdition.showBibSearch` | ✅ |
+| ED12 | Tests PHPUnit verdes (142 tests) y build frontend verde | ✅ |
 
 ---
 
@@ -214,6 +235,7 @@ Tracking: `07_FIX_PATHS_PRD.md`. Alineado con estructura PRD (`carrera/{YYYY}/im
 | 2026-05-28 | 113 tests, 353 assertions ✅ |
 | 2026-05-30 | 113 tests, 353 assertions ✅ (tras limpiar edition_id de sponsors) |
 | 2026-06-13 | 134 tests, 441 assertions ✅ (Bib Email Sender + fix club-member test) |
+| 2026-06-15 | 142 tests, 470 assertions ✅ (Bib Search por edición + showBibSearch) |
 
 ---
 

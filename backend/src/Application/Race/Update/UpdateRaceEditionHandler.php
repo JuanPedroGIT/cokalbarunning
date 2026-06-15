@@ -24,7 +24,7 @@ final class UpdateRaceEditionHandler
             throw new \InvalidArgumentException('Edition not found');
         }
 
-        if ($command->name !== null || $command->description !== null || $command->date !== null || $command->location !== null || $command->shirtUrl !== null || $command->trophyUrl !== null) {
+        if ($command->name !== null || $command->description !== null || $command->date !== null || $command->location !== null || $command->shirtUrl !== null || $command->trophyUrl !== null || $command->showBibSearch !== null) {
             $edition->update(
                 name: $command->name ?? $edition->name(),
                 description: $command->description ?? $edition->description(),
@@ -32,6 +32,7 @@ final class UpdateRaceEditionHandler
                 location: $command->location ?? $edition->location(),
                 shirtUrl: $command->shirtUrl !== null ? ($command->shirtUrl ?: null) : $edition->shirtUrl(),
                 trophyUrl: $command->trophyUrl !== null ? ($command->trophyUrl ?: null) : $edition->trophyUrl(),
+                showBibSearch: $command->showBibSearch,
             );
         }
 
@@ -41,6 +42,10 @@ final class UpdateRaceEditionHandler
 
         if ($command->isActive !== null) {
             $command->isActive ? $edition->activate() : $edition->deactivate();
+        }
+
+        if ($command->showBibSearch !== null && $command->name === null && $command->description === null && $command->date === null && $command->location === null && $command->shirtUrl === null && $command->trophyUrl === null) {
+            $edition->setShowBibSearch($command->showBibSearch);
         }
 
         if ($command->posterUrl !== null) {

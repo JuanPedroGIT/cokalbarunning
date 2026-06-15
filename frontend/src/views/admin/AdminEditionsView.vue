@@ -12,6 +12,7 @@ interface Edition {
   date: string
   location: string
   isActive: boolean
+  showBibSearch: boolean
   posterUrl: string | null
   registrationUrl: string | null
   shirtUrl: string | null
@@ -32,6 +33,7 @@ const form = ref<Partial<Edition>>({
   date: '',
   location: '',
   isActive: true,
+  showBibSearch: false,
   posterUrl: null,
   registrationUrl: null,
   shirtUrl: null,
@@ -193,6 +195,7 @@ function resetForm() {
     date: '',
     location: '',
     isActive: true,
+    showBibSearch: false,
     posterUrl: null,
     registrationUrl: null,
     shirtUrl: null,
@@ -272,6 +275,12 @@ onMounted(() => {
             <label class="flex items-center gap-2 cursor-pointer">
               <input v-model="form.isActive" type="checkbox" class="w-4 h-4 accent-[#FF5C00]" />
               <span class="text-sm">Edicion activa</span>
+            </label>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input v-model="form.showBibSearch" type="checkbox" class="w-4 h-4 accent-[#FF5C00]" />
+              <span class="text-sm">Mostrar busqueda de dorsales</span>
             </label>
           </div>
         </div>

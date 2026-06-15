@@ -21,6 +21,7 @@ final class RaceEdition
         private DateTimeImmutable $date,
         private string $location,
         private bool $isActive = true,
+        private bool $showBibSearch = false,
         private ?string $posterUrl = null,
         private ?string $registrationUrl = null,
         private ?string $shirtUrl = null,
@@ -64,6 +65,21 @@ final class RaceEdition
     public function isActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function showBibSearch(): bool
+    {
+        return $this->showBibSearch;
+    }
+
+    public function enableBibSearch(): void
+    {
+        $this->showBibSearch = true;
+    }
+
+    public function setShowBibSearch(bool $showBibSearch): void
+    {
+        $this->showBibSearch = $showBibSearch;
     }
 
     public function posterUrl(): ?string
@@ -151,7 +167,7 @@ final class RaceEdition
         $this->year = $year;
     }
 
-    public function update(string $name, string $description, DateTimeImmutable $date, string $location, ?string $shirtUrl = null, ?string $trophyUrl = null): void
+    public function update(string $name, string $description, DateTimeImmutable $date, string $location, ?string $shirtUrl = null, ?string $trophyUrl = null, ?bool $showBibSearch = null): void
     {
         $this->name = $name;
         $this->description = $description;
@@ -162,6 +178,9 @@ final class RaceEdition
         }
         if ($trophyUrl !== null) {
             $this->trophyUrl = $trophyUrl;
+        }
+        if ($showBibSearch !== null) {
+            $this->showBibSearch = $showBibSearch;
         }
     }
 
