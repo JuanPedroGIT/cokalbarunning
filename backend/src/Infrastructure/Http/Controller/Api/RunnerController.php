@@ -28,19 +28,21 @@ class RunnerController extends AbstractController
             return $this->json(['error' => 'editionId is required'], 400);
         }
 
+        if (mb_strlen($name) < 4) {
+            return $this->json(['error' => 'name must be at least 4 characters'], 400);
+        }
+
         $qb = $this->entityManager->getRepository(Runner::class)
             ->createQueryBuilder('r')
             ->where('r.raceEditionId = :editionId')
             ->setParameter('editionId', $editionId);
 
-        if ($name !== '') {
-            $term = mb_strtolower($name);
-            $qb
-                ->andWhere(
-                    'LOWER(r.firstName) LIKE :name OR LOWER(r.lastName) LIKE :name OR LOWER(CONCAT(r.firstName, \' \', r.lastName)) LIKE :name'
-                )
-                ->setParameter('name', '%' . $term . '%');
-        }
+        $term = mb_strtolower($name);
+        $qb
+            ->andWhere(
+                'LOWER(r.firstName) LIKE :name OR LOWER(r.lastName) LIKE :name OR LOWER(CONCAT(r.firstName, \' \', r.lastName)) LIKE :name'
+            )
+            ->setParameter('name', '%' . $term . '%');
 
         $runners = $qb
             ->orderBy('r.firstName', 'ASC')

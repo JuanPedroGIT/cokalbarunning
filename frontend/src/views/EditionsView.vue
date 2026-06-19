@@ -22,6 +22,11 @@ const activeEdition = computed(() => raceStore.editions[0] ?? null)
 const searchName = ref('')
 const activeResults = ref<RunnerResult[]>([])
 const activeSearching = ref(false)
+const activeSearchError = ref('')
+
+const MIN_SEARCH_LENGTH = 4
+
+const canSearchActive = computed(() => searchName.value.trim().length >= MIN_SEARCH_LENGTH)
 
 onMounted(() => {
   raceStore.fetchEditions()
@@ -37,10 +42,18 @@ async function searchActiveBibs() {
   const edition = activeEdition.value
   if (!edition) return
 
+  const term = searchName.value.trim()
+  if (term.length < MIN_SEARCH_LENGTH) {
+    activeSearchError.value = `Escribe al menos ${MIN_SEARCH_LENGTH} caracteres para buscar.`
+    activeResults.value = []
+    return
+  }
+
+  activeSearchError.value = ''
   activeSearching.value = true
   try {
     const response = await api.get('/runners', {
-      params: { editionId: edition.id, name: searchName.value.trim() },
+      params: { editionId: edition.id, name: term },
     })
     activeResults.value = response.data.data
   } catch {
@@ -116,12 +129,16 @@ async function searchActiveBibs() {
                 />
                 <button
                   type="button"
-                  class="font-barlow-condensed font-bold text-xs tracking-widest uppercase bg-naranja text-negro px-4 py-2 hover:bg-naranja/90 transition-colors"
-                  :disabled="activeSearching"
+                  class="font-barlow-condensed font-bold text-xs tracking-widest uppercase bg-naranja text-negro px-4 py-2 hover:bg-naranja/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="activeSearching || !canSearchActive"
                   @click="searchActiveBibs"
                 >
                   {{ activeSearching ? '...' : 'Buscar' }}
                 </button>
+              </div>
+
+              <div v-if="activeSearchError" class="mt-3 text-naranja text-sm">
+                {{ activeSearchError }}
               </div>
 
               <div v-if="activeResults.length > 0" class="mt-4 border border-white/10 bg-negro/50 max-h-64 overflow-y-auto">

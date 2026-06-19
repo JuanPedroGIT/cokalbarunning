@@ -4,171 +4,72 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tu Dorsal - {{ editionName }}</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f4f6f8;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #333333;
-            -webkit-font-smoothing: antialiased;
-        }
-        .wrapper {
-            width: 100%;
-            table-layout: fixed;
-            background-color: #f4f6f8;
-            padding-top: 40px;
-            padding-bottom: 40px;
-        }
-        .email-container {
-            max-width: 600px;
-            background-color: #ffffff;
-            margin: 0 auto;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        .header {
-            background-color: #1e293b;
-            padding: 40px 30px;
-            text-align: center;
-            border-bottom: 4px solid #ff5a36;
-        }
-        .header h1 {
-            color: #ffffff;
-            font-size: 24px;
-            margin: 0;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .header p {
-            color: #94a3b8;
-            margin: 5px 0 0 0;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .content {
-            padding: 40px 35px;
-            line-height: 1.6;
-        }
-        .content h2 {
-            color: #1e293b;
-            font-size: 20px;
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-        .content p {
-            font-size: 16px;
-            color: #475569;
-            margin-bottom: 25px;
-        }
-        .dorsal-box {
-            background-color: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            border-radius: 6px;
-            padding: 30px;
-            text-align: center;
-            margin: 30px 0;
-        }
-        .dorsal-label {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
-        .dorsal-number {
-            font-size: 54px;
-            font-weight: 800;
-            color: #ff5a36;
-            line-height: 1;
-            margin: 0;
-        }
-        .details-list {
-            background-color: #f1f5f9;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 30px;
-            list-style: none;
-        }
-        .details-list li {
-            font-size: 15px;
-            color: #334155;
-            margin-bottom: 10px;
-            padding-left: 20px;
-            position: relative;
-        }
-        .details-list li:last-child {
-            margin-bottom: 0;
-        }
-        .details-list li::before {
-            content: "•";
-            color: #ff5a36;
-            font-weight: bold;
-            font-size: 18px;
-            position: absolute;
-            left: 0;
-            top: -2px;
-        }
-        .footer {
-            background-color: #f8fafc;
-            padding: 25px 30px;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-        }
-        .footer p {
-            font-size: 13px;
-            color: #94a3b8;
-            margin: 0 0 10px 0;
-            line-height: 1.4;
-        }
-        .footer a {
-            color: #ff5a36;
-            text-decoration: none;
-            font-weight: 600;
-        }
-    </style>
 </head>
-<body>
-    <div class="wrapper">
-        <div class="email-container">
-            <div class="header">
-                <h1>Un Nuevo Impulso</h1>
-                <p>Club Cokalba Running</p>
-            </div>
+<body bgcolor="#f4f6f8" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f4f6f8">
+        <tr>
+            <td align="center" valign="top">
+                <table width="600" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff" align="center">
+                    <tr>
+                        <td align="center" valign="top" bgcolor="#1e293b" style="padding:40px 30px; border-bottom:4px solid #ff5a36;">
+                            <font face="Arial, Helvetica, sans-serif" size="5" color="#ffffff"><b>UN NUEVO IMPULSO</b></font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8">CLUB COKALBA RUNNING</font>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="left" valign="top" bgcolor="#ffffff" style="padding:40px 35px;">
+                            <font face="Arial, Helvetica, sans-serif" size="4" color="#1e293b"><b>¡Hola, {{ nombre }}!</b></font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">Ya falta muy poco para que volvamos a llenar las calles de ilusión, esfuerzo y, sobre todo, mucha solidaridad. Te confirmamos que tu inscripción para la <b>{{ editionName }}</b> en Coca de Alba está lista.</font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">Para esta edición, tu identificación oficial en la línea de salida será la siguiente:</font>
+                            <br><br>
 
-            <div class="content">
-                <h2>¡Hola, {{ nombre }}!</h2>
-                <p>Ya falta muy poco para que volvamos a llenar las calles de ilusión, esfuerzo y, sobre todo, mucha solidaridad. Te confirmamos que tu inscripción para la <strong>{{ editionName }}</strong> en Coca de Alba está lista.</p>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f8fafc" align="center">
+                                <tr>
+                                    <td align="center" valign="top" style="padding:30px; border:2px dashed #cbd5e1;">
+                                        <font face="Arial, Helvetica, sans-serif" size="2" color="#64748b">TU DORSAL ASIGNADO</font>
+                                        <br><br>
+                                        <font face="Arial, Helvetica, sans-serif" size="10" color="#ff5a36"><b>{{ dorsal }}</b></font>
+                                    </td>
+                                </tr>
+                            </table>
 
-                <p>Para esta edición, tu identificación oficial en la línea de salida será la siguiente:</p>
+                            <br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">Recuerda que cada zancada cuenta. Con tu participación estás apoyando directamente a la <b>Asociación Síndrome X Frágil de Madrid</b>, ayudando a dar visibilidad y mejorar la vida de muchas familias.</font>
+                            <br><br>
 
-                <div class="dorsal-box">
-                    <div class="dorsal-label">Tu Dorsal Asignado</div>
-                    <div class="dorsal-number">{{ dorsal }}</div>
-                </div>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f1f5f9" align="center">
+                                <tr>
+                                    <td align="left" valign="top" style="padding:20px;">
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Fecha:</b> {{ editionDate }}</font>
+                                        <br><br>
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Hora de salida:</b> 09:00 h (Prueba absoluta)</font>
+                                        <br><br>
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Lugar:</b> {{ editionLocation }}</font>
+                                        <br><br>
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Distancia:</b> 9.735 varas castellanas (8.124 metros)</font>
+                                    </td>
+                                </tr>
+                            </table>
 
-                <p>Recuerda que cada zancada cuenta. Con tu participación estás apoyando directamente a la <strong>Asociación Síndrome X Frágil de Madrid</strong>, ayudando a dar visibilidad y mejorar la vida de muchas familias.</p>
-
-                <ul class="details-list">
-                    <li><strong>Fecha:</strong> {{ editionDate }}</li>
-                    <li><strong>Hora de salida:</strong> 09:00 h (Prueba absoluta)</li>
-                    <li><strong>Lugar:</strong> {{ editionLocation }}</li>
-                    <li><strong>Distancia:</strong> 9.735 varas castellanas (8.124 metros)</li>
-                </ul>
-
-                <p>¡Te deseamos una excelente carrera! Nos vemos muy pronto en la línea de salida para compartir una gran jornada de compañerismo y atletismo popular.</p>
-
-                <p style="margin-bottom: 0;">El equipo de organización,<br><strong>Club Cokalba Running</strong></p>
-            </div>
-
-            <div class="footer">
-                <p>Este correo electrónico fue enviado de forma automática referente a tu inscripción.<br>Ayuntamiento de Coca de Alba • Diputación de Salamanca • Cokalba Running</p>
-                <p><a href="https://cokalba-running.com" target="_blank">cokalba-running.com</a></p>
-            </div>
-        </div>
-    </div>
+                            <br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">¡Te deseamos una excelente carrera! Nos vemos muy pronto en la línea de salida para compartir una gran jornada de compañerismo y atletismo popular.</font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">El equipo de organización,<br><b>Club Cokalba Running</b></font>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" valign="top" bgcolor="#f8fafc" style="padding:25px 30px; border-top:1px solid #e2e8f0;">
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8">Este correo electrónico fue enviado de forma automática referente a tu inscripción.<br>Ayuntamiento de Coca de Alba • Diputación de Salamanca • Cokalba Running</font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8"><a href="https://cokalba-running.com" target="_blank" style="color:#ff5a36; text-decoration:none;"><b>cokalba-running.com</b></a></font>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

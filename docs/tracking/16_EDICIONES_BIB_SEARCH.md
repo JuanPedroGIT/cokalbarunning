@@ -15,6 +15,7 @@ Modificación de la página pública `/ediciones` para:
 3. Opciones disponibles: **Resultados**, **Galería** y, cuando proceda, **Buscar dorsal**.
 4. La búsqueda de dorsales está condicionada por el flag `showBibSearch` de la edición actual.
 5. Al buscar, filtrar runners por nombre (LIKE case-insensitive) y mostrar nombre completo + dorsal.
+6. El término de búsqueda debe tener al menos 4 caracteres, tanto en frontend como en backend.
 
 ---
 
@@ -36,6 +37,12 @@ Modificación de la página pública `/ediciones` para:
 - **Contexto:** ¿Cómo se decide si una edición muestra la búsqueda de dorsal?
 - **Decisión:** Se añade el campo `showBibSearch` a `RaceEdition`. Es `false` por defecto, se activa automáticamente al cargar runners desde el CSV de dorsales y puede editarse manualmente desde el panel de administración.
 - **Impacto:** Nuevo campo en ORM, dominio, DTO, mapper, migración, handlers y panel admin.
+- **Reversible:** Sí.
+
+### DEC-28: Longitud mínima del término de búsqueda
+- **Contexto:** ¿Se debe limitar la longitud mínima del nombre para evitar consultas muy amplias o abuso del endpoint público?
+- **Decisión:** El término de búsqueda debe tener **al menos 4 caracteres**. El frontend deshabilita el botón y muestra un mensaje hasta alcanzar la longitud; el backend rechaza peticiones con menos de 4 caracteres devolviendo 400.
+- **Impacto:** Validación en `RunnerController::search`, ajuste en `EditionsView.vue` y nuevo test funcional.
 - **Reversible:** Sí.
 
 ---
@@ -61,7 +68,7 @@ Modificación de la página pública `/ediciones` para:
 - `src/Infrastructure/Http/Controller/Api/Admin/AdminBibEmailController.php`
   - Activa `showBibSearch = true` de la edición al procesar el envío de dorsales.
 - `src/Infrastructure/Http/Controller/Api/RunnerController.php`
-  - `GET /api/v1/runners` — búsqueda pública por `editionId` y `name`.
+  - `GET /api/v1/runners` — búsqueda pública por `editionId` y `name` (mínimo 4 caracteres).
 - `migrations/Version20260615143450.php`
   - Añade la columna `show_bib_search` a `race_editions`.
 
@@ -74,6 +81,7 @@ Modificación de la página pública `/ediciones` para:
   - Layout cartel derecha / opciones izquierda.
   - Botones Resultados, Galería y Buscar dorsal (solo si `activeEdition.showBibSearch`).
   - Formulario de búsqueda con lista de resultados.
+  - Validación de longitud mínima (4 caracteres) y mensaje de error.
 - `frontend/src/views/admin/AdminEditionsView.vue`
   - Checkbox para editar `Mostrar búsqueda de dorsales`.
 
@@ -83,6 +91,7 @@ Modificación de la página pública `/ediciones` para:
   - Validación de parámetros.
   - Búsqueda por nombre y apellido.
   - Filtrado por edición.
+  - Validación de longitud mínima del término de búsqueda.
 - `backend/tests/Functional/Api/AdminRaceControllerTest.php`
   - Creación y actualización de `showBibSearch`.
 - `backend/tests/Functional/Api/Admin/AdminBibEmailControllerTest.php`
@@ -92,7 +101,7 @@ Modificación de la página pública `/ediciones` para:
 
 ## Verificación
 
-- ✅ Tests backend: 142 tests, 470 assertions.
+- ✅ Tests backend: 143 tests, 472 assertions.
 - ✅ Build frontend verde (`vue-tsc` + Vite).
 
 ---
@@ -102,3 +111,4 @@ Modificación de la página pública `/ediciones` para:
 - La búsqueda es case-insensitive (`LOWER(...) LIKE ...`) pero respeta tildes: buscar "lopez" no encontrará "lópez". Si se requiere búsqueda sin tildes, se puede añadir `unaccent` de PostgreSQL más adelante.
 - El endpoint es público (método GET en `/api/v1`).
 - `showBibSearch` es `false` por defecto; solo la edición actual puede mostrar el buscador y el admin puede desactivarlo manualmente.
+- El término de búsqueda requiere al menos 4 caracteres para reducir resultados parciales y evitar consultas excesivas al endpoint público.

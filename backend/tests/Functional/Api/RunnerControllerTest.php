@@ -51,6 +51,21 @@ final class RunnerControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(400);
     }
 
+    public function testSearchRequiresNameWithMinimumLength(): void
+    {
+        $client = static::createClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $edition = $this->seedEdition($em);
+
+        $client->request('GET', sprintf('/api/v1/runners?editionId=%s&name=Ju', $edition->getId()));
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $client->request('GET', sprintf('/api/v1/runners?editionId=%s&name=Juan', $edition->getId()));
+
+        $this->assertResponseIsSuccessful();
+    }
+
     public function testSearchRunnersByName(): void
     {
         $client = static::createClient();

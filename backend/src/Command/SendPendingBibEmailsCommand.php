@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
 use App\Entity\EmailSendLog as OrmEmailSendLog;
+use App\Infrastructure\Mail\BrevoMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -14,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
 
@@ -26,11 +27,12 @@ final class SendPendingBibEmailsCommand extends Command
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly MailerInterface $mailer,
+        private readonly BrevoMailer $brevoMailer,
         private readonly Environment $twig,
         private readonly RaceEditionRepositoryInterface $raceEditionRepository,
         private readonly string $senderEmail,
         private readonly int $delaySeconds,
+        private readonly ?string $bccEmail = null,
     ) {
         parent::__construct();
     }
@@ -95,7 +97,7 @@ final class SendPendingBibEmailsCommand extends Command
                     : null;
 
                 $editionName = $edition?->name() ?? 'IX Carrera Solidaria "Un Nuevo Impulso"';
-                $editionDate = $edition?->date()?->format('l, d \d\e F \d\e Y') ?? 'Domingo, 5 de julio de 2026';
+                $editionDate = $this->formatEditionDate($edition->date());
                 $editionLocation = $edition?->location() ?? 'Calle Larga, Coca de Alba (Salamanca)';
 
                 $html = $this->twig->render('emails/bib_assigned.html.twig', [
@@ -117,12 +119,16 @@ final class SendPendingBibEmailsCommand extends Command
 
                 $email = (new Email())
                     ->from($this->senderEmail)
-                    ->to($log->getRecipientEmail())
+                    ->to(new Address($log->getRecipientEmail(), $log->getRecipientName()))
                     ->subject(sprintf('Tu dorsal para la carrera - %s', $log->getRecipientName()))
                     ->text($textPlain)
                     ->html($html);
 
-                $this->mailer->send($email);
+                if ($this->bccEmail !== null && $this->bccEmail !== '') {
+                    $email->addBcc(new Address($this->bccEmail, 'Cokalba Running'));
+                }
+
+                $this->brevoMailer->send($email);
 
                 $log->markAsSent();
                 if ($userId !== null && $userId !== '') {
@@ -152,5 +158,38 @@ final class SendPendingBibEmailsCommand extends Command
         $io->success(sprintf('Proceso finalizado. Enviados: %d. Fallidos: %d.', $sent, $failed));
 
         return Command::SUCCESS;
+    }
+
+    private function formatEditionDate(\DateTimeImmutable $date): string
+    {
+        $days = [
+            'Monday' => 'lunes',
+            'Tuesday' => 'martes',
+            'Wednesday' => 'miércoles',
+            'Thursday' => 'jueves',
+            'Friday' => 'viernes',
+            'Saturday' => 'sábado',
+            'Sunday' => 'domingo',
+        ];
+
+        $months = [
+            'January' => 'enero',
+            'February' => 'febrero',
+            'March' => 'marzo',
+            'April' => 'abril',
+            'May' => 'mayo',
+            'June' => 'junio',
+            'July' => 'julio',
+            'August' => 'agosto',
+            'September' => 'septiembre',
+            'October' => 'octubre',
+            'November' => 'noviembre',
+            'December' => 'diciembre',
+        ];
+
+        $dayName = $days[$date->format('l')];
+        $monthName = $months[$date->format('F')];
+
+        return sprintf('%s, %d de %s de %d', $dayName, (int) $date->format('j'), $monthName, (int) $date->format('Y'));
     }
 }

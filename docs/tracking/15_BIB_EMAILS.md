@@ -115,12 +115,16 @@ Nueva funcionalidad en el panel de administración para que el admin pueda:
   - `GET /api/v1/admin/bib-emails` — listado filtrado por `editionId`.
   - `GET /api/v1/admin/bib-emails/sent-counts` — devuelve conteo de envíos por email agrupado por edición (opcional `editionId`).
 - `src/Command/SendPendingBibEmailsCommand.php` — comando para enviar logs `pending`; acepta `--edition-id`, `--delay`, `--limit`, `--user-id`.
+- `src/Infrastructure/Mail/BrevoMailer.php` — envía los emails de dorsales a través de la API REST de Brevo.
 
 #### Plantilla y Mailer
 - `templates/emails/bib_assigned.html.twig`
+- `src/Infrastructure/Mail/BrevoMailer.php` (API REST de Brevo)
 - Variables en `.env.example`:
-  - `MAILER_DSN` (Gmail SMTP con SSL: `smtps://cokalbarunning@gmail.com:PASSWORD@smtp.gmail.com:465`)
+  - `BREVO_API_KEY`
   - `MAILER_SENDER_EMAIL`
+  - `MAILER_SENDER_NAME`
+  - `MAILER_BCC_EMAIL`
   - `BIB_EMAIL_DELAY_SECONDS`
 
 ### Frontend
@@ -137,15 +141,21 @@ Nueva funcionalidad en el panel de administración para que el admin pueda:
 ### Variables de entorno (.env)
 
 ```env
-# Mailer (Gmail SMTP con SSL en puerto 465)
-MAILER_DSN=smtps://cokalbarunning@gmail.com:CONTRASEÑA@smtp.gmail.com:465
+# Mailer
 MAILER_SENDER_EMAIL=cokalbarunning@gmail.com
+MAILER_SENDER_NAME="Cokalba Running"
+
+# Brevo (API v3) - usado para el envio de dorsales
+BREVO_API_KEY=tu_api_key_de_brevo
+
+# BCC para los emails de dorsales
+MAILER_BCC_EMAIL=cokalbarunning@gmail.com
 
 # Delay entre envíos (segundos)
 BIB_EMAIL_DELAY_SECONDS=3
 ```
 
-En desarrollo se puede usar `MAILER_DSN=null://default` para simular envíos sin llegar al destinatario. En tests se fuerza `MAILER_DSN=null://null`.
+En desarrollo se puede usar una API key de sandbox de Brevo. En tests se fuerza `BREVO_API_KEY=test-brevo-key` y `MAILER_DSN=null://null` (este último ya no se usa para dorsales).
 
 ### Envío de emails
 
@@ -248,6 +258,7 @@ El comando escribe su salida en `/var/www/backend/var/log/bib-emails-runner.log`
 - El nombre del CSV se divide en `first_name` (primera palabra) y `last_name` (resto del nombre).
 - El endpoint `/bib-emails/send` únicamente crea registros `pending`; el envío real lo realiza el comando CLI `app:bib-emails:send`.
 - El comando se lanza desde el panel con `nohup` en segundo plano.
+- El envío real se realiza a través de la API REST de Brevo mediante `App\Infrastructure\Mail\BrevoMailer`.
 - El delay entre envíos se controla con `BIB_EMAIL_DELAY_SECONDS`; el comando CLI lo puede sobrescribir con `--delay`.
 - Si el admin pulsa "Enviar" y algunos registros ya están `sent`, se omiten a menos que se marque `force=true`.
 - Se corrigió `AdminClubMemberControllerTest::testCreateMemberWithUserId` para buscar el miembro recién creado por ID y evitar fallos por datos residuales en la BD de test.

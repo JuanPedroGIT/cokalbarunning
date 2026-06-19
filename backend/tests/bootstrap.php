@@ -12,3 +12,7 @@ putenv('MAILER_DSN=null://null');
 $_SERVER['MAILER_DSN'] = $_ENV['MAILER_DSN'] = 'null://null';
 putenv('BIB_EMAIL_DELAY_SECONDS=0');
 $_SERVER['BIB_EMAIL_DELAY_SECONDS'] = $_ENV['BIB_EMAIL_DELAY_SECONDS'] = '0';
+putenv('BREVO_API_KEY=test-brevo-key');
+$_SERVER['BREVO_API_KEY'] = $_ENV['BREVO_API_KEY'] = 'test-brevo-key';
+putenv('MAILER_BCC_EMAIL=bcc@example.com');
+$_SERVER['MAILER_BCC_EMAIL'] = $_ENV['MAILER_BCC_EMAIL'] = 'bcc@example.com';
