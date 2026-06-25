@@ -39,6 +39,9 @@ class Runner
     #[ORM\Column(length: 1, nullable: true)]
     private ?string $gender = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $category = null;
+
     public function getId(): string
     {
         return $this->id;
@@ -140,6 +143,17 @@ class Runner
     public function setGender(?string $gender): static
     {
         $this->gender = $gender;
+        return $this;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?string $category): static
+    {
+        $this->category = $category;
         return $this;
     }
 }

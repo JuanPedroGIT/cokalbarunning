@@ -15,9 +15,9 @@ interface EmailSendLogRepositoryInterface
     /**
      * @return EmailSendLog[]
      */
-    public function findByRaceEditionId(string $raceEditionId): array;
+    public function findByTypeAndRaceEditionId(string $type, ?string $raceEditionId): array;
 
-    public function findByEmailAndBibNumber(string $email, string $bibNumber): ?EmailSendLog;
+    public function findByEmailTypeAndReference(string $email, string $type, ?string $reference): ?EmailSendLog;
 
     public function countSentByEmail(string $email): int;
 

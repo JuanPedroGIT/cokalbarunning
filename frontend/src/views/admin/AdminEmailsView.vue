@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import ImageDropZone from '@/components/ui/ImageDropZone.vue'
 
 interface Edition {
   id: string
@@ -11,9 +12,16 @@ interface Edition {
 }
 
 interface PreviewItem {
-  name: string
+  firstName: string
+  lastName: string
+  fullName: string
   email: string
-  bibNumber: string
+  reference: string | null
+  club: string | null
+  gender: string | null
+  category: string | null
+  shirtSize: string | null
+  birthDate: string | null
   emailValid: boolean
   status: string
   errorMessage: string | null
@@ -23,22 +31,24 @@ interface PreviewItem {
 
 interface LogItem {
   id: string
+  type: string
   raceEditionId: string | null
   recipientEmail: string
   recipientName: string
-  bibNumber: string
+  reference: string | null
   status: string
   errorMessage: string | null
   sentAt: string | null
   sentBy: string | null
   createdAt: string
+  metadata: Record<string, unknown> | null
 }
 
 interface LogGroup {
   raceEditionId: string | null
   recipientEmail: string
   recipientName: string
-  bibNumber: string
+  reference: string | null
   count: number
   lastSentAt: string | null
   lastStatus: string
@@ -55,6 +65,18 @@ interface AdminUser {
   roles: string[]
 }
 
+interface EmailConfigData {
+  id?: string
+  subject: string
+  title: string
+  description: string
+  prize?: string
+  drawDate?: string
+  prizeImageUrl?: string
+}
+
+type EmailType = 'last_instructions' | 'raffle'
+
 const router = useRouter()
 const fileInput = ref<HTMLInputElement | null>(null)
 const edition = ref<Edition | null>(null)
@@ -69,6 +91,18 @@ const message = ref<{ type: 'success' | 'error'; text: string } | null>(null)
 const users = ref<AdminUser[]>([])
 const selectedGroupKeys = ref<Set<string>>(new Set())
 const sentCounts = ref<Map<string, number>>(new Map())
+const activeTab = ref<EmailType>('raffle')
+
+const emailConfig = ref<EmailConfigData>({
+  subject: '',
+  title: '',
+  description: '',
+  prize: '',
+  drawDate: '',
+  prizeImageUrl: '',
+})
+const emailConfigId = ref<string | null>(null)
+const emailConfigSaving = ref(false)
 
 const userMap = computed(() => {
   const map = new Map<string, AdminUser>()
@@ -87,7 +121,7 @@ const stats = computed(() => {
 const emailSentCounts = computed(() => sentCounts.value)
 
 function groupKey(group: LogGroup): string {
-  return `${group.raceEditionId ?? ''}|${group.recipientEmail}|${group.recipientName}|${group.bibNumber}`
+  return `${group.raceEditionId ?? ''}|${group.recipientEmail}|${group.recipientName}|${group.reference ?? ''}`
 }
 
 const groupedLogs = computed(() => {
@@ -98,7 +132,7 @@ const groupedLogs = computed(() => {
       raceEditionId: log.raceEditionId ?? null,
       recipientEmail: log.recipientEmail,
       recipientName: log.recipientName,
-      bibNumber: log.bibNumber,
+      reference: log.reference ?? null,
       count: 0,
       lastSentAt: null,
       lastStatus: log.status,
@@ -165,16 +199,23 @@ const duplicateEmails = computed(() => {
   return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([email]) => email)
 })
 
-const duplicateBibNumbers = computed(() => {
-  const counts = new Map<string, number>()
-  items.value.forEach((i) => counts.set(i.bibNumber, (counts.get(i.bibNumber) || 0) + 1))
-  return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([bib]) => bib)
-})
 const allSelected = computed({
   get: () => validItems.value.length > 0 && validItems.value.every((i) => i.selected),
   set: (value: boolean) => {
     validItems.value.forEach((i) => (i.selected = value))
   },
+})
+
+const referenceLabel = computed(() => {
+  const labels: Record<EmailType, string> = {
+    last_instructions: 'Dorsal',
+    raffle: 'Dorsal',
+  }
+  return labels[activeTab.value]
+})
+
+const csvFormatHint = computed(() => {
+  return 'Dorsal;Nombre;Apellidos;Sexo;email;...'
 })
 
 function statusLabel(status: string): string {
@@ -197,6 +238,14 @@ function statusClass(status: string): string {
   return map[status] ?? 'bg-gray-500/10 text-gray-400'
 }
 
+function setTab(tab: EmailType) {
+  activeTab.value = tab
+  selectedGroupKeys.value = new Set()
+  fetchLogs()
+  fetchSentCounts()
+  loadEmailConfig()
+}
+
 async function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
@@ -212,7 +261,7 @@ async function handleFileChange(event: Event) {
   }
 
   try {
-    const res = await api.post('/admin/bib-emails/preview', formData)
+    const res = await api.post(`/admin/emails/${activeTab.value}/preview`, formData)
     edition.value = res.data.data.edition
     if (edition.value && !selectedEditionId.value) {
       selectedEditionId.value = edition.value.id
@@ -221,6 +270,11 @@ async function handleFileChange(event: Event) {
       ...item,
       selected: item.emailValid && item.status !== 'sent',
     }))
+    const runnersCreated = res.data.data.runnersCreated ?? 0
+    message.value = {
+      type: 'success',
+      text: `${items.value.length} fila(s) procesadas. ${runnersCreated} runner(s) creado(s)/actualizado(s).`,
+    }
     await fetchLogs()
     await fetchSentCounts()
   } catch (err: any) {
@@ -259,7 +313,7 @@ async function fetchUsers() {
 async function fetchLogs() {
   try {
     const params = selectedEditionId.value ? { editionId: selectedEditionId.value } : {}
-    const res = await api.get('/admin/bib-emails', { params })
+    const res = await api.get(`/admin/emails/${activeTab.value}`, { params })
     logs.value = res.data.data
   } catch {
     // Silencioso: los logs son informativos
@@ -269,7 +323,7 @@ async function fetchLogs() {
 async function fetchSentCounts() {
   try {
     const params = selectedEditionId.value ? { editionId: selectedEditionId.value } : {}
-    const res = await api.get('/admin/bib-emails/sent-counts', { params })
+    const res = await api.get(`/admin/emails/${activeTab.value}/sent-counts`, { params })
     const entries = res.data.data as Array<{ email: string; count: number }>
     sentCounts.value = new Map(entries.map((e) => [e.email, e.count]))
   } catch {
@@ -279,6 +333,103 @@ async function fetchSentCounts() {
 
 function onEditionChange() {
   fetchLogs()
+  fetchSentCounts()
+  loadEmailConfig()
+}
+
+async function loadEmailConfig() {
+  if (!selectedEditionId.value) return
+  try {
+    const res = await api.get(`/admin/emails/${activeTab.value}/config`, {
+      params: { editionId: selectedEditionId.value },
+    })
+    const data = res.data.data
+    if (data) {
+      emailConfigId.value = data.id
+      emailConfig.value = {
+        subject: data.subject ?? '',
+        title: data.title ?? '',
+        description: data.description ?? '',
+        prize: data.prize ?? '',
+        drawDate: data.drawDate ?? '',
+        prizeImageUrl: data.prizeImageUrl ?? '',
+      }
+    } else {
+      emailConfigId.value = null
+      emailConfig.value = { subject: '', title: '', description: '', prize: '', drawDate: '', prizeImageUrl: '' }
+    }
+  } catch {
+    // Silencioso: la configuracion es opcional
+  }
+}
+
+async function saveEmailConfig() {
+  if (!selectedEditionId.value) {
+    message.value = { type: 'error', text: 'Selecciona una edicion antes de guardar la configuracion' }
+    return
+  }
+
+  emailConfigSaving.value = true
+  message.value = null
+
+  const typeLabel = activeTab.value === 'raffle' ? 'del sorteo' : 'de ultimas indicaciones'
+
+  try {
+    const payload: any = {
+      editionId: selectedEditionId.value,
+      subject: emailConfig.value.subject,
+      title: emailConfig.value.title,
+      description: emailConfig.value.description,
+    }
+    payload.prizeImageUrl = emailConfig.value.prizeImageUrl
+    if (activeTab.value === 'raffle') {
+      payload.prize = emailConfig.value.prize
+      payload.drawDate = emailConfig.value.drawDate
+    }
+    if (emailConfigId.value) {
+      await api.put(`/admin/emails/${activeTab.value}/config/${emailConfigId.value}`, payload)
+      message.value = { type: 'success', text: `Configuracion ${typeLabel} actualizada.` }
+    } else {
+      const res = await api.post(`/admin/emails/${activeTab.value}/config`, payload)
+      emailConfigId.value = res.data.data.id
+      message.value = { type: 'success', text: `Configuracion ${typeLabel} guardada.` }
+    }
+  } catch (err: any) {
+    message.value = {
+      type: 'error',
+      text: err.response?.data?.error ?? `Error al guardar la configuracion ${typeLabel}`,
+    }
+  } finally {
+    emailConfigSaving.value = false
+  }
+}
+
+async function uploadPrizeImage(file: File) {
+  if (!selectedEditionId.value) {
+    message.value = { type: 'error', text: 'Selecciona una edicion antes de subir la imagen' }
+    return
+  }
+
+  emailConfigSaving.value = true
+  message.value = null
+
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('editionId', selectedEditionId.value)
+
+  try {
+    const res = await api.post(`/admin/emails/${activeTab.value}/prize-image`, formData)
+    emailConfig.value.prizeImageUrl = res.data.data.prizeImageUrl
+    emailConfigId.value = res.data.data.id
+    message.value = { type: 'success', text: 'Imagen del premio subida correctamente.' }
+  } catch (err: any) {
+    message.value = {
+      type: 'error',
+      text: err.response?.data?.error ?? 'Error al subir la imagen del premio',
+    }
+  } finally {
+    emailConfigSaving.value = false
+  }
 }
 
 async function sendEmails() {
@@ -290,20 +441,33 @@ async function sendEmails() {
   try {
     const payload: any = {
       force: forceResend.value,
-      items: selectedItems.value.map(({ name, email, bibNumber }) => ({
-        name,
+      items: selectedItems.value.map(({ firstName, lastName, fullName, email, reference, club, gender, category, birthDate }) => ({
+        firstName,
+        lastName,
+        fullName,
         email,
-        bibNumber,
+        reference,
+        club,
+        gender,
+        category,
+        birthDate,
       })),
     }
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
     }
-    const res = await api.post('/admin/bib-emails/send', payload)
-    const { queued, skipped } = res.data.data
+    if (activeTab.value === 'raffle') {
+      payload.metadata = { ...emailConfig.value }
+    }
+    const res = await api.post(`/admin/emails/${activeTab.value}/send`, payload)
+    const { queued, skipped, queuedInstructions } = res.data.data
+    const baseText = `${queued} correo(s) de ${activeTab.value === 'raffle' ? 'sorteo' : 'indicaciones'} marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`
+    const extraText = activeTab.value === 'raffle' && queuedInstructions > 0
+      ? ` Tambien se han encolado ${queuedInstructions} correo(s) de ultimas indicaciones.`
+      : ''
     message.value = {
       type: 'success',
-      text: `${queued} correo(s) marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`,
+      text: baseText + extraText,
     }
     await fetchLogs()
     await fetchSentCounts()
@@ -327,15 +491,20 @@ async function resendLogs(groupsToResend: LogGroup[]) {
     const payload: any = {
       force: true,
       items: groupsToResend.map((group) => ({
-        name: group.recipientName,
+        firstName: '',
+        lastName: '',
+        fullName: group.recipientName,
         email: group.recipientEmail,
-        bibNumber: group.bibNumber,
+        reference: group.reference,
       })),
     }
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
     }
-    const res = await api.post('/admin/bib-emails/send', payload)
+    if (activeTab.value === 'raffle') {
+      payload.metadata = { ...emailConfig.value }
+    }
+    const res = await api.post(`/admin/emails/${activeTab.value}/send`, payload)
     const { queued, skipped } = res.data.data
     message.value = {
       type: 'success',
@@ -363,11 +532,16 @@ async function runPendingEmails() {
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
     }
-    const res = await api.post('/admin/bib-emails/run', payload)
+    const res = await api.post(`/admin/emails/${activeTab.value}/run`, payload)
     message.value = {
       type: 'success',
       text: res.data.data.message,
     }
+    // Refrescar logs y conteos tras unos segundos para reflejar el envio en segundo plano.
+    setTimeout(async () => {
+      await fetchLogs()
+      await fetchSentCounts()
+    }, 3000)
   } catch (err: any) {
     message.value = {
       type: 'error',
@@ -382,6 +556,7 @@ fetchEditions().then(() => {
   fetchLogs()
   fetchSentCounts()
   fetchUsers()
+  loadEmailConfig()
 })
 </script>
 
@@ -394,29 +569,17 @@ fetchEditions().then(() => {
       >
         ← Volver
       </button>
-      <h1 class="text-xl font-bold uppercase tracking-wider">Envio de Dorsales por Email</h1>
+      <h1 class="text-xl font-bold uppercase tracking-wider">Envio de Correos</h1>
     </header>
 
     <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-      <div
-        v-if="message"
-        :class="[
-          'rounded-lg border px-4 py-3 text-sm',
-          message.type === 'success'
-            ? 'bg-green-500/10 border-green-500/20 text-green-400'
-            : 'bg-red-500/10 border-red-500/20 text-red-400',
-        ]"
-      >
-        {{ message.text }}
-      </div>
-
       <!-- Upload -->
       <div class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 class="text-lg font-semibold text-naranja">1. Seleccionar edicion y subir CSV</h2>
+            <h2 class="text-lg font-semibold text-naranja">Seleccionar edicion y subir CSV de inscritos</h2>
             <p class="text-sm text-gray-400">
-              Formato: <code class="bg-[#0A0A0A] px-1.5 py-0.5 rounded">nombre;email;dorsal</code>
+              Formato: <code class="bg-[#0A0A0A] px-1.5 py-0.5 rounded">{{ csvFormatHint }}</code>
             </p>
           </div>
         </div>
@@ -460,6 +623,133 @@ fetchEditions().then(() => {
         </div>
       </div>
 
+      <!-- Tabs -->
+      <div class="flex gap-2 border-b border-white/5">
+        <button
+          @click="setTab('raffle')"
+          :class="[
+            'px-4 py-2 text-sm font-medium transition cursor-pointer border-b-2',
+            activeTab === 'raffle'
+              ? 'border-[#FF5C00] text-[#FF5C00]'
+              : 'border-transparent text-gray-400 hover:text-white',
+          ]"
+        >
+          1. Sorteo
+        </button>
+        <button
+          @click="setTab('last_instructions')"
+          :class="[
+            'px-4 py-2 text-sm font-medium transition cursor-pointer border-b-2',
+            activeTab === 'last_instructions'
+              ? 'border-[#FF5C00] text-[#FF5C00]'
+              : 'border-transparent text-gray-400 hover:text-white',
+          ]"
+        >
+          2. Últimas Indicaciones
+        </button>
+      </div>
+
+      <div
+        v-if="message"
+        :class="[
+          'rounded-lg border px-4 py-3 text-sm',
+          message.type === 'success'
+            ? 'bg-green-500/10 border-green-500/20 text-green-400'
+            : 'bg-red-500/10 border-red-500/20 text-red-400',
+        ]"
+      >
+        {{ message.text }}
+      </div>
+
+      <!-- Email config -->
+      <div
+        class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4"
+      >
+        <h2 class="text-lg font-semibold text-naranja">
+          {{ activeTab === 'raffle' ? 'Configuración del sorteo' : 'Configuración de últimas indicaciones' }}
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-400 mb-1">Asunto del correo</label>
+            <input
+              v-model="emailConfig.subject"
+              type="text"
+              :placeholder="activeTab === 'raffle' ? 'Ej: Sorteo {title} - {prize}' : 'Ej: Ultimas indicaciones - {editionName}'"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
+            <p class="text-xs text-gray-500 mt-1">Variables disponibles: {title}, {drawDate}, {prize}, {description}, {editionName}, {reference}</p>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Título</label>
+            <input
+              v-model="emailConfig.title"
+              type="text"
+              :placeholder="activeTab === 'raffle' ? 'Ej: Sorteo de la camiseta' : 'Ej: Instrucciones para la carrera'"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            />
+          </div>
+          <template v-if="activeTab === 'raffle'">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Fecha del sorteo</label>
+              <input
+                v-model="emailConfig.drawDate"
+                type="text"
+                placeholder="Ej: 5 de julio de 2026"
+                class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Premio</label>
+              <input
+                v-model="emailConfig.prize"
+                type="text"
+                placeholder="Ej: Camiseta oficial de la carrera"
+                class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+              />
+            </div>
+          </template>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-400 mb-1">
+              {{ activeTab === 'raffle' ? 'Descripción / bases' : 'Descripción / contenido' }}
+            </label>
+            <textarea
+              v-model="emailConfig.description"
+              rows="3"
+              :placeholder="activeTab === 'raffle' ? 'Describe las bases del sorteo...' : 'Describe el contenido de las ultimas indicaciones...'"
+              class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition"
+            ></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-400 mb-1">
+              {{ activeTab === 'raffle' ? 'Foto del premio' : 'Foto' }}
+            </label>
+            <div class="max-w-[240px]">
+              <ImageDropZone
+                :label="emailConfigSaving ? 'Subiendo...' : (activeTab === 'raffle' ? 'Arrastra la foto del premio aqui o haz clic' : 'Arrastra la foto aqui o haz clic')"
+                :selected-label="'Arrastra otra imagen o haz clic para cambiar'"
+                :image-url="emailConfig.prizeImageUrl || undefined"
+                accept="image/*"
+                square
+                @select="uploadPrizeImage"
+                @clear="emailConfig.prizeImageUrl = ''"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            @click="saveEmailConfig"
+            :disabled="emailConfigSaving"
+            class="bg-[#FF5C00] text-white px-5 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 cursor-pointer"
+          >
+            {{ emailConfigSaving ? 'Guardando...' : (emailConfigId ? 'Actualizar configuracion' : 'Guardar configuracion') }}
+          </button>
+          <span v-if="emailConfigId" class="text-xs text-green-400">
+            Configuracion guardada
+          </span>
+        </div>
+      </div>
+
       <!-- Preview -->
       <div v-if="items.length > 0" class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -477,7 +767,7 @@ fetchEditions().then(() => {
                 <th class="p-2 md:p-3 font-medium w-10"></th>
                 <th class="p-2 md:p-3 font-medium">Nombre</th>
                 <th class="p-2 md:p-3 font-medium">Email</th>
-                <th class="p-2 md:p-3 font-medium">Dorsal</th>
+                <th class="p-2 md:p-3 font-medium">{{ referenceLabel }}</th>
                 <th class="p-2 md:p-3 font-medium">Envios previos</th>
                 <th class="p-2 md:p-3 font-medium">Estado anterior</th>
               </tr>
@@ -485,7 +775,7 @@ fetchEditions().then(() => {
             <tbody>
               <tr
                 v-for="item in items"
-                :key="`${item.email}-${item.bibNumber}`"
+                :key="`${item.email}-${item.reference ?? ''}`"
                 :class="[
                   'border-t border-white/5 transition',
                   !item.emailValid ? 'opacity-60 bg-red-500/5' : 'hover:bg-[#1a1a1a]',
@@ -500,9 +790,9 @@ fetchEditions().then(() => {
                   />
                   <span v-else class="text-red-400 text-xs">Invalido</span>
                 </td>
-                <td class="p-2 md:p-3">{{ item.name }}</td>
+                <td class="p-2 md:p-3">{{ item.fullName }}</td>
                 <td class="p-2 md:p-3">{{ item.email }}</td>
-                <td class="p-2 md:p-3 font-mono">{{ item.bibNumber }}</td>
+                <td class="p-2 md:p-3 font-mono">{{ item.reference ?? '—' }}</td>
                 <td class="p-2 md:p-3 text-gray-400">
                   {{ emailSentCounts.get(item.email) ?? 0 }}
                 </td>
@@ -524,9 +814,6 @@ fetchEditions().then(() => {
         </div>
         <div v-if="duplicateEmails.length > 0" class="text-sm text-amber-400">
           Emails repetidos: {{ duplicateEmails.join(', ') }}.
-        </div>
-        <div v-if="duplicateBibNumbers.length > 0" class="text-sm text-amber-400">
-          Dorsales repetidos: {{ duplicateBibNumbers.join(', ') }}.
         </div>
 
         <!-- Actions -->
@@ -583,7 +870,7 @@ fetchEditions().then(() => {
                 <th class="p-2 md:p-3 font-medium w-10"></th>
                 <th class="p-2 md:p-3 font-medium">Nombre</th>
                 <th class="p-2 md:p-3 font-medium">Email</th>
-                <th class="p-2 md:p-3 font-medium">Dorsal</th>
+                <th class="p-2 md:p-3 font-medium">{{ referenceLabel }}</th>
                 <th class="p-2 md:p-3 font-medium">Estado</th>
                 <th class="p-2 md:p-3 font-medium">Enviado</th>
                 <th class="p-2 md:p-3 font-medium">Envios</th>
@@ -603,7 +890,7 @@ fetchEditions().then(() => {
                 </td>
                 <td class="p-2 md:p-3">{{ group.recipientName }}</td>
                 <td class="p-2 md:p-3">{{ group.recipientEmail }}</td>
-                <td class="p-2 md:p-3 font-mono">{{ group.bibNumber }}</td>
+                <td class="p-2 md:p-3 font-mono">{{ group.reference ?? '—' }}</td>
                 <td class="p-2 md:p-3">
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"

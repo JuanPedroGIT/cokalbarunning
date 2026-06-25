@@ -22,9 +22,7 @@ final class GetEmailSendLogsQueryHandler
      */
     public function __invoke(GetEmailSendLogsQuery $query): array
     {
-        $logs = $query->raceEditionId !== null
-            ? $this->repository->findByRaceEditionId($query->raceEditionId)
-            : $this->repository->findAll();
+        $logs = $this->repository->findByTypeAndRaceEditionId($query->type, $query->raceEditionId);
 
         return array_map(
             fn ($log) => EmailSendLogResponseDto::fromDomain($log),

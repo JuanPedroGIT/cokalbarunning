@@ -18,6 +18,7 @@ final class Runner
         private ?string $club = null,
         private ?DateTimeImmutable $birthDate = null,
         private ?string $gender = null,
+        private ?string $category = null,
     ) {
     }
 
@@ -71,6 +72,11 @@ final class Runner
         return $this->gender;
     }
 
+    public function category(): ?string
+    {
+        return $this->category;
+    }
+
     public function ageAt(DateTimeImmutable $date): ?int
     {
         if ($this->birthDate === null) {
@@ -80,7 +86,7 @@ final class Runner
         return $date->diff($this->birthDate)->y;
     }
 
-    public function update(string $firstName, string $lastName, ?string $email, ?string $club, ?DateTimeImmutable $birthDate, ?string $gender): void
+    public function update(string $firstName, string $lastName, ?string $email, ?string $club, ?DateTimeImmutable $birthDate, ?string $gender, ?string $category): void
     {
         $this->firstName = $firstName;
         $this->lastName = $lastName;
@@ -88,6 +94,7 @@ final class Runner
         $this->club = $club;
         $this->birthDate = $birthDate;
         $this->gender = $gender;
+        $this->category = $category;
     }
 
     public function assignEditionAndBib(string $raceEditionId, string $bibNumber): void

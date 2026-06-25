@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Domain\Notification\ValueObject\EmailType;
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
 use App\Entity\EmailSendLog as OrmEmailSendLog;
+use App\Repository\EmailConfigRepository;
 use App\Infrastructure\Mail\BrevoMailer;
+use App\Infrastructure\Mail\EmailTemplateResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -20,16 +23,18 @@ use Symfony\Component\Mime\Email;
 use Twig\Environment;
 
 #[AsCommand(
-    name: 'app:bib-emails:send',
-    description: 'Envia los emails de dorsales pendientes',
+    name: 'app:emails:send',
+    description: 'Envia los emails pendientes por tipo',
 )]
-final class SendPendingBibEmailsCommand extends Command
+final class SendPendingEmailsCommand extends Command
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly BrevoMailer $brevoMailer,
         private readonly Environment $twig,
+        private readonly BrevoMailer $brevoMailer,
         private readonly RaceEditionRepositoryInterface $raceEditionRepository,
+        private readonly EmailConfigRepository $emailConfigRepository,
+        private readonly EmailTemplateResolver $templateResolver,
         private readonly string $senderEmail,
         private readonly int $delaySeconds,
         private readonly ?string $bccEmail = null,
@@ -40,6 +45,7 @@ final class SendPendingBibEmailsCommand extends Command
     protected function configure(): void
     {
         $this
+            ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Tipo de email: bib, raffle, last_instructions')
             ->addOption('edition-id', null, InputOption::VALUE_REQUIRED, 'UUID de la edicion a filtrar')
             ->addOption('delay', null, InputOption::VALUE_REQUIRED, 'Segundos de espera entre envios', $this->delaySeconds)
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximo de emails a enviar', 0)
@@ -50,20 +56,32 @@ final class SendPendingBibEmailsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        $type = $input->getOption('type');
+        if (!\is_string($type) || $type === '') {
+            $io->error('Debes indicar el tipo de email con --type.');
+
+            return Command::FAILURE;
+        }
+
+        try {
+            new EmailType($type);
+        } catch (\InvalidArgumentException $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
+
         $editionId = $input->getOption('edition-id');
         $delay = (int) $input->getOption('delay');
         $limit = (int) $input->getOption('limit');
         $userId = $input->getOption('user-id');
 
-        $criteria = ['status' => 'pending'];
-        if ($editionId !== null && $editionId !== '') {
-            $criteria['raceEditionId'] = $editionId;
-        }
-
-        $repository = $this->entityManager->getRepository(OrmEmailSendLog::class);
-        $queryBuilder = $repository->createQueryBuilder('l')
+        $queryBuilder = $this->entityManager->getRepository(OrmEmailSendLog::class)
+            ->createQueryBuilder('l')
             ->where('l.status = :status')
-            ->setParameter('status', 'pending');
+            ->andWhere('l.type = :type')
+            ->setParameter('status', 'pending')
+            ->setParameter('type', $type);
 
         if ($editionId !== null && $editionId !== '') {
             $queryBuilder
@@ -84,12 +102,14 @@ final class SendPendingBibEmailsCommand extends Command
         }
 
         $total = \count($logs);
-        $io->info(sprintf('Enviando %d email(s)...', $total));
+        $io->info(sprintf('Enviando %d email(s) de tipo "%s"...', $total, $type));
 
         $sent = 0;
         $failed = 0;
 
-        /** @var EmailSendLog $log */
+        $templateConfig = $this->templateResolver->resolve($type);
+
+        /** @var OrmEmailSendLog $log */
         foreach ($logs as $index => $log) {
             try {
                 $edition = $log->getRaceEditionId() !== null
@@ -97,31 +117,36 @@ final class SendPendingBibEmailsCommand extends Command
                     : null;
 
                 $editionName = $edition?->name() ?? 'IX Carrera Solidaria "Un Nuevo Impulso"';
-                $editionDate = $this->formatEditionDate($edition->date());
+                $editionDate = $edition !== null ? $this->formatEditionDate($edition->date()) : null;
                 $editionLocation = $edition?->location() ?? 'Calle Larga, Coca de Alba (Salamanca)';
 
-                $html = $this->twig->render('emails/bib_assigned.html.twig', [
+                $metadata = $this->resolveMetadata($log, $type);
+
+                $templateVars = [
                     'nombre' => $log->getRecipientName(),
-                    'dorsal' => $log->getBibNumber(),
+                    'firstName' => $this->extractFirstName($log->getRecipientName()),
+                    'lastName' => $this->extractLastName($log->getRecipientName()),
                     'editionName' => $editionName,
                     'editionDate' => $editionDate,
                     'editionLocation' => $editionLocation,
-                ]);
+                    'dorsal' => $log->getReference(),
+                    'reference' => $log->getReference(),
+                    'metadata' => $metadata,
+                ];
 
-                $textPlain = sprintf(
-                    "¡Hola %s!\n\nTu dorsal asignado es: %s\n\nEdición: %s\nFecha: %s\nLugar: %s\n\nGracias por participar.",
-                    $log->getRecipientName(),
-                    $log->getBibNumber(),
-                    $editionName,
-                    $editionDate,
-                    $editionLocation,
-                );
+                if ($type === EmailType::BIB) {
+                    $templateVars['dorsal'] = $log->getReference();
+                }
+
+                $html = $this->twig->render($templateConfig['template'], $templateVars);
+
+                $subjectTemplate = !empty($metadata['subject']) ? $metadata['subject'] : $templateConfig['subject'];
+                $subject = $this->renderSubject($subjectTemplate, $templateVars, $metadata);
 
                 $email = (new Email())
                     ->from($this->senderEmail)
                     ->to(new Address($log->getRecipientEmail(), $log->getRecipientName()))
-                    ->subject(sprintf('Tu dorsal para la carrera - %s', $log->getRecipientName()))
-                    ->text($textPlain)
+                    ->subject($subject)
                     ->html($html);
 
                 if ($this->bccEmail !== null && $this->bccEmail !== '') {
@@ -158,6 +183,106 @@ final class SendPendingBibEmailsCommand extends Command
         $io->success(sprintf('Proceso finalizado. Enviados: %d. Fallidos: %d.', $sent, $failed));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveMetadata(OrmEmailSendLog $log, string $type): array
+    {
+        $logMetadata = $log->getMetadata() ?? [];
+        if ($logMetadata !== []) {
+            return $logMetadata;
+        }
+
+        $raceEditionId = $log->getRaceEditionId();
+        if ($raceEditionId === null || $raceEditionId === '') {
+            return [];
+        }
+
+        $config = $this->emailConfigRepository->findByRaceEditionIdAndType($raceEditionId, $type);
+        if ($config === null) {
+            return [];
+        }
+
+        $data = [
+            'subject' => $config->getSubject(),
+            'title' => $config->getTitle(),
+            'description' => $config->getDescription(),
+            'prizeImageUrl' => $config->getPrizeImageUrl(),
+        ];
+
+        if ($type === EmailType::RAFFLE) {
+            $data['prize'] = $config->getPrize();
+            $data['drawDate'] = $config->getDrawDate();
+        }
+
+        return $data;
+    }
+
+    private function renderSubject(string $template, array $vars, array $metadata = []): string
+    {
+        $subject = $template;
+
+        foreach (['title', 'drawDate', 'prize', 'description'] as $key) {
+            $value = $metadata[$key] ?? null;
+            if (\is_string($value) || \is_numeric($value)) {
+                $subject = str_replace('{' . $key . '}', (string) $value, $subject);
+            }
+        }
+
+        $flatVars = $this->flattenVars($vars);
+        foreach ($flatVars as $key => $value) {
+            if (\is_string($value) || \is_numeric($value)) {
+                $subject = str_replace('{' . $key . '}', (string) $value, $subject);
+            }
+        }
+
+        return $subject;
+    }
+
+    /**
+     * @param array<string, mixed> $vars
+     *
+     * @return array<string, mixed>
+     */
+    private function flattenVars(array $vars, string $prefix = ''): array
+    {
+        $result = [];
+        foreach ($vars as $key => $value) {
+            $fullKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
+            if (\is_array($value)) {
+                $result = array_merge($result, $this->flattenVars($value, $fullKey));
+            } else {
+                $result[$fullKey] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    private function extractFirstName(string $fullName): string
+    {
+        $trimmed = trim($fullName);
+        $spacePos = strpos($trimmed, ' ');
+
+        if ($spacePos === false) {
+            return $trimmed;
+        }
+
+        return substr($trimmed, 0, $spacePos);
+    }
+
+    private function extractLastName(string $fullName): string
+    {
+        $trimmed = trim($fullName);
+        $spacePos = strpos($trimmed, ' ');
+
+        if ($spacePos === false) {
+            return '';
+        }
+
+        return trim(substr($trimmed, $spacePos + 1));
     }
 
     private function formatEditionDate(\DateTimeImmutable $date): string

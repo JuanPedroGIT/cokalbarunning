@@ -21,10 +21,13 @@ COPY composer.json composer.lock symfony.lock ./
 RUN composer install --no-interaction --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize
-RUN mkdir -p public/uploads var && chmod -R 777 public/uploads var
+RUN mkdir -p public/uploads var/cache var/log \
+    && chmod -R 775 public/uploads var \
+    && chown -R www-data:www-data public/uploads var
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV APP_ENV=dev
+USER www-data
 EXPOSE 9000
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]
@@ -36,9 +39,12 @@ COPY composer.json composer.lock symfony.lock ./
 RUN composer install --no-dev --no-interaction --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize --classmap-authoritative \
-    && mkdir -p public/uploads var && chmod -R 777 public/uploads var
+    && mkdir -p public/uploads var/cache var/log \
+    && chmod -R 775 public/uploads var \
+    && chown -R www-data:www-data public/uploads var
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER www-data
 EXPOSE 9000
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

@@ -29,7 +29,7 @@ final class RunnerControllerTest extends WebTestCase
         return $edition;
     }
 
-    private function seedRunner(EntityManagerInterface $em, string $editionId, string $firstName, string $lastName, string $email, string $bibNumber): void
+    private function seedRunner(EntityManagerInterface $em, string $editionId, string $firstName, string $lastName, string $email, string $bibNumber, ?string $club = null, ?string $gender = null, ?string $category = null): void
     {
         $runner = new Runner();
         $runner->setId(Uuid::uuid4()->toString());
@@ -38,6 +38,9 @@ final class RunnerControllerTest extends WebTestCase
         $runner->setEmail($email);
         $runner->setRaceEditionId($editionId);
         $runner->setBibNumber($bibNumber);
+        $runner->setClub($club);
+        $runner->setGender($gender);
+        $runner->setCategory($category);
 
         $em->persist($runner);
         $em->flush();
@@ -129,5 +132,24 @@ final class RunnerControllerTest extends WebTestCase
 
         $this->assertCount(1, $data['data']);
         $this->assertSame('001', $data['data'][0]['bibNumber']);
+    }
+
+    public function testSearchIncludesClubGenderAndCategory(): void
+    {
+        $client = static::createClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $edition = $this->seedEdition($em);
+
+        $this->seedRunner($em, $edition->getId(), 'Juan', 'Pérez', 'juan@example.com', '001', 'Cokalba Running', 'M', 'VETERANO A');
+
+        $client->request('GET', sprintf('/api/v1/runners?editionId=%s&name=juan', $edition->getId()));
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertCount(1, $data['data']);
+        $this->assertSame('Cokalba Running', $data['data'][0]['club']);
+        $this->assertSame('M', $data['data'][0]['gender']);
+        $this->assertSame('VETERANO A', $data['data'][0]['category']);
     }
 }

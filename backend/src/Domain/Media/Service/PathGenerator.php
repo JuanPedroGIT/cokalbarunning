@@ -66,4 +66,9 @@ final class PathGenerator
     {
         return self::CLUB . '/blog/' . \bin2hex(\random_bytes(16)) . ".$ext";
     }
+
+    public function emailImagePath(string $type, string $ext): string
+    {
+        return self::CLUB . '/' . $type . '/' . \bin2hex(\random_bytes(16)) . ".$ext";
+    }
 }

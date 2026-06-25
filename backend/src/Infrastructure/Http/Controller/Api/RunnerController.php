@@ -58,6 +58,9 @@ class RunnerController extends AbstractController
                 'lastName' => $runner->getLastName(),
                 'fullName' => trim($runner->getFirstName() . ' ' . $runner->getLastName()),
                 'bibNumber' => $runner->getBibNumber(),
+                'club' => $runner->getClub(),
+                'gender' => $runner->getGender(),
+                'category' => $runner->getCategory(),
             ];
         }, $runners);
 

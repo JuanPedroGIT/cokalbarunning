@@ -7,6 +7,7 @@ namespace App\Application\Notification\Query;
 final readonly class GetEmailSendLogsQuery
 {
     public function __construct(
+        public string $type = 'bib',
         public ?string $raceEditionId = null,
     ) {
     }

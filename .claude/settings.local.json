@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/juanp/Documents/apps/**)",
+      "Bash(grep -r \"RaffleConfig\\\\|raffleConfig\\\\|raffle_config\" backend/src/ backend/tests/ frontend/src/)"
+    ]
+  }
+}

@@ -92,7 +92,8 @@ final class AdminRaceControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(201);
 
         $em = static::getContainer()->get(EntityManagerInterface::class);
-        $edition = $em->getRepository(\App\Entity\RaceEdition::class)->findOneBy(['year' => 2028]);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $edition = $em->getRepository(\App\Entity\RaceEdition::class)->find($data['data']['id']);
         $this->assertNotNull($edition);
         $this->assertTrue($edition->isShowBibSearch());
     }

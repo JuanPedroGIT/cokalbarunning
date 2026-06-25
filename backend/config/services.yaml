@@ -99,9 +99,8 @@ services:
             $senderEmail: '%env(MAILER_SENDER_EMAIL)%'
             $senderName: '%env(MAILER_SENDER_NAME)%'
 
-    App\Command\SendPendingBibEmailsCommand:
+    App\Command\SendPendingEmailsCommand:
         arguments:
-            $brevoMailer: '@App\Infrastructure\Mail\BrevoMailer'
             $senderEmail: '%env(MAILER_SENDER_EMAIL)%'
             $delaySeconds: '%env(int:BIB_EMAIL_DELAY_SECONDS)%'
             $bccEmail: '%env(MAILER_BCC_EMAIL)%'

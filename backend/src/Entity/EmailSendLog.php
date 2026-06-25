@@ -12,11 +12,15 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['race_edition_id'], name: 'idx_email_send_log_edition')]
 #[ORM\Index(columns: ['recipient_email'], name: 'idx_email_send_log_email')]
 #[ORM\Index(columns: ['status'], name: 'idx_email_send_log_status')]
+#[ORM\Index(columns: ['type'], name: 'idx_email_send_log_type')]
 class EmailSendLog
 {
     #[ORM\Id]
     #[ORM\Column(type: 'string', length: 36)]
     private string $id;
+
+    #[ORM\Column(type: 'string', length: 20)]
+    private string $type = 'bib';
 
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $raceEditionId = null;
@@ -27,8 +31,8 @@ class EmailSendLog
     #[ORM\Column(type: 'string', length: 255)]
     private string $recipientName;
 
-    #[ORM\Column(type: 'string', length: 20)]
-    private string $bibNumber;
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $reference = null;
 
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = 'pending';
@@ -41,6 +45,9 @@ class EmailSendLog
 
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $sentBy = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $metadata = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -62,6 +69,17 @@ class EmailSendLog
     public function setId(string $id): static
     {
         $this->id = $id;
+        return $this;
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
         return $this;
     }
 
@@ -98,14 +116,14 @@ class EmailSendLog
         return $this;
     }
 
-    public function getBibNumber(): string
+    public function getReference(): ?string
     {
-        return $this->bibNumber;
+        return $this->reference;
     }
 
-    public function setBibNumber(string $bibNumber): static
+    public function setReference(?string $reference): static
     {
-        $this->bibNumber = $bibNumber;
+        $this->reference = $reference;
         return $this;
     }
 
@@ -150,6 +168,17 @@ class EmailSendLog
     public function setSentBy(?string $sentBy): static
     {
         $this->sentBy = $sentBy;
+        return $this;
+    }
+
+    public function getMetadata(): ?array
+    {
+        return $this->metadata;
+    }
+
+    public function setMetadata(?array $metadata): static
+    {
+        $this->metadata = $metadata;
         return $this;
     }
 

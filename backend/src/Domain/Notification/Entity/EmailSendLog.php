@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace App\Domain\Notification\Entity;
 
 use App\Domain\Notification\ValueObject\EmailStatus;
+use App\Domain\Notification\ValueObject\EmailType;
 
 final class EmailSendLog
 {
+    /**
+     * @param array<string, mixed> $metadata
+     */
     public function __construct(
         private string $id,
+        private EmailType $type,
         private string $recipientEmail,
         private string $recipientName,
-        private string $bibNumber,
+        private ?string $reference,
         private EmailStatus $status,
         private ?string $raceEditionId = null,
         private ?string $errorMessage = null,
@@ -20,33 +25,46 @@ final class EmailSendLog
         private ?string $sentBy = null,
         private ?\DateTimeImmutable $createdAt = null,
         private ?\DateTimeImmutable $updatedAt = null,
+        private array $metadata = [],
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
     public static function create(
         string $id,
+        string $type,
         string $recipientEmail,
         string $recipientName,
-        string $bibNumber,
+        ?string $reference = null,
         ?string $raceEditionId = null,
+        array $metadata = [],
     ): self {
         $now = new \DateTimeImmutable();
 
         return new self(
             id: $id,
+            type: new EmailType($type),
             recipientEmail: $recipientEmail,
             recipientName: $recipientName,
-            bibNumber: $bibNumber,
+            reference: $reference,
             raceEditionId: $raceEditionId,
             status: EmailStatus::pending(),
             createdAt: $now,
             updatedAt: $now,
+            metadata: $metadata,
         );
     }
 
     public function id(): string
     {
         return $this->id;
+    }
+
+    public function type(): EmailType
+    {
+        return $this->type;
     }
 
     public function recipientEmail(): string
@@ -59,9 +77,9 @@ final class EmailSendLog
         return $this->recipientName;
     }
 
-    public function bibNumber(): string
+    public function reference(): ?string
     {
-        return $this->bibNumber;
+        return $this->reference;
     }
 
     public function raceEditionId(): ?string
@@ -89,9 +107,12 @@ final class EmailSendLog
         return $this->sentBy;
     }
 
-    public function assignSentBy(string $userId): void
+    /**
+     * @return array<string, mixed>
+     */
+    public function metadata(): array
     {
-        $this->sentBy = $userId;
+        return $this->metadata;
     }
 
     public function createdAt(): ?\DateTimeImmutable
@@ -102,6 +123,11 @@ final class EmailSendLog
     public function updatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function assignSentBy(string $userId): void
+    {
+        $this->sentBy = $userId;
     }
 
     public function markAsPending(): void

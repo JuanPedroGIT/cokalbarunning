@@ -37,22 +37,32 @@ final class DoctrineEmailSendLogRepository implements EmailSendLogRepositoryInte
         return $this->mapper->toDomain($orm);
     }
 
-    public function findByRaceEditionId(string $raceEditionId): array
+    public function findByTypeAndRaceEditionId(string $type, ?string $raceEditionId): array
     {
+        $criteria = ['type' => $type];
+        if ($raceEditionId !== null && $raceEditionId !== '') {
+            $criteria['raceEditionId'] = $raceEditionId;
+        }
+
         $orms = $this->em->getRepository(OrmEmailSendLog::class)->findBy(
-            ['raceEditionId' => $raceEditionId],
+            $criteria,
             ['createdAt' => 'DESC']
         );
 
         return array_map(fn (OrmEmailSendLog $orm) => $this->mapper->toDomain($orm), $orms);
     }
 
-    public function findByEmailAndBibNumber(string $email, string $bibNumber): ?DomainEmailSendLog
+    public function findByEmailTypeAndReference(string $email, string $type, ?string $reference): ?DomainEmailSendLog
     {
-        $orm = $this->em->getRepository(OrmEmailSendLog::class)->findOneBy([
+        $criteria = [
             'recipientEmail' => $email,
-            'bibNumber' => $bibNumber,
-        ]);
+            'type' => $type,
+        ];
+        if ($reference !== null && $reference !== '') {
+            $criteria['reference'] = $reference;
+        }
+
+        $orm = $this->em->getRepository(OrmEmailSendLog::class)->findOneBy($criteria);
 
         if ($orm === null) {
             return null;

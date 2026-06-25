@@ -84,10 +84,14 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
-      path: '/admin/bib-emails',
-      name: 'admin-bib-emails',
-      component: () => import('../views/admin/AdminBibEmailsView.vue'),
+      path: '/admin/emails',
+      name: 'admin-emails',
+      component: () => import('../views/admin/AdminEmailsView.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/admin/bib-emails',
+      redirect: '/admin/emails',
     },
     {
       path: '/admin/users',

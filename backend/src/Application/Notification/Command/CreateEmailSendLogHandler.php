@@ -20,10 +20,12 @@ final class CreateEmailSendLogHandler
     {
         $log = EmailSendLog::create(
             id: $command->id,
+            type: $command->type,
             recipientEmail: $command->recipientEmail,
             recipientName: $command->recipientName,
-            bibNumber: $command->bibNumber,
+            reference: $command->reference,
             raceEditionId: $command->raceEditionId,
+            metadata: $command->metadata,
         );
 
         if ($command->sentBy !== null && $command->sentBy !== '') {

@@ -12,6 +12,9 @@ interface RunnerResult {
   lastName: string
   fullName: string
   bibNumber: string | null
+  club: string | null
+  gender: string | null
+  category: string | null
 }
 
 const raceStore = useRaceStore()
@@ -146,10 +149,17 @@ async function searchActiveBibs() {
                   <li
                     v-for="runner in activeResults"
                     :key="runner.id"
-                    class="px-4 py-3 flex justify-between items-center"
+                    class="px-4 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
                   >
-                    <span class="text-white">{{ runner.fullName }}</span>
-                    <span class="font-barlow-condensed font-bold text-naranja">Dorsal {{ runner.bibNumber ?? '-' }}</span>
+                    <div class="flex flex-col">
+                      <span class="text-white">{{ runner.fullName }}</span>
+                      <div class="flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
+                        <span v-if="runner.club">{{ runner.club }}</span>
+                        <span v-if="runner.gender">{{ runner.gender === 'F' ? 'Femenino' : runner.gender === 'M' ? 'Masculino' : runner.gender }}</span>
+                        <span v-if="runner.category">{{ runner.category }}</span>
+                      </div>
+                    </div>
+                    <span class="font-barlow-condensed font-bold text-naranja shrink-0">Dorsal {{ runner.bibNumber ?? '-' }}</span>
                   </li>
                 </ul>
               </div>

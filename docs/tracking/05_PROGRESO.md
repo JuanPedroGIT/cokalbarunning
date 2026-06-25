@@ -1,7 +1,71 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-15
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones
+> **Última actualización:** 2026-06-25
+> **Última revisión:** generalización de raffle_configs → emails_config + foto en últimas indicaciones
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones
+
+---
+
+## Imagen del premio en sorteo (2026-06-25)
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| IP1 | Backend: endpoint `POST /admin/emails/raffle/prize-image` sube imagen a R2 y guarda path en `RaffleConfig.prizeImageUrl` | ✅ |
+| IP2 | Backend: `SendPendingEmailsCommand` incluye `prizeImageUrl` en metadata del sorteo | ✅ |
+| IP3 | Backend: plantilla `raffle.html.twig` muestra la imagen del premio si existe | ✅ |
+| IP4 | Frontend: campo para subir/preview/eliminar imagen del premio en `AdminEmailsView.vue` | ✅ |
+| IP5 | Backend: envio de correos masivos via `BrevoMailer` (no `MailerInterface`/`MAILER_DSN`) | ✅ |
+| IP6 | Backend/Frontend: mostrar `club` en buscador de runners de `/ediciones` | ✅ |
+| IP7 | Backend/Frontend: guardar y mostrar `gender` y `category` en tabla `runners` y buscador | ✅ |
+| IP8 | Backend: no pisar runners existentes al subir CSV con mismo dorsal en la misma edicion | ✅ |
+| IP9 | Tests PHPUnit verdes (146 tests) y build frontend verde | ✅ |
+
+---
+
+## Generalización de config de emails + foto en últimas indicaciones (2026-06-25)
+
+Tracking: `17_NUEVOS_TIPOS_CORREO.md` (secciones nuevas al final).
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| GC1 | Migración: renombrar `raffle_configs` → `emails_config`, añadir columna `type` y unique index `(race_edition_id, type)` | ✅ |
+| GC2 | Entidad `RaffleConfig` → `EmailConfig` con campo `type` | ✅ |
+| GC3 | Repositorio `RaffleConfigRepository` → `EmailConfigRepository` con `findByRaceEditionIdAndType()` | ✅ |
+| GC4 | Endpoints de config generalizados: `/emails/{type}/config` (GET/POST) y `/{type}/config/{id}` (PUT) | ✅ |
+| GC5 | `prize-image` acepta `raffle|last_instructions`; `PathGenerator::emailImagePath($type, $ext)` | ✅ |
+| GC6 | `SendPendingEmailsCommand::resolveMetadata` carga config para ambos tipos; `prizeImageUrl` común | ✅ |
+| GC7 | Frontend: config dinámica por pestaña (sorteo: premio/fecha/foto; indicaciones: solo título/descripción/foto) | ✅ |
+| GC8 | Frontend: `PreviewItem` incluye `gender` y `birthDate`; envío no pisa datos de runners | ✅ |
+| GC9 | Fix: caché de rutas Symfony requirió borrado manual de `var/cache/dev` para compilar `last_instructions` | ✅ |
+| GC10 | `vue-tsc` verde; migración aplicada; schema validado | ✅ |
+
+---
+
+## Nuevos tipos de correo — Sorteo y Últimas Indicaciones (2026-06-24)
+
+Tracking: `17_NUEVOS_TIPOS_CORREO.md`.
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| NC1 | Tracking y decisiones técnicas | ✅ |
+| NC1b | Revisar CSV de inscritos (`Inscritos_Coca_de_alba_25.csv`) y PDF de últimas instrucciones | ✅ |
+| NC1c | Unificar sorteo + indicaciones sobre el mismo CSV de inscritos; dorsal como número de participación | ✅ |
+| NC2 | Campo `type` en `EmailSendLog` + migración | ✅ |
+| NC2b | Campo `metadata` JSON en `EmailSendLog` + migración | ✅ |
+| NC3 | Renombrar `bibNumber` → `reference` (nullable) | ✅ |
+| NC4 | Generalizar parser CSV y DTO de destinatarios | ✅ |
+| NC5 | `EmailTemplateResolver` + plantillas Twig por tipo | ✅ |
+| NC6 | Comando CLI `app:emails:send --type` | ✅ |
+| NC7 | Endpoints `/admin/emails/{type}/...` | ✅ |
+| NC8 | Vista admin `AdminEmailsView.vue` con carga única arriba y pestañas (Sorteo + Últimas Indicaciones) debajo | ✅ |
+| NC9 | Crear/actualizar runners automáticamente al cargar el CSV de inscritos | ✅ |
+| NC10 | Al enviar sorteo se crean/actualizan runners y se encolan automáticamente las últimas indicaciones | ✅ |
+| NC11 | Persistencia de configuración del sorteo en `raffle_configs` con endpoints CRUD | ✅ |
+| NC12 | Comando `app:emails:send` usa `MAILER_DSN` (Symfony Mailer); `BrevoMailer` conservado | ✅ |
+| NC13 | Solución definitiva de permisos de caché (`USER www-data` en Dockerfile) | ✅ |
+| NC14 | Tests PHPUnit (142 tests) y `vue-tsc`/build verdes | ✅ |
+| NC15 | Asunto del sorteo parametrizable con placeholders `{title}`, `{drawDate}`, `{prize}`, `{description}` | ✅ |
+| NC16 | Reorganizar plantilla `raffle.html.twig`: dorsal como número de participación y datos del sorteo visibles | ✅ |
 
 ---
 
@@ -236,6 +300,7 @@ Tracking: `07_FIX_PATHS_PRD.md`. Alineado con estructura PRD (`carrera/{YYYY}/im
 | 2026-05-30 | 113 tests, 353 assertions ✅ (tras limpiar edition_id de sponsors) |
 | 2026-06-13 | 134 tests, 441 assertions ✅ (Bib Email Sender + fix club-member test) |
 | 2026-06-15 | 142 tests, 470 assertions ✅ (Bib Search por edición + showBibSearch) |
+| 2026-06-25 | 146 tests ✅ (generalización emails_config + foto últimas indicaciones) |
 
 ---
 

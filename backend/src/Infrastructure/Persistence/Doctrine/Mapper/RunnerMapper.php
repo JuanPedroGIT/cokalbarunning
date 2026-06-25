@@ -21,6 +21,7 @@ final class RunnerMapper
             club: $orm->getClub(),
             birthDate: $orm->getBirthDate(),
             gender: $orm->getGender(),
+            category: $orm->getCategory(),
         );
     }
 
@@ -36,6 +37,7 @@ final class RunnerMapper
         $target->setClub($domain->club());
         $target->setBirthDate($domain->birthDate());
         $target->setGender($domain->gender());
+        $target->setCategory($domain->category());
 
         return $target;
     }
