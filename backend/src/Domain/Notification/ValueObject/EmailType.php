@@ -10,10 +10,11 @@ final readonly class EmailType
     public const RAFFLE = 'raffle';
     public const LAST_INSTRUCTIONS = 'last_instructions';
     public const THANKS = 'thanks';
+    public const GENERIC = 'generic';
 
     public function __construct(private string $value)
     {
-        if (!\in_array($value, [self::BIB, self::RAFFLE, self::LAST_INSTRUCTIONS, self::THANKS], true)) {
+        if (!\in_array($value, [self::BIB, self::RAFFLE, self::LAST_INSTRUCTIONS, self::THANKS, self::GENERIC], true)) {
             throw new \InvalidArgumentException(sprintf('Invalid email type: %s', $value));
         }
     }
@@ -61,5 +62,15 @@ final readonly class EmailType
     public static function thanks(): self
     {
         return new self(self::THANKS);
+    }
+
+    public function isGeneric(): bool
+    {
+        return $this->value === self::GENERIC;
+    }
+
+    public static function generic(): self
+    {
+        return new self(self::GENERIC);
     }
 }

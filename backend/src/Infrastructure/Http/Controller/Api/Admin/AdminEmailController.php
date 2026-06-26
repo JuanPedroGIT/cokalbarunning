@@ -32,7 +32,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/v1/admin')]
 class AdminEmailController extends AbstractController
 {
-    private const VALID_TYPES = [EmailType::BIB, EmailType::RAFFLE, EmailType::LAST_INSTRUCTIONS, EmailType::THANKS];
+    private const VALID_TYPES = [EmailType::BIB, EmailType::RAFFLE, EmailType::LAST_INSTRUCTIONS, EmailType::THANKS, EmailType::GENERIC];
 
     public function __construct(
         private MessageBusInterface $commandBus,
@@ -47,7 +47,7 @@ class AdminEmailController extends AbstractController
     ) {
     }
 
-    #[Route('/emails/{type}', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
     public function list(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -66,7 +66,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => array_map(fn ($dto) => $dto->toArray(), $dtos)]);
     }
 
-    #[Route('/emails/{type}/preview', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/preview', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
     public function preview(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -139,7 +139,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
     public function send(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -295,7 +295,7 @@ class AdminEmailController extends AbstractController
         return $existing->id();
     }
 
-    #[Route('/emails/{type}/sent-counts', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/sent-counts', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
     public function sentCounts(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -328,7 +328,65 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $data]);
     }
 
-    #[Route('/emails/{type}/run', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
+    #[Route('/emails/generic/recipients', methods: ['GET'])]
+    public function genericRecipients(Request $request): JsonResponse
+    {
+        $activeEdition = $this->raceEditionRepository->findActive();
+        $activeEditionId = $activeEdition?->id()->value();
+
+        $conn = $this->entityManager->getConnection();
+
+        $excludeJoin = '';
+        $excludeWhere = '';
+        if ($activeEditionId !== null) {
+            $escapedId = $conn->quote($activeEditionId);
+            $excludeJoin = "LEFT JOIN runners active_r ON active_r.email = r.email AND active_r.race_edition_id::uuid = $escapedId::uuid";
+            $excludeWhere = ' AND active_r.id IS NULL';
+        }
+
+        $sql = <<<SQL
+            SELECT DISTINCT ON (r.email)
+                r.id, r.first_name, r.last_name, r.email, r.bib_number, r.club,
+                r.gender, r.category, r.birth_date,
+                re.year AS edition_year, re.name AS edition_name
+            FROM runners r
+            JOIN race_editions re ON re.id::uuid = r.race_edition_id::uuid
+            $excludeJoin
+            WHERE r.email IS NOT NULL AND r.email != ''
+            $excludeWhere
+            ORDER BY r.email, r.birth_date ASC NULLS LAST
+        SQL;
+
+        $rows = $conn->executeQuery($sql)->fetchAllAssociative();
+
+        $items = array_map(function (array $row): array {
+            $fullName = trim($row['first_name'] . ' ' . $row['last_name']);
+
+            return [
+                'firstName' => $row['first_name'],
+                'lastName' => $row['last_name'],
+                'fullName' => $fullName,
+                'email' => $row['email'],
+                'reference' => $row['bib_number'],
+                'club' => $row['club'],
+                'gender' => $row['gender'],
+                'category' => $row['category'],
+                'birthDate' => $row['birth_date'],
+                'editionYear' => (int) $row['edition_year'],
+                'editionName' => $row['edition_name'],
+                'emailValid' => true,
+            ];
+        }, $rows);
+
+        return $this->json([
+            'data' => [
+                'items' => $items,
+                'total' => \count($items),
+            ],
+        ]);
+    }
+
+    #[Route('/emails/{type}/run', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
     public function run(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -381,7 +439,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
     public function getConfig(Request $request, string $type): JsonResponse
     {
         $editionId = $request->query->get('editionId');
@@ -402,7 +460,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $data]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
     public function createConfig(Request $request, string $type): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -436,7 +494,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $responseData], 201);
     }
 
-    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
     public function uploadPrizeImage(Request $request, string $type): JsonResponse
     {
         $editionId = $request->request->get('editionId');
@@ -479,7 +537,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
+    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
     public function updateConfig(string $type, string $id, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

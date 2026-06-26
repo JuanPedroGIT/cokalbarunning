@@ -75,7 +75,7 @@ interface EmailConfigData {
   prizeImageUrl?: string
 }
 
-type EmailType = 'last_instructions' | 'raffle' | 'thanks'
+type EmailType = 'last_instructions' | 'raffle' | 'thanks' | 'generic'
 
 const router = useRouter()
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -198,6 +198,9 @@ const tabItems = computed(() => {
   if (activeTab.value === 'thanks') {
     return items.value.filter((i) => isZeroDorsal(i.reference))
   }
+  if (activeTab.value === 'generic') {
+    return items.value
+  }
   return items.value.filter((i) => !isZeroDorsal(i.reference))
 })
 
@@ -223,6 +226,7 @@ const referenceLabel = computed(() => {
     last_instructions: 'Dorsal',
     raffle: 'Dorsal',
     thanks: 'Dorsal',
+    generic: 'Dorsal',
   }
   return labels[activeTab.value]
 })
@@ -383,7 +387,7 @@ async function saveEmailConfig() {
   emailConfigSaving.value = true
   message.value = null
 
-  const typeLabel = activeTab.value === 'raffle' ? 'del sorteo' : activeTab.value === 'last_instructions' ? 'de ultimas indicaciones' : 'de agradecimiento'
+  const typeLabel = activeTab.value === 'raffle' ? 'del sorteo' : activeTab.value === 'last_instructions' ? 'de ultimas indicaciones' : activeTab.value === 'thanks' ? 'de agradecimiento' : 'generica'
 
   try {
     const payload: any = {
@@ -443,6 +447,33 @@ async function uploadPrizeImage(file: File) {
   }
 }
 
+async function loadGenericRecipients() {
+  loading.value = true
+  message.value = null
+
+  try {
+    const res = await api.get('/admin/emails/generic/recipients')
+    const data = res.data.data
+    items.value = data.items.map((item: PreviewItem) => ({
+      ...item,
+      selected: item.emailValid,
+    }))
+    message.value = {
+      type: 'success',
+      text: `${data.total} participante(s) cargado(s) de todas las ediciones (agrupados por email, edicion mas antigua).`,
+    }
+    await fetchLogs()
+    await fetchSentCounts()
+  } catch (err: any) {
+    message.value = {
+      type: 'error',
+      text: err.response?.data?.error ?? 'Error al cargar los participantes',
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
 async function sendEmails() {
   if (selectedItems.value.length === 0) return
 
@@ -474,10 +505,10 @@ async function sendEmails() {
     if (bccEmail.value) meta.bccEmail = bccEmail.value
     payload.metadata = Object.keys(meta).length > 0 ? meta : undefined
 
-    const typeLabel = activeTab.value === 'raffle' ? 'sorteo' : activeTab.value === 'last_instructions' ? 'indicaciones' : 'agradecimiento'
+    const typeLabel2 = activeTab.value === 'raffle' ? 'sorteo' : activeTab.value === 'last_instructions' ? 'indicaciones' : activeTab.value === 'thanks' ? 'agradecimiento' : 'generico'
     const res = await api.post(`/admin/emails/${activeTab.value}/send`, payload)
     const { queued, skipped, queuedInstructions } = res.data.data
-    const baseText = `${queued} correo(s) de ${typeLabel} marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`
+    const baseText = `${queued} correo(s) de ${typeLabel2} marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`
     const extraText = activeTab.value === 'raffle' && queuedInstructions > 0
       ? ` Tambien se han encolado ${queuedInstructions} correo(s) de ultimas indicaciones.`
       : ''
@@ -600,8 +631,10 @@ fetchEditions().then(() => {
       <div class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 class="text-lg font-semibold text-naranja">Seleccionar edicion y subir CSV de inscritos</h2>
-            <p class="text-sm text-gray-400">
+            <h2 class="text-lg font-semibold text-naranja">
+              {{ activeTab === 'generic' ? 'Cargar participantes de todas las ediciones' : 'Seleccionar edicion y subir CSV de inscritos' }}
+            </h2>
+            <p v-if="activeTab !== 'generic'" class="text-sm text-gray-400">
               Formato: <code class="bg-[#0A0A0A] px-1.5 py-0.5 rounded">{{ csvFormatHint }}</code>
             </p>
           </div>
@@ -625,23 +658,37 @@ fetchEditions().then(() => {
             </select>
           </div>
           <div class="flex items-end gap-4">
-            <input
-              ref="fileInput"
-              type="file"
-              accept=".csv,text/csv"
-              @change="handleFileChange"
-              class="hidden"
-            />
-            <button
-              @click="fileInput?.click()"
-              :disabled="loading"
-              class="bg-[#FF5C00] text-white px-5 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 cursor-pointer"
-            >
-              {{ loading ? 'Procesando...' : 'Seleccionar CSV' }}
-            </button>
-            <span v-if="items.length > 0" class="text-sm text-gray-400">
-              {{ items.length }} fila(s) procesadas
-            </span>
+            <template v-if="activeTab === 'generic'">
+              <button
+                @click="loadGenericRecipients"
+                :disabled="loading"
+                class="bg-[#FF5C00] text-white px-5 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 cursor-pointer"
+              >
+                {{ loading ? 'Cargando...' : 'Cargar participantes' }}
+              </button>
+              <span v-if="items.length > 0" class="text-sm text-gray-400">
+                {{ items.length }} participante(s) cargados
+              </span>
+            </template>
+            <template v-else>
+              <input
+                ref="fileInput"
+                type="file"
+                accept=".csv,text/csv"
+                @change="handleFileChange"
+                class="hidden"
+              />
+              <button
+                @click="fileInput?.click()"
+                :disabled="loading"
+                class="bg-[#FF5C00] text-white px-5 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 cursor-pointer"
+              >
+                {{ loading ? 'Procesando...' : 'Seleccionar CSV' }}
+              </button>
+              <span v-if="items.length > 0" class="text-sm text-gray-400">
+                {{ items.length }} fila(s) procesadas
+              </span>
+            </template>
           </div>
         </div>
       </div>
@@ -681,6 +728,17 @@ fetchEditions().then(() => {
         >
           3. Agradecimiento
         </button>
+        <button
+          @click="setTab('generic')"
+          :class="[
+            'px-4 py-2 text-sm font-medium transition cursor-pointer border-b-2',
+            activeTab === 'generic'
+              ? 'border-[#FF5C00] text-[#FF5C00]'
+              : 'border-transparent text-gray-400 hover:text-white',
+          ]"
+        >
+          4. Genérico
+        </button>
       </div>
 
       <div
@@ -700,7 +758,7 @@ fetchEditions().then(() => {
         class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4"
       >
         <h2 class="text-lg font-semibold text-naranja">
-          {{ activeTab === 'raffle' ? 'Configuración del sorteo' : activeTab === 'last_instructions' ? 'Configuración de últimas indicaciones' : 'Configuración de agradecimiento' }}
+          {{ activeTab === 'raffle' ? 'Configuración del sorteo' : activeTab === 'last_instructions' ? 'Configuración de últimas indicaciones' : activeTab === 'thanks' ? 'Configuración de agradecimiento' : 'Configuración genérica' }}
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">

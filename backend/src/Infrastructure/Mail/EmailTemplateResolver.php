@@ -27,6 +27,10 @@ final class EmailTemplateResolver
                 'template' => 'emails/thanks.html.twig',
                 'subject' => 'Gracias por participar - {nombre}',
             ],
+            EmailType::GENERIC => [
+                'template' => 'emails/generic.html.twig',
+                'subject' => '{title} - {editionName}',
+            ],
             default => throw new \InvalidArgumentException(sprintf('Unsupported email type: %s', $type)),
         };
     }

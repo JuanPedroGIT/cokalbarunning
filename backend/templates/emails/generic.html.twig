@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ metadata.title|default('Comunicado') }} - {{ editionName }}</title>
+</head>
+<body bgcolor="#f4f6f8" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f4f6f8">
+        <tr>
+            <td align="center" valign="top">
+                <table width="600" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff" align="center">
+                    <tr>
+                        <td align="center" valign="top" bgcolor="#1e293b" style="padding:40px 30px; border-bottom:4px solid #ff5a36;">
+                            <font face="Arial, Helvetica, sans-serif" size="5" color="#ffffff"><b>UN NUEVO IMPULSO</b></font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8">CLUB COKALBA RUNNING</font>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="left" valign="top" bgcolor="#ffffff" style="padding:40px 35px;">
+                            <font face="Arial, Helvetica, sans-serif" size="4" color="#1e293b"><b>¡Hola, {{ nombre }}!</b></font>
+                            <br><br>
+
+                            {% if metadata.title is defined and metadata.title is not empty %}
+                                <font face="Arial, Helvetica, sans-serif" size="5" color="#ff5a36"><b>{{ metadata.title }}</b></font>
+                                <br><br>
+                            {% endif %}
+
+                            {% if metadata.description is defined and metadata.description is not empty %}
+                                <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">{{ metadata.description|nl2br }}</font>
+                                <br><br>
+                            {% endif %}
+
+                            {% if metadata.prizeImageUrl is defined and metadata.prizeImageUrl is not empty %}
+                                <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff" align="center">
+                                    <tr>
+                                        <td align="center" valign="top" style="padding:20px 0;">
+                                            <img src="{{ metadata.prizeImageUrl }}" alt="{{ metadata.title|default('Comunicado') }}" style="max-width:100%; height:auto; display:block; border-radius:8px; border:1px solid #e2e8f0;">
+                                        </td>
+                                    </tr>
+                                </table>
+                                <br>
+                            {% endif %}
+
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f1f5f9" align="center">
+                                <tr>
+                                    <td align="left" valign="top" style="padding:20px;">
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Fecha:</b> {{ editionDate }}</font>
+                                        <br><br>
+                                        <font face="Arial, Helvetica, sans-serif" size="3" color="#334155"><b>Lugar:</b> {{ editionLocation }}</font>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            <font face="Arial, Helvetica, sans-serif" size="3" color="#475569">Gracias por ser parte de esta carrera solidaria.<br><b>Club Cokalba Running</b></font>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" valign="top" bgcolor="#f8fafc" style="padding:25px 30px; border-top:1px solid #e2e8f0;">
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8">Este correo electrónico fue enviado de forma automática.<br>Ayuntamiento de Coca de Alba &middot; Diputación de Salamanca &middot; Cokalba Running</font>
+                            <br><br>
+                            <font face="Arial, Helvetica, sans-serif" size="2" color="#94a3b8"><a href="https://cokalba-running.com" target="_blank" style="color:#ff5a36; text-decoration:none;"><b>cokalba-running.com</b></a></font>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
