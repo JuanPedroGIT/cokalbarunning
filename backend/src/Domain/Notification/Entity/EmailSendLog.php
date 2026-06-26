@@ -115,6 +115,15 @@ final class EmailSendLog
         return $this->metadata;
     }
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    public function setMetadata(array $metadata): void
+    {
+        $this->metadata = $metadata;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function createdAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;

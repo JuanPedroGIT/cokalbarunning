@@ -38,6 +38,7 @@ final class SendPendingEmailsCommand extends Command
         private readonly string $senderEmail,
         private readonly int $delaySeconds,
         private readonly ?string $bccEmail = null,
+        private readonly string $publicUrl = '',
     ) {
         parent::__construct();
     }
@@ -149,8 +150,9 @@ final class SendPendingEmailsCommand extends Command
                     ->subject($subject)
                     ->html($html);
 
-                if ($this->bccEmail !== null && $this->bccEmail !== '') {
-                    $email->addBcc(new Address($this->bccEmail, 'Cokalba Running'));
+                $bccEmail = $metadata['bccEmail'] ?? $this->bccEmail;
+                if ($bccEmail !== null && $bccEmail !== '') {
+                    $email->addBcc(new Address($bccEmail, 'Cokalba Running'));
                 }
 
                 $this->brevoMailer->send($email);
@@ -191,33 +193,33 @@ final class SendPendingEmailsCommand extends Command
     private function resolveMetadata(OrmEmailSendLog $log, string $type): array
     {
         $logMetadata = $log->getMetadata() ?? [];
-        if ($logMetadata !== []) {
-            return $logMetadata;
-        }
 
+        $configData = [];
         $raceEditionId = $log->getRaceEditionId();
-        if ($raceEditionId === null || $raceEditionId === '') {
-            return [];
+        if ($raceEditionId !== null && $raceEditionId !== '') {
+            $config = $this->emailConfigRepository->findByRaceEditionIdAndType($raceEditionId, $type);
+            if ($config !== null) {
+                $configData = [
+                    'subject' => $config->getSubject(),
+                    'title' => $config->getTitle(),
+                    'description' => $config->getDescription(),
+                    'prizeImageUrl' => $config->getPrizeImageUrl(),
+                ];
+                if ($type === EmailType::RAFFLE) {
+                    $configData['prize'] = $config->getPrize();
+                    $configData['drawDate'] = $config->getDrawDate();
+                }
+            }
         }
 
-        $config = $this->emailConfigRepository->findByRaceEditionIdAndType($raceEditionId, $type);
-        if ($config === null) {
-            return [];
+        $result = array_merge($configData, $logMetadata);
+
+        // Ensure prizeImageUrl is an absolute URL
+        if (!empty($result['prizeImageUrl']) && !str_starts_with($result['prizeImageUrl'], 'http')) {
+            $result['prizeImageUrl'] = $this->publicUrl . '/' . ltrim($result['prizeImageUrl'], '/');
         }
 
-        $data = [
-            'subject' => $config->getSubject(),
-            'title' => $config->getTitle(),
-            'description' => $config->getDescription(),
-            'prizeImageUrl' => $config->getPrizeImageUrl(),
-        ];
-
-        if ($type === EmailType::RAFFLE) {
-            $data['prize'] = $config->getPrize();
-            $data['drawDate'] = $config->getDrawDate();
-        }
-
-        return $data;
+        return $result;
     }
 
     private function renderSubject(string $template, array $vars, array $metadata = []): string

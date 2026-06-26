@@ -9,10 +9,11 @@ final readonly class EmailType
     public const BIB = 'bib';
     public const RAFFLE = 'raffle';
     public const LAST_INSTRUCTIONS = 'last_instructions';
+    public const THANKS = 'thanks';
 
     public function __construct(private string $value)
     {
-        if (!\in_array($value, [self::BIB, self::RAFFLE, self::LAST_INSTRUCTIONS], true)) {
+        if (!\in_array($value, [self::BIB, self::RAFFLE, self::LAST_INSTRUCTIONS, self::THANKS], true)) {
             throw new \InvalidArgumentException(sprintf('Invalid email type: %s', $value));
         }
     }
@@ -37,6 +38,11 @@ final readonly class EmailType
         return $this->value === self::LAST_INSTRUCTIONS;
     }
 
+    public function isThanks(): bool
+    {
+        return $this->value === self::THANKS;
+    }
+
     public static function bib(): self
     {
         return new self(self::BIB);
@@ -50,5 +56,10 @@ final readonly class EmailType
     public static function lastInstructions(): self
     {
         return new self(self::LAST_INSTRUCTIONS);
+    }
+
+    public static function thanks(): self
+    {
+        return new self(self::THANKS);
     }
 }

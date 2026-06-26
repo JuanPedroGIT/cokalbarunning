@@ -32,7 +32,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/v1/admin')]
 class AdminEmailController extends AbstractController
 {
-    private const VALID_TYPES = [EmailType::BIB, EmailType::RAFFLE, EmailType::LAST_INSTRUCTIONS];
+    private const VALID_TYPES = [EmailType::BIB, EmailType::RAFFLE, EmailType::LAST_INSTRUCTIONS, EmailType::THANKS];
 
     public function __construct(
         private MessageBusInterface $commandBus,
@@ -47,7 +47,7 @@ class AdminEmailController extends AbstractController
     ) {
     }
 
-    #[Route('/emails/{type}', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions'])]
+    #[Route('/emails/{type}', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
     public function list(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -66,7 +66,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => array_map(fn ($dto) => $dto->toArray(), $dtos)]);
     }
 
-    #[Route('/emails/{type}/preview', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions'])]
+    #[Route('/emails/{type}/preview', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
     public function preview(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -139,7 +139,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions'])]
+    #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
     public function send(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -295,7 +295,7 @@ class AdminEmailController extends AbstractController
         return $existing->id();
     }
 
-    #[Route('/emails/{type}/sent-counts', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions'])]
+    #[Route('/emails/{type}/sent-counts', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
     public function sentCounts(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -328,7 +328,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $data]);
     }
 
-    #[Route('/emails/{type}/run', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions'])]
+    #[Route('/emails/{type}/run', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks'])]
     public function run(Request $request, string $type): JsonResponse
     {
         if (!$this->isValidType($type)) {
@@ -337,6 +337,20 @@ class AdminEmailController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $editionId = \is_array($data) ? ($data['editionId'] ?? null) : null;
+        $bccEmail = \is_array($data) ? ($data['bccEmail'] ?? null) : null;
+
+        // Store BCC in pending logs metadata before running the command
+        if (\is_string($bccEmail) && $bccEmail !== '') {
+            $pendingLogs = $this->emailSendLogRepository->findByTypeAndRaceEditionId($type, $editionId);
+            foreach ($pendingLogs as $log) {
+                if ($log->status()->isPending()) {
+                    $currentMeta = $log->metadata();
+                    $currentMeta['bccEmail'] = $bccEmail;
+                    $log->setMetadata($currentMeta);
+                    $this->emailSendLogRepository->save($log);
+                }
+            }
+        }
 
         $editionOption = '';
         if ($editionId !== null && $editionId !== '') {
@@ -367,7 +381,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions'])]
+    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
     public function getConfig(Request $request, string $type): JsonResponse
     {
         $editionId = $request->query->get('editionId');
@@ -388,7 +402,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $data]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions'])]
+    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
     public function createConfig(Request $request, string $type): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -422,7 +436,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $responseData], 201);
     }
 
-    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions'])]
+    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
     public function uploadPrizeImage(Request $request, string $type): JsonResponse
     {
         $editionId = $request->request->get('editionId');
@@ -465,7 +479,7 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions'])]
+    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks'])]
     public function updateConfig(string $type, string $id, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -642,7 +656,7 @@ class AdminEmailController extends AbstractController
 
         $repository = $this->entityManager->getRepository(Runner::class);
 
-        if ($reference !== null && $reference !== '') {
+        if ($reference !== null && $reference !== '' && !$this->isZeroBib($reference)) {
             $existingByBib = $repository->findOneBy([
                 'raceEditionId' => $raceEditionId,
                 'bibNumber' => $reference,
@@ -692,6 +706,11 @@ class AdminEmailController extends AbstractController
             substr($trimmed, 0, $spacePos),
             trim(substr($trimmed, $spacePos + 1)),
         ];
+    }
+
+    private function isZeroBib(string $reference): bool
+    {
+        return trim($reference, '0') === '';
     }
 
     private function parseRunnerBirthDate(string $value): ?\DateTimeImmutable

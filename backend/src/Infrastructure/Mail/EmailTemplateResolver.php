@@ -23,6 +23,10 @@ final class EmailTemplateResolver
                 'template' => 'emails/raffle.html.twig',
                 'subject' => 'Sorteo {title} - {prize}',
             ],
+            EmailType::THANKS => [
+                'template' => 'emails/thanks.html.twig',
+                'subject' => 'Gracias por participar - {nombre}',
+            ],
             default => throw new \InvalidArgumentException(sprintf('Unsupported email type: %s', $type)),
         };
     }

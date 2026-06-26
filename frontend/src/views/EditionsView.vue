@@ -68,9 +68,9 @@ async function searchActiveBibs() {
 </script>
 
 <template>
-  <section class="relative z-10 pt-32 pb-20 px-6 max-w-6xl mx-auto">
+  <section class="relative z-10 pt-24 md:pt-32 pb-16 md:pb-20 px-4 md:px-6 max-w-6xl mx-auto">
     <div class="font-barlow-condensed font-semibold text-sm tracking-[0.3em] uppercase text-naranja mb-3">Historial</div>
-    <h1 class="font-barlow-condensed font-black text-[clamp(2.5rem,5vw,4.5rem)] leading-[0.95] uppercase mb-12">
+    <h1 class="font-barlow-condensed font-black text-[clamp(2.5rem,5vw,4.5rem)] leading-[0.95] uppercase mb-8 md:mb-12">
       EDICIONES
     </h1>
 
@@ -78,61 +78,61 @@ async function searchActiveBibs() {
 
     <template v-else>
       <!-- Edición actual -->
-      <div v-if="activeEdition" class="mb-16">
+      <div v-if="activeEdition" class="mb-12 md:mb-16">
         <div class="font-barlow-condensed font-semibold text-sm tracking-[0.3em] uppercase text-naranja mb-3">
           Edición actual
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8 items-stretch bg-gris-oscuro border border-white/5 p-6 md:p-8">
+        <div class="grid md:grid-cols-2 gap-6 md:gap-8 items-stretch bg-gris-oscuro border border-white/5 p-4 md:p-8">
           <!-- Izquierda: info y opciones -->
-          <div class="flex flex-col">
-            <div class="font-barlow-condensed font-black text-6xl md:text-7xl text-naranja mb-2">
+          <div class="flex flex-col md:order-1 order-2">
+            <div class="font-barlow-condensed font-black text-5xl md:text-7xl text-naranja mb-2">
               {{ activeEdition.year }}
             </div>
-            <div class="font-barlow-condensed font-bold text-2xl uppercase leading-tight mb-2">
+            <div class="font-barlow-condensed font-bold text-xl md:text-2xl uppercase leading-tight mb-2">
               {{ activeEdition.name }}
             </div>
-            <div class="text-gris-texto mb-6">
+            <div class="text-gris-texto text-sm md:text-base mb-4 md:mb-6">
               {{ activeEdition.date }} &middot; {{ activeEdition.location }}
             </div>
 
-            <div class="flex flex-wrap gap-3 mb-6">
+            <div class="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6">
               <a
                 v-if="activeEdition.resultsUrl"
                 :href="activeEdition.resultsUrl"
                 target="_blank"
-                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-naranja border border-naranja/40 px-4 py-2 hover:bg-naranja hover:text-negro transition-colors text-center"
+                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-naranja border border-naranja/40 px-3 md:px-4 py-2 hover:bg-naranja hover:text-negro transition-colors text-center"
               >
                 Resultados
               </a>
               <span
                 v-else
-                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-white/30 border border-white/10 px-4 py-2 text-center"
+                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-white/30 border border-white/10 px-3 md:px-4 py-2 text-center"
               >
                 Resultados no disponibles
               </span>
 
               <RouterLink
                 :to="`/galeria?edicion=${activeEdition.id}`"
-                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-white/70 border border-white/20 px-4 py-2 hover:border-naranja hover:text-naranja transition-colors text-center"
+                class="font-barlow-condensed font-bold text-xs tracking-widest uppercase text-white/70 border border-white/20 px-3 md:px-4 py-2 hover:border-naranja hover:text-naranja transition-colors text-center"
               >
                 Galería
               </RouterLink>
             </div>
 
             <!-- Búsqueda de dorsal edición actual -->
-            <div v-if="activeEdition.showBibSearch" class="mt-auto">
+            <div v-if="activeEdition.showBibSearch" class="mt-auto pt-2">
               <div class="flex gap-2">
                 <input
                   v-model="searchName"
                   type="text"
-                  placeholder="Escribe un nombre..."
-                  class="flex-1 bg-negro border border-white/20 px-4 py-2 text-white placeholder-white/30 focus:border-naranja focus:outline-none"
+                  placeholder="Buscar dorsal..."
+                  class="flex-1 min-w-0 bg-negro border border-white/20 px-3 md:px-4 py-2 text-sm md:text-base text-white placeholder-white/30 focus:border-naranja focus:outline-none"
                   @keyup.enter="searchActiveBibs"
                 />
                 <button
                   type="button"
-                  class="font-barlow-condensed font-bold text-xs tracking-widest uppercase bg-naranja text-negro px-4 py-2 hover:bg-naranja/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="shrink-0 font-barlow-condensed font-bold text-xs tracking-widest uppercase bg-naranja text-negro px-3 md:px-4 py-2 hover:bg-naranja/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="activeSearching || !canSearchActive"
                   @click="searchActiveBibs"
                 >
@@ -149,17 +149,17 @@ async function searchActiveBibs() {
                   <li
                     v-for="runner in activeResults"
                     :key="runner.id"
-                    class="px-4 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+                    class="px-3 md:px-4 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
                   >
-                    <div class="flex flex-col">
-                      <span class="text-white">{{ runner.fullName }}</span>
+                    <div class="flex flex-col min-w-0">
+                      <span class="text-white text-sm md:text-base truncate">{{ runner.fullName }}</span>
                       <div class="flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
                         <span v-if="runner.club">{{ runner.club }}</span>
                         <span v-if="runner.gender">{{ runner.gender === 'F' ? 'Femenino' : runner.gender === 'M' ? 'Masculino' : runner.gender }}</span>
                         <span v-if="runner.category">{{ runner.category }}</span>
                       </div>
                     </div>
-                    <span class="font-barlow-condensed font-bold text-naranja shrink-0">Dorsal {{ runner.bibNumber ?? '-' }}</span>
+                    <span class="font-barlow-condensed font-bold text-naranja shrink-0 text-sm md:text-base">Dorsal {{ runner.bibNumber ?? '-' }}</span>
                   </li>
                 </ul>
               </div>
@@ -170,17 +170,19 @@ async function searchActiveBibs() {
           </div>
 
           <!-- Derecha: cartel -->
-          <div class="aspect-[2/3] bg-gris-medio flex items-center justify-center overflow-hidden">
-            <img
-              v-if="activeEdition.posterUrl"
-              :src="activeEdition.posterUrl"
-              :alt="activeEdition.name"
-              class="w-full h-full object-cover cursor-zoom-in"
-              @click="zoomImage($event.target as HTMLImageElement)"
-            />
-            <span v-else class="font-barlow-condensed text-sm tracking-widest uppercase text-white/15">
-              Sin cartel
-            </span>
+          <div class="md:order-2 order-1 flex justify-center">
+            <div class="w-full max-w-[280px] sm:max-w-[320px] aspect-[2/3] bg-gris-medio flex items-center justify-center overflow-hidden">
+              <img
+                v-if="activeEdition.posterUrl"
+                :src="activeEdition.posterUrl"
+                :alt="activeEdition.name"
+                class="w-full h-full object-cover cursor-zoom-in"
+                @click="zoomImage($event.target as HTMLImageElement)"
+              />
+              <span v-else class="font-barlow-condensed text-sm tracking-widest uppercase text-white/15">
+                Sin cartel
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-25
-> **Última revisión:** generalización de raffle_configs → emails_config + foto en últimas indicaciones
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones
+> **Última actualización:** 2026-06-26
+> **Última revisión:** refactor SOLID F4 (GenerateThumbnailsCommand) + tests (F6)
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6
 
 ---
 
@@ -38,6 +38,29 @@ Tracking: `17_NUEVOS_TIPOS_CORREO.md` (secciones nuevas al final).
 | GC8 | Frontend: `PreviewItem` incluye `gender` y `birthDate`; envío no pisa datos de runners | ✅ |
 | GC9 | Fix: caché de rutas Symfony requirió borrado manual de `var/cache/dev` para compilar `last_instructions` | ✅ |
 | GC10 | `vue-tsc` verde; migración aplicada; schema validado | ✅ |
+
+---
+
+## SOLID F4: Dividir GenerateThumbnailsCommand (2026-06-26)
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| F4.1 | Crear `R2FileLister` (lista objetos de R2 por prefijo) | ✅ |
+| F4.2 | `GenerateThumbnailsCommand` usa `R2FileLister` en vez de `S3Client` directo | ✅ |
+| F4.3 | `GenerateThumbnailsCommand` usa `ImageProcessorInterface::createThumbnail()` en vez de GD crudo | ✅ |
+| F4.4 | `GenerateThumbnailsCommand` usa `PhotoRepositoryInterface::save()` en vez de SQL crudo | ✅ |
+| F4.5 | `GenerateThumbnailsCommand` usa `RaceEditionRepositoryInterface::findByYear()` en vez de SQL crudo | ✅ |
+| F4.6 | `services.yaml`: registro de `R2FileLister` + actualización de argumentos del comando | ✅ |
+
+## SOLID F6: Tests pendientes (2026-06-26)
+
+| # | Cambio | Estado |
+|---|--------|--------|
+| F6.1 | Test unitario de `PathGenerator` (15 tests, 28 assertions) | ✅ |
+| F6.2 | Test unitario de `R2FileLister` (3 tests, 10 assertions) | ✅ |
+| F6.3 | Fix: caché de test con referencia a `RaffleConfigRepository` eliminada → limpiar `var/cache/test` | ✅ |
+| F6.4 | Fix: aplicar migración en BD de test (`emails_config`) | ✅ |
+| F6.5 | Suite completa: 164 tests, 540 assertions verdes | ✅ |
 
 ---
 
@@ -300,7 +323,7 @@ Tracking: `07_FIX_PATHS_PRD.md`. Alineado con estructura PRD (`carrera/{YYYY}/im
 | 2026-05-30 | 113 tests, 353 assertions ✅ (tras limpiar edition_id de sponsors) |
 | 2026-06-13 | 134 tests, 441 assertions ✅ (Bib Email Sender + fix club-member test) |
 | 2026-06-15 | 142 tests, 470 assertions ✅ (Bib Search por edición + showBibSearch) |
-| 2026-06-25 | 146 tests ✅ (generalización emails_config + foto últimas indicaciones) |
+| 2026-06-26 | 164 tests, 540 assertions ✅ (SOLID F4 + tests F6) |
 
 ---
 

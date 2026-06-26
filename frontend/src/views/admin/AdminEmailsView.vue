@@ -75,7 +75,7 @@ interface EmailConfigData {
   prizeImageUrl?: string
 }
 
-type EmailType = 'last_instructions' | 'raffle'
+type EmailType = 'last_instructions' | 'raffle' | 'thanks'
 
 const router = useRouter()
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -92,6 +92,7 @@ const users = ref<AdminUser[]>([])
 const selectedGroupKeys = ref<Set<string>>(new Set())
 const sentCounts = ref<Map<string, number>>(new Map())
 const activeTab = ref<EmailType>('raffle')
+const bccEmail = ref('')
 
 const emailConfig = ref<EmailConfigData>({
   subject: '',
@@ -189,13 +190,24 @@ const selectedEdition = computed(() =>
   editions.value.find((e) => e.id === selectedEditionId.value) ?? edition.value
 )
 
-const validItems = computed(() => items.value.filter((i) => i.emailValid))
-const invalidItems = computed(() => items.value.filter((i) => !i.emailValid))
-const selectedItems = computed(() => items.value.filter((i) => i.selected && i.emailValid))
+function isZeroDorsal(ref: string | null): boolean {
+  return ref !== null && ref !== '' && /^0+$/.test(ref)
+}
+
+const tabItems = computed(() => {
+  if (activeTab.value === 'thanks') {
+    return items.value.filter((i) => isZeroDorsal(i.reference))
+  }
+  return items.value.filter((i) => !isZeroDorsal(i.reference))
+})
+
+const validItems = computed(() => tabItems.value.filter((i) => i.emailValid))
+const invalidItems = computed(() => tabItems.value.filter((i) => !i.emailValid))
+const selectedItems = computed(() => tabItems.value.filter((i) => i.selected && i.emailValid))
 
 const duplicateEmails = computed(() => {
   const counts = new Map<string, number>()
-  items.value.forEach((i) => counts.set(i.email, (counts.get(i.email) || 0) + 1))
+  tabItems.value.forEach((i) => counts.set(i.email, (counts.get(i.email) || 0) + 1))
   return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([email]) => email)
 })
 
@@ -210,13 +222,12 @@ const referenceLabel = computed(() => {
   const labels: Record<EmailType, string> = {
     last_instructions: 'Dorsal',
     raffle: 'Dorsal',
+    thanks: 'Dorsal',
   }
   return labels[activeTab.value]
 })
 
-const csvFormatHint = computed(() => {
-  return 'Dorsal;Nombre;Apellidos;Sexo;email;...'
-})
+const csvFormatHint = 'Dorsal;Nombre;Apellidos;Sexo;email;...'
 
 function statusLabel(status: string): string {
   const labels: Record<string, string> = {
@@ -372,7 +383,7 @@ async function saveEmailConfig() {
   emailConfigSaving.value = true
   message.value = null
 
-  const typeLabel = activeTab.value === 'raffle' ? 'del sorteo' : 'de ultimas indicaciones'
+  const typeLabel = activeTab.value === 'raffle' ? 'del sorteo' : activeTab.value === 'last_instructions' ? 'de ultimas indicaciones' : 'de agradecimiento'
 
   try {
     const payload: any = {
@@ -456,12 +467,17 @@ async function sendEmails() {
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
     }
-    if (activeTab.value === 'raffle') {
-      payload.metadata = { ...emailConfig.value }
+    const meta: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(emailConfig.value)) {
+      if (v !== '' && v !== null && v !== undefined) meta[k] = v
     }
+    if (bccEmail.value) meta.bccEmail = bccEmail.value
+    payload.metadata = Object.keys(meta).length > 0 ? meta : undefined
+
+    const typeLabel = activeTab.value === 'raffle' ? 'sorteo' : activeTab.value === 'last_instructions' ? 'indicaciones' : 'agradecimiento'
     const res = await api.post(`/admin/emails/${activeTab.value}/send`, payload)
     const { queued, skipped, queuedInstructions } = res.data.data
-    const baseText = `${queued} correo(s) de ${activeTab.value === 'raffle' ? 'sorteo' : 'indicaciones'} marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`
+    const baseText = `${queued} correo(s) de ${typeLabel} marcado(s) como pendiente(s). ${skipped} omitido(s) por ya enviado(s).`
     const extraText = activeTab.value === 'raffle' && queuedInstructions > 0
       ? ` Tambien se han encolado ${queuedInstructions} correo(s) de ultimas indicaciones.`
       : ''
@@ -501,9 +517,13 @@ async function resendLogs(groupsToResend: LogGroup[]) {
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
     }
-    if (activeTab.value === 'raffle') {
-      payload.metadata = { ...emailConfig.value }
+    const meta: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(emailConfig.value)) {
+      if (v !== '' && v !== null && v !== undefined) meta[k] = v
     }
+    if (bccEmail.value) meta.bccEmail = bccEmail.value
+    payload.metadata = Object.keys(meta).length > 0 ? meta : undefined
+
     const res = await api.post(`/admin/emails/${activeTab.value}/send`, payload)
     const { queued, skipped } = res.data.data
     message.value = {
@@ -531,6 +551,9 @@ async function runPendingEmails() {
     const payload: any = {}
     if (selectedEditionId.value) {
       payload.editionId = selectedEditionId.value
+    }
+    if (bccEmail.value) {
+      payload.bccEmail = bccEmail.value
     }
     const res = await api.post(`/admin/emails/${activeTab.value}/run`, payload)
     message.value = {
@@ -647,6 +670,17 @@ fetchEditions().then(() => {
         >
           2. Últimas Indicaciones
         </button>
+        <button
+          @click="setTab('thanks')"
+          :class="[
+            'px-4 py-2 text-sm font-medium transition cursor-pointer border-b-2',
+            activeTab === 'thanks'
+              ? 'border-[#FF5C00] text-[#FF5C00]'
+              : 'border-transparent text-gray-400 hover:text-white',
+          ]"
+        >
+          3. Agradecimiento
+        </button>
       </div>
 
       <div
@@ -666,7 +700,7 @@ fetchEditions().then(() => {
         class="bg-[#141414] rounded-lg border border-white/5 p-4 md:p-6 space-y-4"
       >
         <h2 class="text-lg font-semibold text-naranja">
-          {{ activeTab === 'raffle' ? 'Configuración del sorteo' : 'Configuración de últimas indicaciones' }}
+          {{ activeTab === 'raffle' ? 'Configuración del sorteo' : activeTab === 'last_instructions' ? 'Configuración de últimas indicaciones' : 'Configuración de agradecimiento' }}
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
@@ -774,7 +808,7 @@ fetchEditions().then(() => {
             </thead>
             <tbody>
               <tr
-                v-for="item in items"
+                v-for="item in tabItems"
                 :key="`${item.email}-${item.reference ?? ''}`"
                 :class="[
                   'border-t border-white/5 transition',
@@ -851,6 +885,12 @@ fetchEditions().then(() => {
           >
             {{ sending ? 'Iniciando...' : 'Ejecutar envios pendientes' }}
           </button>
+          <input
+            v-model.trim="bccEmail"
+            type="email"
+            placeholder="BCC (opcional)"
+            class="bg-[#0A0A0A] border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#FF5C00] focus:outline-none transition w-44"
+          />
           <button
             @click="resendLogs(selectedGroups)"
             :disabled="selectedGroups.length === 0 || sending"

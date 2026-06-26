@@ -41,10 +41,13 @@ services:
     App\Domain\Media\Service\ImageProcessorInterface:
         alias: App\Infrastructure\Service\GdImageProcessor
 
-    App\Command\GenerateThumbnailsCommand:
+    App\Infrastructure\Storage\R2FileLister:
         arguments:
             $s3Client: '@Aws\S3\S3Client'
             $bucket: '%env(R2_BUCKET_NAME)%'
+
+    App\Command\GenerateThumbnailsCommand:
+        arguments:
             $publicUrl: '%env(R2_PUBLIC_URL)%'
 
     App\Command\MigrateStorageUrlsToPathsCommand:
@@ -103,7 +106,7 @@ services:
         arguments:
             $senderEmail: '%env(MAILER_SENDER_EMAIL)%'
             $delaySeconds: '%env(int:BIB_EMAIL_DELAY_SECONDS)%'
-            $bccEmail: '%env(MAILER_BCC_EMAIL)%'
+            $publicUrl: '%env(R2_PUBLIC_URL)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
