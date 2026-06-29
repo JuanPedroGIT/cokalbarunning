@@ -26,7 +26,7 @@ final class SearchRunnersQueryHandler
             ->setParameter('editionId', $query->editionId)
             ->andWhere('r.bibNumber IS NOT NULL')
             ->andWhere("r.bibNumber != ''")
-            ->andWhere("TRIM(r.bibNumber, '0') != ''")
+            ->andWhere("r.bibNumber NOT IN ('0', '00', '000', '0000', '00000', '000000')")
             ->andWhere(
                 'LOWER(r.firstName) LIKE :name OR LOWER(r.lastName) LIKE :name OR LOWER(CONCAT(r.firstName, \' \', r.lastName)) LIKE :name'
             )
