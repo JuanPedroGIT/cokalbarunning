@@ -57,7 +57,7 @@ final class SendEmailCampaignHandler
                 continue;
             }
 
-            if ($raceEditionId !== null) {
+            if ($raceEditionId !== null && $type !== EmailType::GENERIC && $type !== EmailType::THANKS) {
                 $this->upsertRunner($item, $raceEditionId);
             }
 

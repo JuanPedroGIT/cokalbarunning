@@ -24,7 +24,8 @@ final class SearchRunnersQueryHandler
             ->createQueryBuilder('r')
             ->where('r.raceEditionId = :editionId')
             ->setParameter('editionId', $query->editionId)
-            ->andWhere("r.bibNumber != '0'")
+            ->andWhere('r.bibNumber IS NOT NULL')
+            ->andWhere("r.bibNumber NOT IN ('0', '00', '000')")
             ->andWhere(
                 'LOWER(r.firstName) LIKE :name OR LOWER(r.lastName) LIKE :name OR LOWER(CONCAT(r.firstName, \' \', r.lastName)) LIKE :name'
             )
