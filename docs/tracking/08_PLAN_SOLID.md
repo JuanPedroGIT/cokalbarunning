@@ -51,31 +51,31 @@ Un solo punto de cambio si la estructura de directorios R2 evoluciona.
 
 ### 2.1 `UploadRaceEditionImageHandler`
 **Archivos nuevos:**
-- [ ] `src/Application/Race/UploadImage/UploadRaceEditionImageCommand.php`
-- [ ] `src/Application/Race/UploadImage/UploadRaceEditionImageHandler.php`
+- [x] `src/Application/Race/UploadImage/UploadRaceEditionImageCommand.php`
+- [x] `src/Application/Race/UploadImage/UploadRaceEditionImageHandler.php`
 
 Unifica `uploadPoster` y `uploadShirt` (60 líneas duplicadas) en un solo handler con parámetro `type`.
 
 **Archivos afectados:**
-- [ ] `AdminRaceController.php` — delegar a command bus
+- [x] `AdminRaceController.php` — delegar a command bus
 
 ### 2.2 `UploadSponsorLogoHandler`
 **Archivos nuevos:**
-- [ ] `src/Application/Club/UploadLogo/UploadSponsorLogoCommand.php`
-- [ ] `src/Application/Club/UploadLogo/UploadSponsorLogoHandler.php`
+- [x] `src/Application/Club/UploadLogo/UploadSponsorLogoCommand.php`
+- [x] `src/Application/Club/UploadLogo/UploadSponsorLogoHandler.php`
 
 Extrae la lógica de upload de logo del controller al handler.
 
 **Archivos afectados:**
-- [ ] `AdminSponsorController.php` — delegar a command bus
+- [x] `AdminSponsorController.php` — delegar a command bus
 
 ### 2.3 `UploadClubMemberPhotoHandler`
 **Archivos nuevos:**
-- [ ] `src/Application/Club/UploadPhoto/UploadClubMemberPhotoCommand.php`
-- [ ] `src/Application/Club/UploadPhoto/UploadClubMemberPhotoHandler.php`
+- [x] `src/Application/Club/UploadPhoto/UploadClubMemberPhotoCommand.php`
+- [x] `src/Application/Club/UploadPhoto/UploadClubMemberPhotoHandler.php`
 
 **Archivos afectados:**
-- [ ] `AdminClubMemberController.php` — delegar a command bus
+- [x] `AdminClubMemberController.php` — delegar a command bus
 
 ---
 

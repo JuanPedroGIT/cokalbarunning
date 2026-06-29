@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api.service'
+import ImageDropZone from '@/components/ui/ImageDropZone.vue'
 import InstagramSvg from '@/assets/icons/instagram.svg?raw'
 
 interface Post {
@@ -42,6 +43,7 @@ const form = ref<Partial<Post>>({ title: '', excerpt: '', content: '', tag: 'not
 const router = useRouter()
 const editingId = ref<string | null>(null)
 const coverFile = ref<File | null>(null)
+const coverPreviewUrl = ref<string | null>(null)
 const socialPublishes = ref<Record<string, SocialPublishLog>>({})
 const publishingIds = ref<Set<string>>(new Set())
 
@@ -93,6 +95,10 @@ async function save() {
   if (coverFile.value && id) {
     await uploadCover(id, coverFile.value)
     coverFile.value = null
+    if (coverPreviewUrl.value) {
+      URL.revokeObjectURL(coverPreviewUrl.value)
+      coverPreviewUrl.value = null
+    }
   }
   resetForm()
   await fetchPosts()
@@ -103,6 +109,14 @@ async function uploadCover(postId: string, file: File) {
   await api.post(`/admin/posts/${postId}/cover`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+}
+
+function onCoverSelect(selectedFile: File) {
+  if (coverPreviewUrl.value) {
+    URL.revokeObjectURL(coverPreviewUrl.value)
+  }
+  coverFile.value = selectedFile
+  coverPreviewUrl.value = URL.createObjectURL(selectedFile)
 }
 
 function edit(p: Post) {
@@ -119,6 +133,10 @@ async function remove(id: string) {
 function resetForm() {
   editingId.value = null
   coverFile.value = null
+  if (coverPreviewUrl.value) {
+    URL.revokeObjectURL(coverPreviewUrl.value)
+    coverPreviewUrl.value = null
+  }
   form.value = { title: '', excerpt: '', content: '', tag: 'noticia', publishedAt: null, bannerEndAt: null, priority: null, type: 1 }
 }
 
@@ -195,17 +213,18 @@ onMounted(async () => {
               <option :value="5">5</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">Imagen portada</label>
-            <input type="file" accept="image/*" :id="`cover-upload`" class="hidden" @change="ev => coverFile = (ev.target as HTMLInputElement).files?.[0] || null" />
-            <label :for="`cover-upload`" class="cursor-pointer bg-[#0A0A0A] border-2 border-dashed border-white/20 rounded-lg px-4 py-3 hover:border-[#FF5C00]/50 hover:bg-[#1a1a1a] transition flex items-center gap-3">
-              <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3l4.5 4.5m-13.5 9V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0021 6.75v6.75" />
-              </svg>
-              <span v-if="!coverFile && !form.coverImage" class="text-sm text-gray-400">Arrastra una imagen o haz clic aquí</span>
-              <span v-else-if="coverFile" class="text-sm text-white font-medium">{{ coverFile.name }}</span>
-              <img v-else-if="form.coverImage" :src="form.coverImage" class="h-12 w-auto object-contain rounded" />
-            </label>
+        </div>
+        <!-- Imagen de portada — dropzone cuadrado -->
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Imagen de portada</label>
+          <div class="w-full sm:w-[240px]">
+            <ImageDropZone
+              :label="'Arrastra o haz clic'"
+              :selected-label="coverFile ? coverFile.name : undefined"
+              :image-url="coverPreviewUrl || form.coverImage || undefined"
+              :square="true"
+              @select="onCoverSelect"
+            />
           </div>
         </div>
         <div class="flex gap-2 pt-2">

@@ -4,37 +4,31 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Http\Controller\Api\Admin;
 
-use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
-use Ramsey\Uuid\Uuid;
+use App\Application\User\Create\CreateUserCommand;
+use App\Application\User\Delete\DeleteUserCommand;
+use App\Application\User\Query\GetAllUsersQuery;
+use App\Application\User\Update\UpdateUserCommand;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1/admin')]
 class AdminUserController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $em,
-        private UserPasswordHasherInterface $hasher,
+        private MessageBusInterface $commandBus,
+        private MessageBusInterface $queryBus,
     ) {
     }
 
     #[Route('/users', methods: ['GET'])]
     public function list(): JsonResponse
     {
-        $users = $this->em->getRepository(User::class)->findAll();
-
-        $data = array_map(fn (User $u): array => [
-            'id' => $u->getId(),
-            'email' => $u->getEmail(),
-            'firstName' => $u->getFirstName(),
-            'lastName' => $u->getLastName(),
-            'roles' => $u->getRoles(),
-            'roles' => $u->getRoles(),
-        ], $users);
+        $envelope = $this->queryBus->dispatch(new GetAllUsersQuery());
+        $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 
         return $this->json(['data' => $data]);
     }
@@ -47,62 +41,55 @@ class AdminUserController extends AbstractController
             return $this->json(['error' => 'Email and password required'], 400);
         }
 
-        $existing = $this->em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
-        if ($existing) {
-            return $this->json(['error' => 'Email already exists'], 409);
+        try {
+            $envelope = $this->commandBus->dispatch(new CreateUserCommand(
+                email: $data['email'],
+                password: $data['password'],
+                firstName: $data['firstName'] ?? '',
+                lastName: $data['lastName'] ?? '',
+                roles: $data['roles'] ?? ['ROLE_EDITOR'],
+            ));
+            $id = $envelope->last(HandledStamp::class)?->getResult();
+
+            return $this->json(['data' => ['id' => $id]], 201);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 409);
         }
-
-        $user = new User();
-        $user->setId(Uuid::uuid4()->toString());
-        $user->setEmail($data['email']);
-        $user->setFirstName($data['firstName'] ?? '');
-        $user->setLastName($data['lastName'] ?? '');
-        $user->setRoles($data['roles'] ?? ['ROLE_EDITOR']);
-        $user->setPassword($this->hasher->hashPassword($user, $data['password']));
-
-        $this->em->persist($user);
-        $this->em->flush();
-
-        return $this->json(['data' => ['id' => $user->getId()]], 201);
     }
 
     #[Route('/users/{id}', methods: ['PUT'])]
     public function update(string $id, Request $request): JsonResponse
     {
-        $user = $this->em->getRepository(User::class)->find($id);
-        if (!$user) {
-            return $this->json(['error' => 'Not found'], 404);
-        }
-
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
             return $this->json(['error' => 'Invalid JSON'], 400);
         }
 
-        if (isset($data['email'])) $user->setEmail($data['email']);
-        if (isset($data['firstName'])) $user->setFirstName($data['firstName']);
-        if (isset($data['lastName'])) $user->setLastName($data['lastName']);
-        if (isset($data['roles'])) $user->setRoles($data['roles']);
-        if (!empty($data['password'])) {
-            $user->setPassword($this->hasher->hashPassword($user, $data['password']));
+        try {
+            $this->commandBus->dispatch(new UpdateUserCommand(
+                id: $id,
+                email: $data['email'] ?? null,
+                password: $data['password'] ?? null,
+                firstName: $data['firstName'] ?? null,
+                lastName: $data['lastName'] ?? null,
+                roles: $data['roles'] ?? null,
+            ));
+
+            return $this->json(['data' => ['updated' => true]]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
         }
-
-        $this->em->flush();
-
-        return $this->json(['data' => ['updated' => true]]);
     }
 
     #[Route('/users/{id}', methods: ['DELETE'])]
     public function delete(string $id): JsonResponse
     {
-        $user = $this->em->getRepository(User::class)->find($id);
-        if (!$user) {
-            return $this->json(['error' => 'Not found'], 404);
+        try {
+            $this->commandBus->dispatch(new DeleteUserCommand(id: $id));
+
+            return $this->json(null, 204);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
         }
-
-        $this->em->remove($user);
-        $this->em->flush();
-
-        return $this->json(null, 204);
     }
 }

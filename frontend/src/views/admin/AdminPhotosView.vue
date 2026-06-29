@@ -23,6 +23,7 @@ interface Edition {
 const photos = ref<Photo[]>([])
 const editions = ref<Edition[]>([])
 const file = ref<File | null>(null)
+const previewUrl = ref<string | null>(null)
 const altText = ref('')
 const isFeatured = ref(false)
 const sortOrder = ref(0)
@@ -60,7 +61,11 @@ async function upload() {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
   file.value = null
+  previewUrl.value = null
   altText.value = ''
   isFeatured.value = false
   sortOrder.value = 0
@@ -74,7 +79,11 @@ async function remove(id: string) {
 }
 
 function onPhotoSelect(selectedFile: File) {
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
   file.value = selectedFile
+  previewUrl.value = URL.createObjectURL(selectedFile)
 }
 
 watch(selectedEditionId, () => {
@@ -104,30 +113,40 @@ onMounted(() => { fetchEditions() })
       </div>
 
       <!-- Upload form (solo visible si hay edicion seleccionada) -->
-      <div v-if="selectedEditionId" class="bg-[#141414] rounded-lg border border-white/5 p-6 space-y-4">
-        <h2 class="text-lg font-semibold border-b border-white/5 pb-3">Subir Foto</h2>
-        <ImageDropZone
-          :label="'Haz clic para seleccionar una imagen'"
-          :selected-label="file ? file.name : undefined"
-          @select="onPhotoSelect"
-        />
-        <div>
-          <label class="block text-xs text-gray-400 mb-1">Texto alternativo (alt)</label>
-          <input v-model="altText" placeholder="Descripcion de la imagen para accesibilidad..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">Orden</label>
-            <input v-model.number="sortOrder" type="number" placeholder="0" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+      <div v-if="selectedEditionId" class="bg-[#141414] rounded-lg border border-white/5 p-4 sm:p-6">
+        <h2 class="text-lg font-semibold border-b border-white/5 pb-3 mb-4">Subir Foto</h2>
+        <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
+          <!-- Drop zone — cuadrado a la izquierda -->
+          <div class="shrink-0 w-full sm:w-[240px]">
+            <ImageDropZone
+              :label="'Arrastra o haz clic'"
+              :selected-label="file ? file.name : undefined"
+              :image-url="previewUrl || undefined"
+              :square="true"
+              @select="onPhotoSelect"
+            />
           </div>
-          <div class="flex items-end">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input v-model="isFeatured" type="checkbox" class="w-4 h-4 accent-[#FF5C00]" />
-              <span class="text-sm">Destacada</span>
-            </label>
+          <!-- Campos a la derecha -->
+          <div class="flex-1 flex flex-col gap-4 min-w-0">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Texto alternativo (alt)</label>
+              <input v-model="altText" placeholder="Descripcion de la imagen..." class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Orden</label>
+                <input v-model.number="sortOrder" type="number" placeholder="0" class="w-full bg-[#0A0A0A] border border-white/10 rounded px-3 py-2 text-white focus:border-[#FF5C00] focus:outline-none transition" />
+              </div>
+              <div class="flex items-end pb-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input v-model="isFeatured" type="checkbox" class="w-4 h-4 accent-[#FF5C00]" />
+                  <span class="text-sm">Destacada</span>
+                </label>
+              </div>
+            </div>
+            <button @click="upload" :disabled="!file" class="bg-[#FF5C00] text-white px-5 py-2.5 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-start">Subir foto</button>
           </div>
         </div>
-        <button @click="upload" :disabled="!file" class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">Subir</button>
       </div>
 
       <div v-else class="bg-[#141414] rounded-lg border border-white/5 p-10 text-center text-gray-500">

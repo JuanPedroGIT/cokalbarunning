@@ -5,24 +5,19 @@ declare(strict_types=1);
 namespace App\Infrastructure\Http\Controller\Api\Admin;
 
 use App\Application\Notification\Command\CreateEmailSendLogCommand;
+use App\Application\Notification\CreateEmailConfig\CreateEmailConfigCommand;
+use App\Application\Notification\GetEmailConfig\GetEmailConfigQuery;
+use App\Application\Notification\GetGenericRecipients\GetGenericRecipientsQuery;
+use App\Application\Notification\GetSentCounts\GetEmailSentCountsQuery;
+use App\Application\Notification\PreviewRecipients\PreviewEmailRecipientsCommand;
 use App\Application\Notification\Query\GetEmailSendLogsQuery;
 use App\Application\Notification\Response\EmailSendLogResponseDto;
-use App\Application\Race\BibEmail\EmailRecipientDto;
-use App\Application\Race\BibEmail\ParseEmailCsv;
-use App\Domain\Notification\Repository\EmailSendLogRepositoryInterface;
+use App\Application\Notification\SendCampaign\SendEmailCampaignCommand;
+use App\Application\Notification\UpdateEmailConfig\UpdateEmailConfigCommand;
+use App\Application\Notification\UploadImage\UploadEmailImageCommand;
 use App\Domain\Notification\ValueObject\EmailType;
-use App\Domain\Media\Port\StoragePort;
-use App\Domain\Media\Service\PathGenerator;
-use App\Domain\Race\Entity\RaceEdition;
-use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
-use App\Domain\Race\ValueObject\RaceEditionId;
-use App\Entity\EmailConfig;
-use App\Entity\Runner;
-use App\Repository\EmailConfigRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Ramsey\Uuid\Uuid;
+use App\Domain\Notification\Repository\EmailSendLogRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -37,13 +32,7 @@ class AdminEmailController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private ParseEmailCsv $csvParser,
-        private RaceEditionRepositoryInterface $raceEditionRepository,
         private EmailSendLogRepositoryInterface $emailSendLogRepository,
-        private EntityManagerInterface $entityManager,
-        private EmailConfigRepository $emailConfigRepository,
-        private StoragePort $storage,
-        private PathGenerator $pathGenerator,
     ) {
     }
 
@@ -74,7 +63,7 @@ class AdminEmailController extends AbstractController
         }
 
         $file = $request->files->get('file');
-        if (!$file instanceof UploadedFile || !$file->isValid()) {
+        if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || !$file->isValid()) {
             return $this->json(['error' => 'No CSV file uploaded or invalid'], 400);
         }
 
@@ -83,60 +72,20 @@ class AdminEmailController extends AbstractController
             return $this->json(['error' => 'Cannot read CSV file'], 400);
         }
 
-        $edition = $this->resolveEdition($request);
-        if ($edition instanceof JsonResponse) {
-            return $edition;
+        $editionId = $request->request->get('editionId') ?: null;
+
+        try {
+            $envelope = $this->commandBus->dispatch(new PreviewEmailRecipientsCommand(
+                type: $type,
+                csvContent: $content,
+                editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+            ));
+            $result = $envelope->last(HandledStamp::class)?->getResult();
+
+            return $this->json(['data' => $result]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
         }
-
-        $recipients = $this->csvParser->parse($content);
-
-        $raceEditionId = $edition?->id()->value();
-        $runnersCreated = 0;
-        if ($raceEditionId !== null) {
-            foreach ($recipients as $recipient) {
-                if ($recipient->email === '' || $recipient->emailValid === false) {
-                    continue;
-                }
-                $this->upsertRunner($recipient->toArray(), $raceEditionId);
-                $runnersCreated++;
-            }
-            $this->entityManager->flush();
-        }
-
-        $items = array_map(function (EmailRecipientDto $recipient) use ($type) {
-            $existing = $this->emailSendLogRepository->findByEmailTypeAndReference(
-                $recipient->email,
-                $type,
-                $recipient->reference
-            );
-
-            return [
-                'firstName' => $recipient->firstName,
-                'lastName' => $recipient->lastName,
-                'fullName' => $recipient->fullName(),
-                'email' => $recipient->email,
-                'reference' => $recipient->reference,
-                'club' => $recipient->club,
-                'category' => $recipient->category,
-                'shirtSize' => $recipient->shirtSize,
-                'emailValid' => $recipient->emailValid,
-                'status' => $existing?->status()->value() ?? 'not_sent',
-                'errorMessage' => $existing?->errorMessage(),
-                'sentAt' => $existing?->sentAt()?->format('Y-m-d H:i:s'),
-            ];
-        }, $recipients);
-
-        return $this->json([
-            'data' => [
-                'edition' => $edition !== null ? [
-                    'id' => $edition->id()->value(),
-                    'name' => $edition->name(),
-                    'year' => $edition->year()->value(),
-                ] : null,
-                'items' => $items,
-                'runnersCreated' => $runnersCreated,
-            ],
-        ]);
     }
 
     #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
@@ -154,145 +103,26 @@ class AdminEmailController extends AbstractController
         $items = $data['items'] ?? [];
         $force = (bool) ($data['force'] ?? false);
         $metadata = \is_array($data['metadata'] ?? null) ? $data['metadata'] : [];
+        $editionId = ($data['editionId'] ?? null) ?: null;
 
         if (!\is_array($items) || $items === []) {
             return $this->json(['error' => 'No recipients provided'], 400);
         }
 
-        $edition = $this->resolveEditionFromBody($data);
-        if ($edition instanceof JsonResponse) {
-            return $edition;
-        }
-        $raceEditionId = $edition?->id()->value();
-
         $user = $this->getUser();
         $sentBy = $user instanceof \App\Entity\User ? $user->getId() : null;
 
-        $queued = 0;
-        $skipped = 0;
-        $queuedInstructions = 0;
+        $envelope = $this->commandBus->dispatch(new SendEmailCampaignCommand(
+            type: $type,
+            items: $items,
+            editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+            metadata: $metadata,
+            force: $force,
+            sentBy: $sentBy,
+        ));
+        $result = $envelope->last(HandledStamp::class)?->getResult();
 
-        foreach ($items as $item) {
-            if (!\is_array($item)) {
-                continue;
-            }
-
-            $email = trim((string) ($item['email'] ?? ''));
-            $firstName = trim((string) ($item['firstName'] ?? ''));
-            $lastName = trim((string) ($item['lastName'] ?? ''));
-            $fullName = trim((string) ($item['fullName'] ?? ''));
-            $reference = isset($item['reference']) ? trim((string) $item['reference']) : null;
-
-            if ($email === '') {
-                continue;
-            }
-
-            $name = $fullName !== '' ? $fullName : trim($firstName . ' ' . $lastName);
-            if ($name === '') {
-                continue;
-            }
-
-            if ($raceEditionId !== null) {
-                $this->upsertRunner($item, $raceEditionId);
-            }
-
-            $created = $this->createOrUpdateLog(
-                email: $email,
-                name: $name,
-                reference: $reference,
-                type: $type,
-                raceEditionId: $raceEditionId,
-                metadata: $metadata,
-                sentBy: $sentBy,
-                force: $force,
-            );
-
-            if ($created === null) {
-                $skipped++;
-                continue;
-            }
-
-            $queued++;
-
-            // Al enviar el sorteo se encolan automaticamente las ultimas indicaciones.
-            if ($type === EmailType::RAFFLE) {
-                $instructionsCreated = $this->createOrUpdateLog(
-                    email: $email,
-                    name: $name,
-                    reference: $reference,
-                    type: EmailType::LAST_INSTRUCTIONS,
-                    raceEditionId: $raceEditionId,
-                    metadata: [],
-                    sentBy: $sentBy,
-                    force: $force,
-                );
-                if ($instructionsCreated !== null) {
-                    $queuedInstructions++;
-                }
-            }
-        }
-
-        if ($type === EmailType::BIB && $raceEditionId !== null && $queued > 0) {
-            $ormEdition = $this->entityManager->getRepository(\App\Entity\RaceEdition::class)->find($raceEditionId);
-            if ($ormEdition !== null && !$ormEdition->isShowBibSearch()) {
-                $ormEdition->setShowBibSearch(true);
-            }
-        }
-
-        $this->entityManager->flush();
-
-        return $this->json([
-            'data' => [
-                'queued' => $queued,
-                'skipped' => $skipped,
-                'queuedInstructions' => $queuedInstructions,
-            ],
-        ]);
-    }
-
-    /**
-     * @param array<string, mixed> $metadata
-     */
-    private function createOrUpdateLog(
-        string $email,
-        string $name,
-        ?string $reference,
-        string $type,
-        ?string $raceEditionId,
-        array $metadata,
-        ?string $sentBy,
-        bool $force,
-    ): ?string {
-        $existing = $this->emailSendLogRepository->findByEmailTypeAndReference($email, $type, $reference);
-        if ($existing !== null && $existing->status()->isSent() && !$force) {
-            return null;
-        }
-
-        $isResend = $existing !== null && $existing->status()->isSent() && $force;
-
-        if ($existing === null || $isResend) {
-            $logId = Uuid::uuid4()->toString();
-            $envelope = $this->commandBus->dispatch(new CreateEmailSendLogCommand(
-                id: $logId,
-                type: $type,
-                recipientEmail: $email,
-                recipientName: $name,
-                reference: $reference,
-                raceEditionId: $raceEditionId,
-                sentBy: $sentBy,
-                metadata: $metadata,
-            ));
-
-            return $envelope->last(HandledStamp::class)?->getResult() ?? $logId;
-        }
-
-        $existing->markAsPending();
-        if ($sentBy !== null && $sentBy !== '') {
-            $existing->assignSentBy($sentBy);
-        }
-        $this->emailSendLogRepository->save($existing);
-
-        return $existing->id();
+        return $this->json(['data' => $result]);
     }
 
     #[Route('/emails/{type}/sent-counts', methods: ['GET'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
@@ -303,27 +133,11 @@ class AdminEmailController extends AbstractController
         }
 
         $raceEditionId = $request->query->get('editionId');
-        $logs = \is_string($raceEditionId) && $raceEditionId !== ''
-            ? $this->emailSendLogRepository->findByTypeAndRaceEditionId($type, $raceEditionId)
-            : $this->emailSendLogRepository->findAll();
-
-        $counts = [];
-
-        foreach ($logs as $log) {
-            if (!$log->status()->isSent()) {
-                continue;
-            }
-            if ($log->type()->value() !== $type) {
-                continue;
-            }
-            $email = $log->recipientEmail();
-            $counts[$email] = ($counts[$email] ?? 0) + 1;
-        }
-
-        $data = [];
-        foreach ($counts as $email => $count) {
-            $data[] = ['email' => $email, 'count' => $count];
-        }
+        $envelope = $this->queryBus->dispatch(new GetEmailSentCountsQuery(
+            type: $type,
+            raceEditionId: \is_string($raceEditionId) && $raceEditionId !== '' ? $raceEditionId : null,
+        ));
+        $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 
         return $this->json(['data' => $data]);
     }
@@ -331,59 +145,10 @@ class AdminEmailController extends AbstractController
     #[Route('/emails/generic/recipients', methods: ['GET'])]
     public function genericRecipients(Request $request): JsonResponse
     {
-        $activeEdition = $this->raceEditionRepository->findActive();
-        $activeEditionId = $activeEdition?->id()->value();
+        $envelope = $this->queryBus->dispatch(new GetGenericRecipientsQuery());
+        $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 
-        $conn = $this->entityManager->getConnection();
-
-        $excludeJoin = '';
-        $excludeWhere = '';
-        if ($activeEditionId !== null) {
-            $escapedId = $conn->quote($activeEditionId);
-            $excludeJoin = "LEFT JOIN runners active_r ON active_r.email = r.email AND active_r.race_edition_id::uuid = $escapedId::uuid";
-            $excludeWhere = ' AND active_r.id IS NULL';
-        }
-
-        $sql = <<<SQL
-            SELECT DISTINCT ON (r.email)
-                r.id, r.first_name, r.last_name, r.email, r.bib_number, r.club,
-                r.gender, r.category, r.birth_date,
-                re.year AS edition_year, re.name AS edition_name
-            FROM runners r
-            JOIN race_editions re ON re.id::uuid = r.race_edition_id::uuid
-            $excludeJoin
-            WHERE r.email IS NOT NULL AND r.email != ''
-            $excludeWhere
-            ORDER BY r.email, r.birth_date ASC NULLS LAST
-        SQL;
-
-        $rows = $conn->executeQuery($sql)->fetchAllAssociative();
-
-        $items = array_map(function (array $row): array {
-            $fullName = trim($row['first_name'] . ' ' . $row['last_name']);
-
-            return [
-                'firstName' => $row['first_name'],
-                'lastName' => $row['last_name'],
-                'fullName' => $fullName,
-                'email' => $row['email'],
-                'reference' => $row['bib_number'],
-                'club' => $row['club'],
-                'gender' => $row['gender'],
-                'category' => $row['category'],
-                'birthDate' => $row['birth_date'],
-                'editionYear' => (int) $row['edition_year'],
-                'editionName' => $row['edition_name'],
-                'emailValid' => true,
-            ];
-        }, $rows);
-
-        return $this->json([
-            'data' => [
-                'items' => $items,
-                'total' => \count($items),
-            ],
-        ]);
+        return $this->json(['data' => $data]);
     }
 
     #[Route('/emails/{type}/run', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
@@ -397,7 +162,6 @@ class AdminEmailController extends AbstractController
         $editionId = \is_array($data) ? ($data['editionId'] ?? null) : null;
         $bccEmail = \is_array($data) ? ($data['bccEmail'] ?? null) : null;
 
-        // Store BCC in pending logs metadata before running the command
         if (\is_string($bccEmail) && $bccEmail !== '') {
             $pendingLogs = $this->emailSendLogRepository->findByTypeAndRaceEditionId($type, $editionId);
             foreach ($pendingLogs as $log) {
@@ -447,15 +211,11 @@ class AdminEmailController extends AbstractController
             return $this->json(['error' => 'Edition ID is required'], 400);
         }
 
-        $config = $this->emailConfigRepository->findByRaceEditionIdAndType($editionId, $type);
-        if ($config === null) {
-            return $this->json(['data' => null]);
-        }
-
-        $data = $config->toArray();
-        if (!empty($data['prizeImageUrl'])) {
-            $data['prizeImageUrl'] = $this->storage->url($data['prizeImageUrl']);
-        }
+        $envelope = $this->queryBus->dispatch(new GetEmailConfigQuery(
+            editionId: $editionId,
+            type: $type,
+        ));
+        $data = $envelope->last(HandledStamp::class)?->getResult();
 
         return $this->json(['data' => $data]);
     }
@@ -473,25 +233,18 @@ class AdminEmailController extends AbstractController
             return $this->json(['error' => 'Edition ID is required'], 400);
         }
 
-        $existing = $this->emailConfigRepository->findByRaceEditionIdAndType($editionId, $type);
-        if ($existing !== null) {
-            return $this->json(['error' => 'Configuration already exists for this edition. Use PUT to update.'], 409);
+        try {
+            $envelope = $this->commandBus->dispatch(new CreateEmailConfigCommand(
+                editionId: $editionId,
+                type: $type,
+                data: $data,
+            ));
+            $responseData = $envelope->last(HandledStamp::class)?->getResult();
+
+            return $this->json(['data' => $responseData], 201);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 409);
         }
-
-        $config = new EmailConfig();
-        $config->setId(Uuid::uuid4()->toString());
-        $config->setRaceEditionId($editionId);
-        $config->setType($type);
-        $this->applyEmailConfigData($config, $data);
-
-        $this->emailConfigRepository->save($config);
-
-        $responseData = $config->toArray();
-        if (!empty($responseData['prizeImageUrl'])) {
-            $responseData['prizeImageUrl'] = $this->storage->url($responseData['prizeImageUrl']);
-        }
-
-        return $this->json(['data' => $responseData], 201);
     }
 
     #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
@@ -503,38 +256,20 @@ class AdminEmailController extends AbstractController
         }
 
         $file = $request->files->get('file');
-        if (!$file instanceof UploadedFile || !$file->isValid()) {
+        if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || !$file->isValid()) {
             return $this->json(['error' => 'No image file uploaded or invalid'], 400);
         }
 
-        $config = $this->emailConfigRepository->findByRaceEditionIdAndType($editionId, $type);
-        if ($config === null) {
-            $config = new EmailConfig();
-            $config->setId(Uuid::uuid4()->toString());
-            $config->setRaceEditionId($editionId);
-            $config->setType($type);
-        }
+        $envelope = $this->commandBus->dispatch(new UploadEmailImageCommand(
+            editionId: $editionId,
+            type: $type,
+            tmpPath: $file->getPathname(),
+            originalName: $file->getClientOriginalName(),
+            mimeType: $file->getMimeType() ?? 'image/png',
+        ));
+        $result = $envelope->last(HandledStamp::class)?->getResult();
 
-        $ext = $file->guessExtension() ?: 'png';
-        $path = $this->pathGenerator->emailImagePath($type, $ext);
-
-        $previousImageUrl = $config->getPrizeImageUrl();
-        if ($previousImageUrl !== null && $previousImageUrl !== '') {
-            $this->storage->delete($previousImageUrl);
-        }
-
-        $this->storage->store($file, $path);
-        $config->setPrizeImageUrl($path);
-        $config->touch();
-        $this->emailConfigRepository->save($config);
-
-        return $this->json([
-            'data' => [
-                'id' => $config->getId(),
-                'prizeImageUrl' => $this->storage->url($path),
-                'config' => $config->toArray(),
-            ],
-        ]);
+        return $this->json(['data' => $result]);
     }
 
     #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
@@ -545,67 +280,17 @@ class AdminEmailController extends AbstractController
             return $this->json(['error' => 'Invalid JSON'], 400);
         }
 
-        $config = $this->emailConfigRepository->find($id);
-        if ($config === null) {
-            return $this->json(['error' => 'Configuration not found'], 404);
-        }
+        try {
+            $envelope = $this->commandBus->dispatch(new UpdateEmailConfigCommand(
+                id: $id,
+                data: $data,
+            ));
+            $responseData = $envelope->last(HandledStamp::class)?->getResult();
 
-        $this->applyEmailConfigData($config, $data);
-        $config->touch();
-        $this->emailConfigRepository->save($config);
-
-        $responseData = $config->toArray();
-        if (!empty($responseData['prizeImageUrl'])) {
-            $responseData['prizeImageUrl'] = $this->storage->url($responseData['prizeImageUrl']);
+            return $this->json(['data' => $responseData]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
         }
-
-        return $this->json(['data' => $responseData]);
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function applyEmailConfigData(EmailConfig $config, array $data): void
-    {
-        if (array_key_exists('subject', $data)) {
-            $config->setSubject($data['subject'] !== null && $data['subject'] !== '' ? (string) $data['subject'] : null);
-        }
-        if (array_key_exists('title', $data)) {
-            $config->setTitle($data['title'] !== null && $data['title'] !== '' ? (string) $data['title'] : null);
-        }
-        if (array_key_exists('description', $data)) {
-            $config->setDescription($data['description'] !== null && $data['description'] !== '' ? (string) $data['description'] : null);
-        }
-        if (array_key_exists('prize', $data)) {
-            $config->setPrize($data['prize'] !== null && $data['prize'] !== '' ? (string) $data['prize'] : null);
-        }
-        if (array_key_exists('drawDate', $data)) {
-            $config->setDrawDate($data['drawDate'] !== null && $data['drawDate'] !== '' ? (string) $data['drawDate'] : null);
-        }
-        if (array_key_exists('prizeImageUrl', $data)) {
-            $newValue = $this->normalizePrizeImageUrl($data['prizeImageUrl']);
-            $oldValue = $config->getPrizeImageUrl();
-            if ($newValue === null && $oldValue !== null && $oldValue !== '') {
-                $this->storage->delete($oldValue);
-            }
-            $config->setPrizeImageUrl($newValue);
-        }
-    }
-
-    private function normalizePrizeImageUrl(mixed $value): ?string
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        $url = (string) $value;
-        if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-            return ltrim($url, '/');
-        }
-
-        $path = preg_replace('#^https?://[^/]+/#', '', $url);
-
-        return $path !== null && $path !== '' ? ltrim($path, '/') : null;
     }
 
     // Legacy routes kept for backward compatibility
@@ -642,145 +327,5 @@ class AdminEmailController extends AbstractController
     private function isValidType(string $type): bool
     {
         return \in_array($type, self::VALID_TYPES, true);
-    }
-
-    private function resolveEdition(Request $request): RaceEdition|JsonResponse|null
-    {
-        $editionId = $request->request->get('editionId') ?? $request->query->get('editionId');
-
-        if ($editionId !== null && $editionId !== '') {
-            $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString((string) $editionId));
-            if ($edition === null) {
-                return $this->json(['error' => 'Edition not found'], 404);
-            }
-
-            return $edition;
-        }
-
-        return $this->raceEditionRepository->findActive();
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function resolveEditionFromBody(array $data): RaceEdition|JsonResponse|null
-    {
-        $editionId = $data['editionId'] ?? null;
-
-        if ($editionId !== null && $editionId !== '') {
-            $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString((string) $editionId));
-            if ($edition === null) {
-                return $this->json(['error' => 'Edition not found'], 404);
-            }
-
-            return $edition;
-        }
-
-        return $this->raceEditionRepository->findActive();
-    }
-
-    /**
-     * @param array<string, mixed> $item
-     */
-    private function upsertRunner(array $item, string $raceEditionId): void
-    {
-        $email = trim((string) ($item['email'] ?? ''));
-        if ($email === '') {
-            return;
-        }
-
-        $firstName = trim((string) ($item['firstName'] ?? ''));
-        $lastName = trim((string) ($item['lastName'] ?? ''));
-        $fullName = trim((string) ($item['fullName'] ?? ''));
-
-        if ($firstName === '' && $fullName !== '') {
-            [$firstName, $lastName] = $this->splitName($fullName);
-        }
-
-        if ($firstName === '') {
-            return;
-        }
-
-        $reference = isset($item['reference']) ? trim((string) $item['reference']) : null;
-        $club = isset($item['club']) ? trim((string) $item['club']) : null;
-        $gender = isset($item['gender']) ? trim((string) $item['gender']) : null;
-        $category = isset($item['category']) ? trim((string) $item['category']) : null;
-
-        $birthDate = null;
-        $rawBirthDate = $item['birthDate'] ?? null;
-        if (\is_string($rawBirthDate) && $rawBirthDate !== '') {
-            $birthDate = $this->parseRunnerBirthDate($rawBirthDate);
-        }
-
-        $repository = $this->entityManager->getRepository(Runner::class);
-
-        if ($reference !== null && $reference !== '' && !$this->isZeroBib($reference)) {
-            $existingByBib = $repository->findOneBy([
-                'raceEditionId' => $raceEditionId,
-                'bibNumber' => $reference,
-            ]);
-
-            if ($existingByBib !== null) {
-                return;
-            }
-        }
-
-        $runner = $repository->findOneBy([
-            'email' => $email,
-            'raceEditionId' => $raceEditionId,
-        ]);
-
-        if ($runner === null) {
-            $runner = new Runner();
-            $runner->setId(Uuid::uuid4()->toString());
-        }
-
-        $runner->setFirstName($firstName);
-        $runner->setLastName($lastName);
-        $runner->setEmail($email);
-        $runner->setRaceEditionId($raceEditionId);
-        $runner->setBibNumber($reference);
-        $runner->setClub($club);
-        $runner->setGender($gender);
-        $runner->setCategory($category);
-        $runner->setBirthDate($birthDate);
-
-        $this->entityManager->persist($runner);
-    }
-
-    /**
-     * @return array{0: string, 1: string}
-     */
-    private function splitName(string $fullName): array
-    {
-        $trimmed = trim($fullName);
-        $spacePos = strpos($trimmed, ' ');
-
-        if ($spacePos === false) {
-            return [$trimmed, ''];
-        }
-
-        return [
-            substr($trimmed, 0, $spacePos),
-            trim(substr($trimmed, $spacePos + 1)),
-        ];
-    }
-
-    private function isZeroBib(string $reference): bool
-    {
-        return trim($reference, '0') === '';
-    }
-
-    private function parseRunnerBirthDate(string $value): ?\DateTimeImmutable
-    {
-        $formats = ['Y-m-d', 'd_m_Y', 'd-m-Y', 'd/m/Y'];
-        foreach ($formats as $format) {
-            $date = \DateTimeImmutable::createFromFormat($format, $value);
-            if ($date !== false) {
-                return $date->setTime(0, 0, 0);
-            }
-        }
-
-        return null;
     }
 }

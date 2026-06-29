@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Race\Create;
+namespace App\Application\Notification\PreviewRecipients;
 
-final readonly class CreateRaceDocumentCommand
+final readonly class PreviewEmailRecipientsCommand
 {
     public function __construct(
-        public string $name,
         public string $type,
-        public string $filePath,
+        public string $csvContent,
         public ?string $editionId = null,
     ) {
     }

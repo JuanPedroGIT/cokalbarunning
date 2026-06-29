@@ -10,8 +10,6 @@ use App\Application\Club\Query\GetClubMembersQuery;
 use App\Application\Club\Response\ClubMemberResponseDto;
 use App\Application\Club\Update\UpdateClubMemberCommand;
 use App\Application\Club\UploadPhoto\UploadClubMemberPhotoCommand;
-use App\Entity\ClubMember as OrmClubMember;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +23,6 @@ class AdminClubMemberController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private EntityManagerInterface $em,
     ) {
     }
 
@@ -57,11 +54,6 @@ class AdminClubMemberController extends AbstractController
         ));
         $id = $envelope->last(HandledStamp::class)?->getResult();
 
-        if ($id) {
-            $orm = $this->em->getRepository(OrmClubMember::class)->find($id);
-            if ($orm) { $orm->setCreatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-        }
-
         return $this->json(['data' => ['id' => $id]], 201);
     }
 
@@ -83,9 +75,6 @@ class AdminClubMemberController extends AbstractController
             sortOrder: $data['sortOrder'] ?? null,
             userId: array_key_exists('userId', $data) ? $data['userId'] : null,
         ));
-
-        $orm = $this->em->getRepository(OrmClubMember::class)->find($id);
-        if ($orm) { $orm->setUpdatedBy($this->getUser()->getEmail()); $this->em->flush(); }
 
         return $this->json(['data' => ['updated' => true]]);
     }

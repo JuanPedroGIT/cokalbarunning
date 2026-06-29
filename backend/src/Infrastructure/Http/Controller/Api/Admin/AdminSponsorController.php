@@ -10,8 +10,6 @@ use App\Application\Club\Query\GetAllSponsorsQuery;
 use App\Application\Club\Response\SponsorResponseDto;
 use App\Application\Club\Update\UpdateSponsorCommand;
 use App\Application\Club\UploadLogo\UploadSponsorLogoCommand;
-use App\Entity\Sponsor as OrmSponsor;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +23,6 @@ class AdminSponsorController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private EntityManagerInterface $em,
     ) {
     }
 
@@ -63,11 +60,6 @@ class AdminSponsorController extends AbstractController
         $envelope = $this->commandBus->dispatch($command);
         $id = $envelope->last(\Symfony\Component\Messenger\Stamp\HandledStamp::class)?->getResult();
 
-        if ($id) {
-            $orm = $this->em->getRepository(OrmSponsor::class)->find($id);
-            if ($orm) { $orm->setCreatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-        }
-
         return $this->json(['data' => ['id' => $id]], 201);
     }
 
@@ -91,9 +83,6 @@ class AdminSponsorController extends AbstractController
         );
 
         $this->commandBus->dispatch($command);
-
-        $orm = $this->em->getRepository(OrmSponsor::class)->find($id);
-        if ($orm) { $orm->setUpdatedBy($this->getUser()->getEmail()); $this->em->flush(); }
 
         return $this->json(['data' => ['updated' => true]]);
     }

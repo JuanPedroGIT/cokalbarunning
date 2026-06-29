@@ -9,14 +9,11 @@ use App\Application\Media\Delete\DeleteBlogPostCommand;
 use App\Application\Media\Query\GetAllPostsQuery;
 use App\Application\Media\Response\BlogPostResponseDto;
 use App\Application\Media\Update\UpdateBlogPostCommand;
+use App\Application\Media\UploadCover\UploadBlogCoverCommand;
 use App\Application\SocialPublishing\Publish\PublishToNetworkCommand;
+use App\Application\SocialPublishing\Query\GetSocialPublishLogsQuery;
 use App\Application\SocialPublishing\Response\SocialPublishLogResponseDto;
-use App\Domain\Media\Port\StoragePort;
-use App\Domain\Media\Service\PathGenerator;
 use App\Domain\SocialPublishing\Exception\SocialPublishingException;
-use App\Domain\SocialPublishing\Repository\SocialPublishLogRepositoryInterface;
-use App\Entity\BlogPost;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,10 +27,6 @@ class AdminBlogController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private StoragePort $storage,
-        private PathGenerator $pathGen,
-        private EntityManagerInterface $em,
-        private SocialPublishLogRepositoryInterface $socialLogRepository,
     ) {
     }
 
@@ -73,11 +66,6 @@ class AdminBlogController extends AbstractController
         $stamp = $envelope->last(HandledStamp::class);
         $newId = $stamp ? $stamp->getResult() : null;
 
-        if ($newId) {
-            $orm = $this->em->getRepository(BlogPost::class)->find($newId);
-            if ($orm) { $orm->setCreatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-        }
-
         return $this->json(['data' => ['id' => $newId]], 201);
     }
 
@@ -104,37 +92,30 @@ class AdminBlogController extends AbstractController
 
         $this->commandBus->dispatch($command);
 
-        $orm = $this->em->getRepository(BlogPost::class)->find($id);
-        if ($orm) { $orm->setUpdatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-
         return $this->json(['data' => ['updated' => true]]);
     }
 
     #[Route('/posts/{id}/cover', methods: ['POST'])]
     public function uploadCover(string $id, Request $request): JsonResponse
     {
-        $post = $this->em->getRepository(BlogPost::class)->find($id);
-        if (!$post) {
-            return $this->json(['error' => 'Not found'], 404);
-        }
-
         $file = $request->files->get('file');
         if (!$file || !$file->isValid()) {
             return $this->json(['error' => 'No file uploaded'], 400);
         }
 
-        $ext = $file->guessExtension() ?: 'jpg';
-        $path = $this->pathGen->blogCoverPath($ext);
+        try {
+            $envelope = $this->commandBus->dispatch(new UploadBlogCoverCommand(
+                postId: $id,
+                tmpPath: $file->getPathname(),
+                originalName: $file->getClientOriginalName(),
+                mimeType: $file->getMimeType() ?? 'image/jpeg',
+            ));
+            $coverUrl = $envelope->last(HandledStamp::class)?->getResult();
 
-        if ($post->getCoverImage()) {
-            $this->storage->delete($post->getCoverImage());
+            return $this->json(['data' => ['coverUrl' => $coverUrl]]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
         }
-
-        $this->storage->store($file, $path);
-        $post->setCoverImage($path);
-        $this->em->flush();
-
-        return $this->json(['data' => ['coverUrl' => $this->storage->url($path)]]);
     }
 
     #[Route('/posts/{id}', methods: ['DELETE'])]
@@ -178,8 +159,8 @@ class AdminBlogController extends AbstractController
     #[Route('/social-publishes', methods: ['GET'])]
     public function listSocialPublishes(): JsonResponse
     {
-        $logs = $this->socialLogRepository->findAll();
-        $dtos = SocialPublishLogResponseDto::fromDomainList($logs);
+        $envelope = $this->queryBus->dispatch(new GetSocialPublishLogsQuery());
+        $dtos = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 
         return $this->json([
             'data' => SocialPublishLogResponseDto::listToArray($dtos),

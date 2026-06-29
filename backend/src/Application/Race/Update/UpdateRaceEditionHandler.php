@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Race\Update;
 
+use App\Domain\Media\Port\StoragePort;
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\EditionYear;
 use App\Domain\Race\ValueObject\RaceEditionId;
@@ -14,6 +15,7 @@ final class UpdateRaceEditionHandler
 {
     public function __construct(
         private RaceEditionRepositoryInterface $repository,
+        private StoragePort $storage,
     ) {
     }
 
@@ -49,7 +51,7 @@ final class UpdateRaceEditionHandler
         }
 
         if ($command->posterUrl !== null) {
-            $edition->setPosterUrl($command->posterUrl ?: null);
+            $edition->setPosterUrl($this->normalizePath($command->posterUrl));
         }
 
         if ($command->registrationUrl !== null) {
@@ -57,11 +59,11 @@ final class UpdateRaceEditionHandler
         }
 
         if ($command->shirtUrl !== null) {
-            $edition->setShirtUrl($command->shirtUrl ?: null);
+            $edition->setShirtUrl($this->normalizePath($command->shirtUrl));
         }
 
         if ($command->trophyUrl !== null) {
-            $edition->setTrophyUrl($command->trophyUrl ?: null);
+            $edition->setTrophyUrl($this->normalizePath($command->trophyUrl));
         }
 
         if ($command->inscriptionInfo !== null) {
@@ -75,5 +77,18 @@ final class UpdateRaceEditionHandler
         }
 
         $this->repository->save($edition);
+    }
+
+    private function normalizePath(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        $base = rtrim($this->storage->url(''), '/');
+        if (str_starts_with($value, $base)) {
+            $normalized = substr($value, strlen($base) + 1);
+            return $normalized === '' ? null : $normalized;
+        }
+        return $value;
     }
 }

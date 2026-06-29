@@ -4,23 +4,18 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Http\Controller\Api\Admin;
 
-use App\Application\Race\Create\CreateRaceDocumentCommand;
 use App\Application\Race\Delete\DeleteRaceDocumentCommand;
 use App\Application\Race\Query\GetDocumentsByEditionQuery;
 use App\Application\Race\Query\GetGeneralDocumentsQuery;
 use App\Application\Race\Response\RaceDocumentResponseDto;
 use App\Application\Race\Update\UpdateRaceDocumentCommand;
-use App\Domain\Media\Port\StoragePort;
-use App\Domain\Media\Service\PathGenerator;
-use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
-use App\Domain\Race\ValueObject\RaceEditionId;
+use App\Application\Race\UploadDocument\UploadRaceDocumentCommand;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
-use Ramsey\Uuid\Uuid;
 
 #[Route('/api/v1/admin')]
 class AdminRaceDocumentController extends AbstractController
@@ -28,9 +23,6 @@ class AdminRaceDocumentController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private StoragePort $storage,
-        private RaceEditionRepositoryInterface $raceEditionRepository,
-        private PathGenerator $pathGen,
     ) {
     }
 
@@ -59,28 +51,13 @@ class AdminRaceDocumentController extends AbstractController
             return $this->json(['error' => 'No file uploaded or invalid'], 400);
         }
 
-        $editionId = $request->request->get('editionId') ?: null;
-        $type = $request->request->get('type', 'general');
-        $extension = $file->guessExtension() ?: 'pdf';
-
-        $editionYear = null;
-        if ($editionId !== null) {
-            $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString($editionId));
-            if (!$edition) {
-                return $this->json(['error' => 'Race edition not found'], 404);
-            }
-            $editionYear = (int) $edition->year()->value();
-        }
-
-        $filename = $this->pathGen->documentPath($editionYear, $type, $extension);
-
-        $this->storage->store($file, $filename);
-
-        $command = new CreateRaceDocumentCommand(
+        $command = new UploadRaceDocumentCommand(
+            tmpPath: $file->getPathname(),
+            originalName: $file->getClientOriginalName(),
+            mimeType: $file->getMimeType() ?? 'application/pdf',
             name: $request->request->get('name', 'Documento sin nombre'),
-            type: $type,
-            filePath: $filename,
-            editionId: $editionId,
+            type: $request->request->get('type', 'general'),
+            editionId: $request->request->get('editionId') ?: null,
         );
 
         $this->commandBus->dispatch($command);

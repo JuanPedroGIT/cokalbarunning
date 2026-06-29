@@ -9,13 +9,7 @@ use App\Application\Media\Query\GetAllPhotosQuery;
 use App\Application\Media\Response\PhotoResponseDto;
 use App\Application\Media\Update\UpdatePhotoCommand;
 use App\Application\Media\Upload\UploadPhotoCommand;
-use App\Domain\Media\Port\StoragePort;
-use App\Domain\Media\Service\ImageProcessorInterface;
-use App\Domain\Media\Service\PathGenerator;
-use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
-use App\Domain\Race\ValueObject\RaceEditionId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -28,10 +22,6 @@ class AdminPhotoController extends AbstractController
     public function __construct(
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
-        private StoragePort $storage,
-        private ImageProcessorInterface $imageProcessor,
-        private RaceEditionRepositoryInterface $raceEditionRepository,
-        private PathGenerator $pathGen,
     ) {
     }
 
@@ -61,36 +51,10 @@ class AdminPhotoController extends AbstractController
             return $this->json(['error' => 'raceEditionId is required'], 400);
         }
 
-        $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString($raceEditionId));
-        if (!$edition) {
-            return $this->json(['error' => 'Race edition not found'], 404);
-        }
-
-        $year = (int) $edition->year()->value();
-        $ext = $file->guessExtension() ?: 'jpg';
-        $originalFilename = $this->pathGen->photoPath($year, $ext);
-
-        // Generate thumbnail BEFORE storing original (move() invalidates the file)
-        $thumbPath = null;
-        if (str_starts_with($file->getMimeType(), 'image/')) {
-            $thumbFilename = $this->pathGen->thumbnailPath($year);
-            $thumbTempPath = $this->imageProcessor->createThumbnail($file, 400, 85);
-            try {
-                $thumbUploadedFile = new UploadedFile($thumbTempPath, basename($thumbTempPath), 'image/webp', null, true);
-                $this->storage->store($thumbUploadedFile, $thumbFilename);
-            } finally {
-                if (file_exists($thumbTempPath)) {
-                    unlink($thumbTempPath);
-                }
-            }
-            $thumbPath = $thumbFilename;
-        }
-
-        $this->storage->store($file, $originalFilename);
-
         $command = new UploadPhotoCommand(
-            originalPath: $originalFilename,
-            thumbPath: $thumbPath,
+            tmpPath: $file->getPathname(),
+            originalName: $file->getClientOriginalName(),
+            mimeType: $file->getMimeType() ?? 'image/jpeg',
             altText: $request->request->get('altText') ?: null,
             raceEditionId: $raceEditionId,
             isFeatured: (bool) $request->request->get('isFeatured', false),

@@ -9,9 +9,6 @@ use App\Application\Race\Delete\DeleteRaceEditionCommand;
 use App\Application\Race\DeleteImage\DeleteRaceEditionImageCommand;
 use App\Application\Race\Update\UpdateRaceEditionCommand;
 use App\Application\Race\UploadImage\UploadRaceEditionImageCommand;
-use App\Domain\Media\Port\StoragePort;
-use App\Entity\RaceEdition as OrmRaceEdition;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,8 +21,6 @@ class AdminRaceController extends AbstractController
 {
     public function __construct(
         private MessageBusInterface $commandBus,
-        private StoragePort $storage,
-        private EntityManagerInterface $em,
     ) {
     }
 
@@ -55,11 +50,6 @@ class AdminRaceController extends AbstractController
         $handled = $envelope->last(HandledStamp::class);
         $id = $handled ? $handled->getResult() : null;
 
-        if ($id) {
-            $orm = $this->em->getRepository(OrmRaceEdition::class)->find($id);
-            if ($orm) { $orm->setCreatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-        }
-
         return $this->json(['data' => ['id' => $id, 'created' => true]], 201);
     }
 
@@ -80,10 +70,10 @@ class AdminRaceController extends AbstractController
             location: $data['location'] ?? null,
             isActive: $data['isActive'] ?? null,
             showBibSearch: array_key_exists('showBibSearch', $data) ? (bool) $data['showBibSearch'] : null,
-            posterUrl: array_key_exists('posterUrl', $data) ? $this->normalizePath($data['posterUrl']) : null,
+            posterUrl: array_key_exists('posterUrl', $data) ? ($data['posterUrl'] ?? null) : null,
             registrationUrl: array_key_exists('registrationUrl', $data) ? ($data['registrationUrl'] ?? '') : null,
-            shirtUrl: array_key_exists('shirtUrl', $data) ? $this->normalizePath($data['shirtUrl']) : null,
-            trophyUrl: array_key_exists('trophyUrl', $data) ? $this->normalizePath($data['trophyUrl']) : null,
+            shirtUrl: array_key_exists('shirtUrl', $data) ? ($data['shirtUrl'] ?? null) : null,
+            trophyUrl: array_key_exists('trophyUrl', $data) ? ($data['trophyUrl'] ?? null) : null,
             inscriptionInfo: array_key_exists('inscriptionInfo', $data) ? ($data['inscriptionInfo'] ?? '') : null,
             solidarityCause: array_key_exists('solidarityCause', $data) ? ($data['solidarityCause'] ?? '') : null,
             solidarityUrl: array_key_exists('solidarityUrl', $data) ? ($data['solidarityUrl'] ?? '') : null,
@@ -91,19 +81,7 @@ class AdminRaceController extends AbstractController
 
         $this->commandBus->dispatch($command);
 
-        $orm = $this->em->getRepository(OrmRaceEdition::class)->find($id);
-        if ($orm) { $orm->setUpdatedBy($this->getUser()->getEmail()); $this->em->flush(); }
-
         return $this->json(['data' => ['updated' => true]]);
-    }
-
-    private function normalizePath(mixed $value): string
-    {
-        if ($value === null || $value === '') return '';
-        $base = rtrim((string) $this->storage->url(''), '/');
-        return str_starts_with((string) $value, $base)
-            ? substr((string) $value, strlen($base) + 1)
-            : (string) $value;
     }
 
     #[Route('/editions/{id}/poster', methods: ['POST'])]

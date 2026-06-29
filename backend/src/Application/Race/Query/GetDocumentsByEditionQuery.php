@@ -7,7 +7,8 @@ namespace App\Application\Race\Query;
 final readonly class GetDocumentsByEditionQuery
 {
     public function __construct(
-        public string $editionId,
+        public ?string $editionId = null,
+        public ?int $year = null,
     ) {
     }
 }

@@ -1,8 +1,38 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-26
-> **Última revisión:** refactor SOLID F4 (GenerateThumbnailsCommand) + tests (F6)
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6
+> **Última actualización:** 2026-06-29
+> **Última revisión:** Auditoría completa SOLID — 14/21 controllers limpios, 7 pendientes (tracking: `19_SOLID_RESTANTES.md`)
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6 + ✅ Ajuste SOLID (18_AJUSTE_SOLID.md) + ⬜ SOLID Restantes (19_SOLID_RESTANTES.md)
+
+---
+
+## Ajuste SOLID — Corrección de desviaciones (2026-06-29)
+
+Tracking: `18_AJUSTE_SOLID.md`.
+
+| Bloque | Descripción | Estado |
+|--------|-------------|--------|
+| B1 | AuditSubscriber + quitar EM de 4 controllers | ✅ |
+| B2 | Refactorizar UploadPhotoHandler + AdminPhotoController | ✅ |
+| B3 | Crear UploadRaceDocumentHandler + limpiar AdminRaceDocumentController | ✅ |
+| B4 | Mover normalizePath a UpdateRaceEditionHandler | ✅ |
+| B5 | Tests + actualizar docs | ✅ (164 tests, 540 assertions) |
+
+---
+
+## SOLID Restantes — 7 controllers con violaciones (2026-06-29)
+
+Tracking: `19_SOLID_RESTANTES.md`. Pendiente de ejecutar.
+
+| # | Controller | Severidad | Estado |
+|---|-----------|-----------|--------|
+| 1 | AdminResultController | CRÍTICO | ✅ |
+| 2 | AdminUserController | CRÍTICO | ✅ |
+| 3 | RunnerController | CRÍTICO | ✅ |
+| 4 | AdminBlogController | CRÍTICO | ✅ |
+| 5 | AdminEmailController | CRÍTICO | ✅ |
+| 6 | MeController | MODERADO | ✅ |
+| 7 | RaceDocumentController | MENOR | ✅ |
 
 ---
 
