@@ -23,19 +23,17 @@ class RunnerController extends AbstractController
     public function search(Request $request): JsonResponse
     {
         $editionId = $request->query->get('editionId');
-        $name = trim((string) $request->query->get('name'));
+        $name = trim((string) $request->query->get('name', ''));
+        $bib = trim((string) $request->query->get('bib', ''));
 
-        if (!\is_string($editionId) || $editionId === '') {
-            return $this->json(['error' => 'editionId is required'], 400);
-        }
-
-        if (mb_strlen($name) < 4) {
+        if ($name !== '' && mb_strlen($name) < 4) {
             return $this->json(['error' => 'name must be at least 4 characters'], 400);
         }
 
         $envelope = $this->queryBus->dispatch(new SearchRunnersQuery(
-            editionId: $editionId,
-            name: $name,
+            editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+            name: $name !== '' ? $name : null,
+            bib: $bib !== '' ? $bib : null,
         ));
 
         $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];

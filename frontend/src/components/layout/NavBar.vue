@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import { useRaceStore } from '@/stores/race.store'
 
 const isOpen = ref(false)
 const auth = useAuthStore()
+const raceStore = useRaceStore()
 const router = useRouter()
 
 function toggle() { isOpen.value = !isOpen.value }
 function close() { isOpen.value = false }
 function logout() { auth.logout(); close(); router.push('/') }
+
+onMounted(() => {
+  raceStore.fetchActiveEdition()
+})
 </script>
 
 <template>
@@ -27,6 +33,7 @@ function logout() { auth.logout(); close(); router.push('/') }
         <li><RouterLink to="/" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Inicio</RouterLink></li>
         <li><RouterLink to="/carrera" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">La Carrera</RouterLink></li>
         <li><RouterLink to="/ediciones" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Ediciones</RouterLink></li>
+        <li v-if="raceStore.activeEdition?.showBibSearch"><RouterLink to="/dorsales" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Dorsales</RouterLink></li>
         <li><RouterLink to="/galeria" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Galeria</RouterLink></li>
         <li><RouterLink to="/blog" class="font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Noticias</RouterLink></li>
       </ul>
@@ -69,6 +76,7 @@ function logout() { auth.logout(); close(); router.push('/') }
           <li><RouterLink @click="close" to="/" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Inicio</RouterLink></li>
           <li><RouterLink @click="close" to="/carrera" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">La Carrera</RouterLink></li>
           <li><RouterLink @click="close" to="/ediciones" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Ediciones</RouterLink></li>
+          <li v-if="raceStore.activeEdition?.showBibSearch"><RouterLink @click="close" to="/dorsales" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Dorsales</RouterLink></li>
           <li><RouterLink @click="close" to="/galeria" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Galeria</RouterLink></li>
           <li><RouterLink @click="close" to="/blog" class="block font-semibold text-sm tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Noticias</RouterLink></li>
         </ul>

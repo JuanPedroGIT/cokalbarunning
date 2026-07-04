@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useRaceStore } from '@/stores/race.store'
 import InstagramSvg from '@/assets/icons/instagram.svg?raw'
 import WhatsappSvg from '@/assets/icons/whatsapp.svg?raw'
 import XSvg from '@/assets/icons/x.svg?raw'
+
+const raceStore = useRaceStore()
+
+onMounted(() => {
+  raceStore.fetchActiveEdition()
+})
 
 function shareUrl(): string {
   return encodeURIComponent(window.location.href)
@@ -51,6 +59,7 @@ function shareToInstagram() {
         <li><RouterLink to="/carrera" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">El Club</RouterLink></li>
         <li><RouterLink to="/carrera" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">La Carrera</RouterLink></li>
         <li><RouterLink to="/ediciones" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">Ediciones</RouterLink></li>
+        <li v-if="raceStore.activeEdition?.showBibSearch"><RouterLink to="/dorsales" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">Dorsales</RouterLink></li>
         <li><RouterLink to="/galeria" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">Galeria</RouterLink></li>
         <li><RouterLink to="/blog" class="text-gris-texto hover:text-naranja transition-colors text-sm uppercase tracking-wider">Noticias</RouterLink></li>
       </ul>
