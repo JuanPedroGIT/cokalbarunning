@@ -1,8 +1,8 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-06-29
-> **Última revisión:** Auditoría completa SOLID — 14/21 controllers limpios, 7 pendientes (tracking: `19_SOLID_RESTANTES.md`)
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6 + ✅ Ajuste SOLID (18_AJUSTE_SOLID.md) + ⬜ SOLID Restantes (19_SOLID_RESTANTES.md)
+> **Última actualización:** 2026-07-27
+> **Última revisión:** Refactor emails en 2 tabs (gestión + envío) — tracking: `21_REFACTOR_EMAILS_2_TABS.md`
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6 + ✅ Ajuste SOLID (18_AJUSTE_SOLID.md) + ✅ SOLID Restantes (19_SOLID_RESTANTES.md) + ✅ Separación carga runners / envío emails (20_SEPARAR_CARGA_RUNNERS_EMAILS.md) + ⬜ Refactor emails 2 tabs (21_REFACTOR_EMAILS_2_TABS.md)
 
 ---
 
@@ -452,3 +452,33 @@ Tracking: `07_FIX_PATHS_PRD.md`. Alineado con estructura PRD (`carrera/{YYYY}/im
 | Fase 6 | Tests Backend | ✅ |
 | Fase 7 | Limpieza | ✅ |
 | Fase 8 | Frontend | ✅ |
+
+---
+
+## Separación carga runners / envío emails (2026-07-27)
+
+Tracking: `20_SEPARAR_CARGA_RUNNERS_EMAILS.md`. Pendiente de ejecutar.
+
+| Bloque | Descripción | Estado |
+|--------|-------------|--------|
+| B0 | RunnerRepositoryInterface + DoctrineRunnerRepository | ✅ |
+| B1 | Backend — Carga de runners independiente (ImportRunnersFromCsv) | ✅ |
+| B2 | Backend — Refactorizar envío de emails (sin CSV, filtros por edición + rango dorsal) | ✅ |
+| B3 | Frontend — Nueva página AdminRunnersView.vue | ✅ |
+| B4 | Frontend — Refactorizar AdminEmailsView.vue (selector tipo, filtros, preview desde BD) | ✅ |
+| B5 | Limpieza, tests, verificación | ✅ |
+
+---
+
+## Refactor emails 2 tabs: Gestión + Envío (2026-07-27)
+
+Tracking: `21_REFACTOR_EMAILS_2_TABS.md`. Pendiente de ejecutar.
+
+| Bloque | Descripción | Estado |
+|--------|-------------|--------|
+| B0 | Domain EmailConfig (interfaz + entidad + repositorio + refactorizar 4 handlers) | ✅ |
+| B1 | Backend — CRUD configs (listar, eliminar, preview template) | ✅ |
+| B2 | Backend — Refactorizar preview/send para usar emailConfigId | ✅ |
+| B3 | Frontend — Tab 1: Gestión de Emails (CRUD + preview + listado) | ✅ |
+| B4 | Frontend — Tab 2: Envío de Emails (selector email + filtros + runners) | ✅ |
+| B5 | Limpieza, tests, verificación | ✅ |

@@ -139,6 +139,12 @@ final class EmailSendLog
         $this->sentBy = $userId;
     }
 
+    public function updateReference(?string $reference): void
+    {
+        $this->reference = $reference;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function markAsPending(): void
     {
         $this->status = EmailStatus::pending();

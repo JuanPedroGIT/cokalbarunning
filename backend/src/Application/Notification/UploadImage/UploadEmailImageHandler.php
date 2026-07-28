@@ -6,8 +6,8 @@ namespace App\Application\Notification\UploadImage;
 
 use App\Domain\Media\Port\StoragePort;
 use App\Domain\Media\Service\PathGenerator;
-use App\Entity\EmailConfig;
-use App\Repository\EmailConfigRepository;
+use App\Domain\Notification\Entity\EmailConfig;
+use App\Domain\Notification\Repository\EmailConfigRepositoryInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -16,7 +16,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final class UploadEmailImageHandler
 {
     public function __construct(
-        private EmailConfigRepository $emailConfigRepository,
+        private EmailConfigRepositoryInterface $emailConfigRepository,
         private StoragePort $storage,
         private PathGenerator $pathGenerator,
     ) {
@@ -25,11 +25,14 @@ final class UploadEmailImageHandler
     public function __invoke(UploadEmailImageCommand $command): array
     {
         $config = $this->emailConfigRepository->findByRaceEditionIdAndType($command->editionId, $command->type);
+        $isNew = false;
         if ($config === null) {
-            $config = new EmailConfig();
-            $config->setId(Uuid::uuid4()->toString());
-            $config->setRaceEditionId($command->editionId);
-            $config->setType($command->type);
+            $config = new EmailConfig(
+                id: Uuid::uuid4()->toString(),
+                raceEditionId: $command->editionId,
+                type: $command->type,
+            );
+            $isNew = true;
         }
 
         $file = new UploadedFile(
@@ -43,18 +46,17 @@ final class UploadEmailImageHandler
         $ext = $file->guessExtension() ?: 'png';
         $path = $this->pathGenerator->emailImagePath($command->type, $ext);
 
-        $previousImageUrl = $config->getPrizeImageUrl();
+        $previousImageUrl = $config->prizeImageUrl();
         if ($previousImageUrl !== null && $previousImageUrl !== '') {
             $this->storage->delete($previousImageUrl);
         }
 
         $this->storage->store($file, $path);
         $config->setPrizeImageUrl($path);
-        $config->touch();
         $this->emailConfigRepository->save($config);
 
         return [
-            'id' => $config->getId(),
+            'id' => $config->id(),
             'prizeImageUrl' => $this->storage->url($path),
             'config' => $config->toArray(),
         ];

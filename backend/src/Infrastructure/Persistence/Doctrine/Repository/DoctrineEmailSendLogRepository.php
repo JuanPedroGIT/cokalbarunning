@@ -62,13 +62,36 @@ final class DoctrineEmailSendLogRepository implements EmailSendLogRepositoryInte
             $criteria['reference'] = $reference;
         }
 
-        $orm = $this->em->getRepository(OrmEmailSendLog::class)->findOneBy($criteria);
+        // Devolver el registro más reciente
+        $orms = $this->em->getRepository(OrmEmailSendLog::class)->findBy(
+            $criteria,
+            ['createdAt' => 'DESC'],
+            1
+        );
 
-        if ($orm === null) {
+        if ($orms === []) {
             return null;
         }
 
-        return $this->mapper->toDomain($orm);
+        return $this->mapper->toDomain($orms[0]);
+    }
+
+    public function findAllByEmailTypeAndReference(string $email, string $type, ?string $reference): array
+    {
+        $criteria = [
+            'recipientEmail' => $email,
+            'type' => $type,
+        ];
+        if ($reference !== null && $reference !== '') {
+            $criteria['reference'] = $reference;
+        }
+
+        $orms = $this->em->getRepository(OrmEmailSendLog::class)->findBy(
+            $criteria,
+            ['createdAt' => 'DESC']
+        );
+
+        return array_map(fn (OrmEmailSendLog $orm) => $this->mapper->toDomain($orm), $orms);
     }
 
     public function countSentByEmail(string $email): int

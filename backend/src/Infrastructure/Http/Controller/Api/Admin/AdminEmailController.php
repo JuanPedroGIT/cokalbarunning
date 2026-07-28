@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Http\Controller\Api\Admin;
 
-use App\Application\Notification\Command\CreateEmailSendLogCommand;
 use App\Application\Notification\CreateEmailConfig\CreateEmailConfigCommand;
+use App\Application\Notification\DeleteEmailConfig\DeleteEmailConfigCommand;
 use App\Application\Notification\GetEmailConfig\GetEmailConfigQuery;
-use App\Application\Notification\GetGenericRecipients\GetGenericRecipientsQuery;
+use App\Application\Notification\GetEmailConfigs\GetEmailConfigsQuery;
 use App\Application\Notification\GetSentCounts\GetEmailSentCountsQuery;
+use App\Application\Notification\PreviewEmailTemplate\PreviewEmailTemplateQuery;
 use App\Application\Notification\PreviewRecipients\PreviewEmailRecipientsCommand;
 use App\Application\Notification\Query\GetEmailSendLogsQuery;
 use App\Application\Notification\Response\EmailSendLogResponseDto;
@@ -55,30 +56,27 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => array_map(fn ($dto) => $dto->toArray(), $dtos)]);
     }
 
-    #[Route('/emails/{type}/preview', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
-    public function preview(Request $request, string $type): JsonResponse
+    #[Route('/emails/preview', methods: ['POST'])]
+    public function preview(Request $request): JsonResponse
     {
-        if (!$this->isValidType($type)) {
-            return $this->json(['error' => 'Invalid email type'], 400);
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
         }
 
-        $file = $request->files->get('file');
-        if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || !$file->isValid()) {
-            return $this->json(['error' => 'No CSV file uploaded or invalid'], 400);
+        $emailConfigId = $data['emailConfigId'] ?? null;
+        if (!\is_string($emailConfigId) || $emailConfigId === '') {
+            return $this->json(['error' => 'emailConfigId is required'], 400);
         }
 
-        $content = file_get_contents($file->getRealPath());
-        if ($content === false) {
-            return $this->json(['error' => 'Cannot read CSV file'], 400);
-        }
-
-        $editionId = $request->request->get('editionId') ?: null;
+        $bibFrom = isset($data['bibFrom']) && $data['bibFrom'] !== '' ? (string) $data['bibFrom'] : null;
+        $bibTo = isset($data['bibTo']) && $data['bibTo'] !== '' ? (string) $data['bibTo'] : null;
 
         try {
             $envelope = $this->commandBus->dispatch(new PreviewEmailRecipientsCommand(
-                type: $type,
-                csvContent: $content,
-                editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+                emailConfigId: $emailConfigId,
+                bibFrom: $bibFrom,
+                bibTo: $bibTo,
             ));
             $result = $envelope->last(HandledStamp::class)?->getResult();
 
@@ -88,34 +86,41 @@ class AdminEmailController extends AbstractController
         }
     }
 
-    #[Route('/emails/{type}/send', methods: ['POST'], requirements: ['type' => 'bib|raffle|last_instructions|thanks|generic'])]
-    public function send(Request $request, string $type): JsonResponse
+    #[Route('/emails/send', methods: ['POST'])]
+    public function send(Request $request): JsonResponse
     {
-        if (!$this->isValidType($type)) {
-            return $this->json(['error' => 'Invalid email type'], 400);
-        }
-
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data)) {
             return $this->json(['error' => 'Invalid JSON'], 400);
         }
 
-        $items = $data['items'] ?? [];
+        $emailConfigId = $data['emailConfigId'] ?? null;
+        if (!\is_string($emailConfigId) || $emailConfigId === '') {
+            return $this->json(['error' => 'emailConfigId is required'], 400);
+        }
+
+        $runnerIds = $data['runnerIds'] ?? [];
+        $runnerEmails = $data['runnerEmails'] ?? [];
         $force = (bool) ($data['force'] ?? false);
         $metadata = \is_array($data['metadata'] ?? null) ? $data['metadata'] : [];
-        $editionId = ($data['editionId'] ?? null) ?: null;
+        $editionId = (string) ($data['editionId'] ?? '');
 
-        if (!\is_array($items) || $items === []) {
-            return $this->json(['error' => 'No recipients provided'], 400);
+        if ((!\is_array($runnerIds) || $runnerIds === []) && (!\is_array($runnerEmails) || $runnerEmails === [])) {
+            return $this->json(['error' => 'No runner IDs or emails provided'], 400);
+        }
+
+        if ($editionId === '') {
+            return $this->json(['error' => 'Edition ID is required'], 400);
         }
 
         $user = $this->getUser();
         $sentBy = $user instanceof \App\Entity\User ? $user->getId() : null;
 
         $envelope = $this->commandBus->dispatch(new SendEmailCampaignCommand(
-            type: $type,
-            items: $items,
-            editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+            emailConfigId: $emailConfigId,
+            runnerIds: \is_array($runnerIds) ? $runnerIds : [],
+            runnerEmails: \is_array($runnerEmails) ? $runnerEmails : [],
+            editionId: $editionId,
             metadata: $metadata,
             force: $force,
             sentBy: $sentBy,
@@ -137,15 +142,6 @@ class AdminEmailController extends AbstractController
             type: $type,
             raceEditionId: \is_string($raceEditionId) && $raceEditionId !== '' ? $raceEditionId : null,
         ));
-        $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
-
-        return $this->json(['data' => $data]);
-    }
-
-    #[Route('/emails/generic/recipients', methods: ['GET'])]
-    public function genericRecipients(Request $request): JsonResponse
-    {
-        $envelope = $this->queryBus->dispatch(new GetGenericRecipientsQuery());
         $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
 
         return $this->json(['data' => $data]);
@@ -203,7 +199,46 @@ class AdminEmailController extends AbstractController
         ]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
+    #[Route('/emails/config', methods: ['GET'])]
+    public function listConfigs(Request $request): JsonResponse
+    {
+        $editionId = $request->query->get('editionId');
+        $envelope = $this->queryBus->dispatch(new GetEmailConfigsQuery(
+            editionId: \is_string($editionId) && $editionId !== '' ? $editionId : null,
+        ));
+        $data = $envelope->last(HandledStamp::class)?->getResult() ?? [];
+
+        return $this->json(['data' => $data]);
+    }
+
+    #[Route('/emails/config/{id}', methods: ['DELETE'])]
+    public function deleteConfig(string $id): JsonResponse
+    {
+        try {
+            $this->commandBus->dispatch(new DeleteEmailConfigCommand(id: $id));
+
+            return $this->json(['data' => ['deleted' => true]]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    #[Route('/emails/config/{id}/preview', methods: ['GET'])]
+    public function previewConfig(string $id): JsonResponse
+    {
+        try {
+            $envelope = $this->queryBus->dispatch(new PreviewEmailTemplateQuery(
+                emailConfigId: $id,
+            ));
+            $data = $envelope->last(HandledStamp::class)?->getResult();
+
+            return $this->json(['data' => $data]);
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    #[Route('/emails/{type}/config', methods: ['GET'], requirements: ['type' => 'raffle|last_instructions|thanks|generic|bib'])]
     public function getConfig(Request $request, string $type): JsonResponse
     {
         $editionId = $request->query->get('editionId');
@@ -220,7 +255,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $data]);
     }
 
-    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
+    #[Route('/emails/{type}/config', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic|bib'])]
     public function createConfig(Request $request, string $type): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -247,7 +282,7 @@ class AdminEmailController extends AbstractController
         }
     }
 
-    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
+    #[Route('/emails/{type}/prize-image', methods: ['POST'], requirements: ['type' => 'raffle|last_instructions|thanks|generic|bib'])]
     public function uploadPrizeImage(Request $request, string $type): JsonResponse
     {
         $editionId = $request->request->get('editionId');
@@ -272,7 +307,7 @@ class AdminEmailController extends AbstractController
         return $this->json(['data' => $result]);
     }
 
-    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks|generic'])]
+    #[Route('/emails/{type}/config/{id}', methods: ['PUT'], requirements: ['type' => 'raffle|last_instructions|thanks|generic|bib'])]
     public function updateConfig(string $type, string $id, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -291,37 +326,6 @@ class AdminEmailController extends AbstractController
         } catch (\RuntimeException $e) {
             return $this->json(['error' => $e->getMessage()], 404);
         }
-    }
-
-    // Legacy routes kept for backward compatibility
-    #[Route('/bib-emails', methods: ['GET'])]
-    public function legacyList(Request $request): JsonResponse
-    {
-        return $this->list($request, EmailType::BIB);
-    }
-
-    #[Route('/bib-emails/preview', methods: ['POST'])]
-    public function legacyPreview(Request $request): JsonResponse
-    {
-        return $this->preview($request, EmailType::BIB);
-    }
-
-    #[Route('/bib-emails/send', methods: ['POST'])]
-    public function legacySend(Request $request): JsonResponse
-    {
-        return $this->send($request, EmailType::BIB);
-    }
-
-    #[Route('/bib-emails/sent-counts', methods: ['GET'])]
-    public function legacySentCounts(Request $request): JsonResponse
-    {
-        return $this->sentCounts($request, EmailType::BIB);
-    }
-
-    #[Route('/bib-emails/run', methods: ['POST'])]
-    public function legacyRun(Request $request): JsonResponse
-    {
-        return $this->run($request, EmailType::BIB);
     }
 
     private function isValidType(string $type): bool

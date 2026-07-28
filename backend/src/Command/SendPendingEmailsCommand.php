@@ -8,7 +8,7 @@ use App\Domain\Notification\ValueObject\EmailType;
 use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
 use App\Domain\Race\ValueObject\RaceEditionId;
 use App\Entity\EmailSendLog as OrmEmailSendLog;
-use App\Repository\EmailConfigRepository;
+use App\Domain\Notification\Repository\EmailConfigRepositoryInterface;
 use App\Infrastructure\Mail\BrevoMailer;
 use App\Infrastructure\Mail\EmailTemplateResolver;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,7 +33,7 @@ final class SendPendingEmailsCommand extends Command
         private readonly Environment $twig,
         private readonly BrevoMailer $brevoMailer,
         private readonly RaceEditionRepositoryInterface $raceEditionRepository,
-        private readonly EmailConfigRepository $emailConfigRepository,
+        private readonly EmailConfigRepositoryInterface $emailConfigRepository,
         private readonly EmailTemplateResolver $templateResolver,
         private readonly string $senderEmail,
         private readonly int $delaySeconds,
@@ -123,6 +123,8 @@ final class SendPendingEmailsCommand extends Command
 
                 $metadata = $this->resolveMetadata($log, $type);
 
+                $displayReference = $metadata['bibNumber'] ?? $log->getReference();
+
                 $templateVars = [
                     'nombre' => $log->getRecipientName(),
                     'firstName' => $this->extractFirstName($log->getRecipientName()),
@@ -130,8 +132,8 @@ final class SendPendingEmailsCommand extends Command
                     'editionName' => $editionName,
                     'editionDate' => $editionDate,
                     'editionLocation' => $editionLocation,
-                    'dorsal' => $log->getReference(),
-                    'reference' => $log->getReference(),
+                    'dorsal' => $displayReference,
+                    'reference' => $displayReference,
                     'metadata' => $metadata,
                 ];
 
@@ -200,14 +202,14 @@ final class SendPendingEmailsCommand extends Command
             $config = $this->emailConfigRepository->findByRaceEditionIdAndType($raceEditionId, $type);
             if ($config !== null) {
                 $configData = [
-                    'subject' => $config->getSubject(),
-                    'title' => $config->getTitle(),
-                    'description' => $config->getDescription(),
-                    'prizeImageUrl' => $config->getPrizeImageUrl(),
+                    'subject' => $config->subject(),
+                    'title' => $config->title(),
+                    'description' => $config->description(),
+                    'prizeImageUrl' => $config->prizeImageUrl(),
                 ];
                 if ($type === EmailType::RAFFLE) {
-                    $configData['prize'] = $config->getPrize();
-                    $configData['drawDate'] = $config->getDrawDate();
+                    $configData['prize'] = $config->prize();
+                    $configData['drawDate'] = $config->drawDate();
                 }
             }
         }

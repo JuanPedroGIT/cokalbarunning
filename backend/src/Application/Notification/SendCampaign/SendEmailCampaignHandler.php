@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Application\Notification\SendCampaign;
 
 use App\Application\Notification\Command\CreateEmailSendLogCommand;
+use App\Domain\Notification\Repository\EmailConfigRepositoryInterface;
 use App\Domain\Notification\Repository\EmailSendLogRepositoryInterface;
 use App\Domain\Notification\ValueObject\EmailType;
-use App\Entity\Runner;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Domain\Race\Repository\RaceEditionRepositoryInterface;
+use App\Domain\Race\ValueObject\RaceEditionId;
+use App\Domain\Registration\Repository\RunnerRepositoryInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -18,16 +20,22 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 final class SendEmailCampaignHandler
 {
     public function __construct(
+        private EmailConfigRepositoryInterface $emailConfigRepository,
         private EmailSendLogRepositoryInterface $emailSendLogRepository,
-        private EntityManagerInterface $entityManager,
+        private RunnerRepositoryInterface $runnerRepository,
+        private RaceEditionRepositoryInterface $raceEditionRepository,
         private MessageBusInterface $commandBus,
     ) {
     }
 
     public function __invoke(SendEmailCampaignCommand $command): array
     {
-        $items = $command->items;
-        $type = $command->type;
+        $config = $this->emailConfigRepository->findById($command->emailConfigId);
+        if ($config === null) {
+            throw new \RuntimeException('Email configuration not found');
+        }
+
+        $type = $config->type();
         $metadata = $command->metadata;
         $force = $command->force;
         $sentBy = $command->sentBy;
@@ -37,28 +45,90 @@ final class SendEmailCampaignHandler
         $skipped = 0;
         $queuedInstructions = 0;
 
-        foreach ($items as $item) {
-            if (!\is_array($item)) {
+        // Process each runner ID individually
+        foreach ($command->runnerIds as $runnerId) {
+            $runner = $this->runnerRepository->findById($runnerId);
+            if ($runner === null || $runner->email() === null || $runner->email() === '') {
+                $skipped++;
+                continue;
+            }
+            $email = $runner->email();
+            $name = $runner->fullName();
+            $bibNumber = $runner->bibNumber();
+
+            // Para dorsales 0/00/000, usar un reference único con el nombre
+            $isZeroBib = $bibNumber !== null && trim($bibNumber, '0') === '';
+            $logReference = $isZeroBib
+                ? '0 - ' . $name
+                : $bibNumber;
+
+            // Migrar log antiguo con reference="0" al nuevo formato único
+            if ($isZeroBib) {
+                $oldLog = $this->emailSendLogRepository->findByEmailTypeAndReference(
+                    $email, $type, $bibNumber
+                );
+                if ($oldLog !== null) {
+                    // Actualizar el reference al formato único para este runner
+                    $oldLog->markAsPending();
+                    if ($sentBy !== null && $sentBy !== '') {
+                        $oldLog->assignSentBy($sentBy);
+                    }
+                    // Migrar el reference para que futuros lookups sean precisos
+                    $oldLog->updateReference($logReference);
+                    $this->emailSendLogRepository->save($oldLog);
+                    $queued++;
+                    continue;
+                }
+            }
+
+            $runnerMeta = array_merge($metadata, [
+                'runnerId' => $runnerId,
+                'bibNumber' => $bibNumber,
+            ]);
+
+            $created = $this->createOrUpdateLog(
+                email: $email,
+                name: $name,
+                reference: $logReference,
+                type: $type,
+                raceEditionId: $raceEditionId,
+                metadata: $runnerMeta,
+                sentBy: $sentBy,
+                force: $force,
+            );
+
+            if ($created === null) {
+                $skipped++;
                 continue;
             }
 
-            $email = trim((string) ($item['email'] ?? ''));
-            $firstName = trim((string) ($item['firstName'] ?? ''));
-            $lastName = trim((string) ($item['lastName'] ?? ''));
-            $fullName = trim((string) ($item['fullName'] ?? ''));
-            $reference = isset($item['reference']) ? trim((string) $item['reference']) : null;
+            $queued++;
 
-            if ($email === '') {
-                continue;
+            if ($type === EmailType::RAFFLE) {
+                $this->createOrUpdateLog(
+                    email: $email,
+                    name: $name,
+                    reference: $reference,
+                    type: EmailType::LAST_INSTRUCTIONS,
+                    raceEditionId: $raceEditionId,
+                    metadata: [],
+                    sentBy: $sentBy,
+                    force: $force,
+                );
+                $queuedInstructions++;
             }
+        }
 
-            $name = $fullName !== '' ? $fullName : trim($firstName . ' ' . $lastName);
-            if ($name === '') {
-                continue;
-            }
-
-            if ($raceEditionId !== null && $type !== EmailType::GENERIC && $type !== EmailType::THANKS) {
-                $this->upsertRunner($item, $raceEditionId);
+        // Process runnerEmails by lookup in the edition
+        foreach ($command->runnerEmails as $email) {
+            $runner = $this->runnerRepository->findByEmailAndEditionId($email, $raceEditionId);
+            if ($runner !== null && $runner->email() !== null && $runner->email() !== '') {
+                $email = $runner->email();
+                $name = $runner->fullName();
+                $reference = $runner->bibNumber();
+            } else {
+                $name = $email;
+                $reference = null;
             }
 
             $created = $this->createOrUpdateLog(
@@ -96,83 +166,19 @@ final class SendEmailCampaignHandler
             }
         }
 
-        if ($type === EmailType::BIB && $raceEditionId !== null && $queued > 0) {
-            $ormEdition = $this->entityManager->getRepository(\App\Entity\RaceEdition::class)->find($raceEditionId);
-            if ($ormEdition !== null && !$ormEdition->isShowBibSearch()) {
-                $ormEdition->setShowBibSearch(true);
+        if ($type === EmailType::BIB && $raceEditionId !== '' && $queued > 0) {
+            $edition = $this->raceEditionRepository->findById(RaceEditionId::fromString($raceEditionId));
+            if ($edition !== null && !$edition->showBibSearch()) {
+                $edition->enableBibSearch();
+                $this->raceEditionRepository->save($edition);
             }
         }
-
-        $this->entityManager->flush();
 
         return [
             'queued' => $queued,
             'skipped' => $skipped,
             'queuedInstructions' => $queuedInstructions,
         ];
-    }
-
-    /**
-     * @param array<string, mixed> $item
-     */
-    private function upsertRunner(array $item, string $raceEditionId): void
-    {
-        $email = trim((string) ($item['email'] ?? ''));
-        if ($email === '') {
-            return;
-        }
-
-        $firstName = trim((string) ($item['firstName'] ?? ''));
-        $lastName = trim((string) ($item['lastName'] ?? ''));
-        $fullName = trim((string) ($item['fullName'] ?? ''));
-
-        if ($firstName === '' && $fullName !== '') {
-            $parts = explode(' ', $fullName, 2);
-            $firstName = $parts[0];
-            $lastName = $parts[1] ?? '';
-        }
-
-        if ($firstName === '') {
-            return;
-        }
-
-        $reference = isset($item['reference']) ? trim((string) $item['reference']) : null;
-        $club = isset($item['club']) ? trim((string) $item['club']) : null;
-        $gender = isset($item['gender']) ? trim((string) $item['gender']) : null;
-        $category = isset($item['category']) ? trim((string) $item['category']) : null;
-
-        $repository = $this->entityManager->getRepository(Runner::class);
-
-        if ($reference !== null && $reference !== '' && trim($reference, '0') !== '') {
-            $existingByBib = $repository->findOneBy([
-                'raceEditionId' => $raceEditionId,
-                'bibNumber' => $reference,
-            ]);
-            if ($existingByBib !== null) {
-                return;
-            }
-        }
-
-        $runner = $repository->findOneBy([
-            'email' => $email,
-            'raceEditionId' => $raceEditionId,
-        ]);
-
-        if ($runner === null) {
-            $runner = new Runner();
-            $runner->setId(Uuid::uuid4()->toString());
-        }
-
-        $runner->setFirstName($firstName);
-        $runner->setLastName($lastName);
-        $runner->setEmail($email);
-        $runner->setRaceEditionId($raceEditionId);
-        $runner->setBibNumber($reference);
-        $runner->setClub($club);
-        $runner->setGender($gender);
-        $runner->setCategory($category);
-
-        $this->entityManager->persist($runner);
     }
 
     /**

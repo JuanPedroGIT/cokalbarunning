@@ -5,7 +5,10 @@
       "Bash(grep -r \"RaffleConfig\\\\|raffleConfig\\\\|raffle_config\" backend/src/ backend/tests/ frontend/src/)",
       "Bash(php bin/phpunit)",
       "Bash(make test *)",
-      "Bash(docker compose *)"
+      "Bash(docker compose *)",
+      "Bash(ssh *)",
+      "Bash(docker exec *)",
+      "Bash(tee /tmp/jwt4.txt)"
     ]
   }
 }

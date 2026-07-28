@@ -19,6 +19,9 @@ interface EmailSendLogRepositoryInterface
 
     public function findByEmailTypeAndReference(string $email, string $type, ?string $reference): ?EmailSendLog;
 
+    /** @return EmailSendLog[] */
+    public function findAllByEmailTypeAndReference(string $email, string $type, ?string $reference): array;
+
     public function countSentByEmail(string $email): int;
 
     /**

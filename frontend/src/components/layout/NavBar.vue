@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRaceStore } from '@/stores/race.store'
@@ -12,6 +12,11 @@ const router = useRouter()
 function toggle() { isOpen.value = !isOpen.value }
 function close() { isOpen.value = false }
 function logout() { auth.logout(); close(); router.push('/') }
+
+const showInscribete = computed(() => {
+  if (!raceStore.activeEdition?.date) return false
+  return new Date(raceStore.activeEdition.date) > new Date()
+})
 
 onMounted(() => {
   raceStore.fetchActiveEdition()
@@ -45,7 +50,7 @@ onMounted(() => {
           <RouterLink to="/admin" class="font-semibold text-xs tracking-widest uppercase text-gray-400 hover:text-[#FF5C00] transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Admin</RouterLink>
           <button @click="logout" class="font-bold text-xs tracking-widest uppercase text-red-400 hover:text-red-300 transition-colors cursor-pointer border border-red-400/30 px-3 py-1.5" style="font-family: 'Barlow Condensed', sans-serif;">Salir</button>
         </template>
-        <a v-else href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank"
+        <a v-else-if="showInscribete" :href="raceStore.activeEdition?.registrationUrl ?? '#'" target="_blank"
           class="font-bold text-sm tracking-widest uppercase bg-[#FF5C00] text-white px-4 py-2 hover:bg-[#FFD600] hover:text-[#0A0A0A] transition-colors"
           style="font-family: 'Barlow Condensed', sans-serif;"
         >Inscribete</a>
@@ -86,7 +91,7 @@ onMounted(() => {
             <RouterLink @click="close" to="/admin" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-gray-400 border border-white/10 px-4 py-3 hover:bg-white/5 transition-colors" style="font-family: 'Barlow Condensed', sans-serif;">Admin</RouterLink>
             <button @click="logout" class="block w-full text-center font-bold text-sm tracking-widest uppercase text-red-400 border border-red-400/30 px-4 py-3 hover:bg-red-400/10 transition-colors cursor-pointer" style="font-family: 'Barlow Condensed', sans-serif;">Cerrar sesion</button>
           </template>
-          <a v-else href="https://www.deporticket.com/web-evento/13254-ix-carrera-solidaria-un-nuevo-impulso" target="_blank"
+          <a v-else-if="showInscribete" :href="raceStore.activeEdition?.registrationUrl ?? '#'" target="_blank"
             class="block w-full text-center font-bold text-sm tracking-widest uppercase bg-[#FF5C00] text-white px-4 py-3 hover:bg-[#FFD600] hover:text-[#0A0A0A] transition-colors"
             style="font-family: 'Barlow Condensed', sans-serif;"
           >Inscribete</a>

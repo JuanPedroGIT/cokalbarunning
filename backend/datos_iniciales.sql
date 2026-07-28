@@ -15,49 +15,49 @@ DELETE FROM race_editions;
 -- ============================================================
 
 -- 2016 (sin poster/camiseta en R2)
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002016-0000-4000-a000-000000000001', 2016, 'II Carrera Solidaria Cocalba Running', 'II edición de la carrera solidaria', '2016-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002016-0000-4000-a000-000000000001', 2016, 'II Carrera Solidaria Cocalba Running', 'II edición de la carrera solidaria', '2016-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2017
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002017-0000-4000-a000-000000000002', 2017, 'III Carrera Solidaria Cocalba Running', 'III edición de la carrera solidaria', '2017-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002017-0000-4000-a000-000000000002', 2017, 'III Carrera Solidaria Cocalba Running', 'III edición de la carrera solidaria', '2017-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2018
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002018-0000-4000-a000-000000000003', 2018, 'IV Carrera Solidaria Cocalba Running', 'IV edición de la carrera solidaria', '2018-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002018-0000-4000-a000-000000000003', 2018, 'IV Carrera Solidaria Cocalba Running', 'IV edición de la carrera solidaria', '2018-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2019
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002019-0000-4000-a000-000000000004', 2019, 'V Carrera Solidaria Cocalba Running', 'V edición de la carrera solidaria', '2019-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002019-0000-4000-a000-000000000004', 2019, 'V Carrera Solidaria Cocalba Running', 'V edición de la carrera solidaria', '2019-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2022
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002022-0000-4000-a000-000000000005', 2022, 'VI Carrera Solidaria Cocalba Running', 'VI edición de la carrera solidaria', '2022-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002022-0000-4000-a000-000000000005', 2022, 'VI Carrera Solidaria Cocalba Running', 'VI edición de la carrera solidaria', '2022-06-15 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2023
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
-VALUES ('e0002023-0000-4000-a000-000000000006', 2023, 'VII Carrera Solidaria Cocalba Running', 'VII edición de la carrera solidaria', '2023-07-02 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
+VALUES ('e0002023-0000-4000-a000-000000000006', 2023, 'VII Carrera Solidaria Cocalba Running', 'VII edición de la carrera solidaria', '2023-07-02 10:00:00', 'Coca de Alba', false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2024 (tiene poster y camiseta en R2)
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
 VALUES ('e0002024-0000-4000-a000-000000000007', 2024, 'VIII Carrera Solidaria Cocalba Running', 'VIII edición de la carrera solidaria', '2024-06-30 10:00:00', 'Coca de Alba', false,
         'un-nuevo-impulso/race/2024/docs/poster-d061ab24-b7b4-4091-a6a4-f779f5b3d7bc.jpg',
         'un-nuevo-impulso/race/2024/docs/camiseta-8a402cbf-ebdb-4afe-a81c-df2060c0ee15.jpg',
-        NULL, NULL, NULL, NULL);
+        NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2025 (tiene poster)
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
 VALUES ('e0002025-0000-4000-a000-000000000008', 2025, 'IX Carrera Solidaria Cocalba Running', 'IX edición de la carrera solidaria', '2025-07-06 10:00:00', 'Coca de Alba', false,
         'un-nuevo-impulso/race/2025/docs/poster-ce55d194-5a37-4b55-a2dd-aecd4f14d4b2.jpg',
         NULL,
-        NULL, NULL, NULL, NULL);
+        NULL, NULL, NULL, NULL, NULL, false);
 
 -- 2026 (edición activa, poster y camiseta)
-INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url)
+INSERT INTO race_editions (id, year, name, description, date, location, is_active, poster_url, shirt_url, registration_url, inscription_info, solidarity_cause, solidarity_url, trophy_url, show_bib_search)
 VALUES ('e0002026-0000-4000-a000-000000000009', 2026, 'X Carrera Solidaria — Un Nuevo Impulso', 'X edición de la carrera solidaria Cokalba Running', '2026-07-05 10:00:00', 'Coca de Alba', true,
         'un-nuevo-impulso/race/2026/docs/cartel-2026.jpg',
         'un-nuevo-impulso/race/2026/docs/camiseta-2026.jpeg',
-        NULL, NULL, NULL, NULL);
+        NULL, NULL, NULL, NULL, NULL, true);
 
 
 -- ============================================================

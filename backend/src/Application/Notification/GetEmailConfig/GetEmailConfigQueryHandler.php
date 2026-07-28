@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Application\Notification\GetEmailConfig;
 
 use App\Domain\Media\Port\StoragePort;
-use App\Repository\EmailConfigRepository;
+use App\Domain\Notification\Repository\EmailConfigRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
 final class GetEmailConfigQueryHandler
 {
     public function __construct(
-        private EmailConfigRepository $emailConfigRepository,
+        private EmailConfigRepositoryInterface $emailConfigRepository,
         private StoragePort $storage,
     ) {
     }

@@ -93,6 +93,12 @@ services:
         arguments:
             $callbackToken: '%env(N8N_CALLBACK_TOKEN)%'
 
+    App\Domain\Registration\Repository\RunnerRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineRunnerRepository
+
+    App\Domain\Notification\Repository\EmailConfigRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineEmailConfigRepository
+
     App\Domain\Notification\Repository\EmailSendLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineEmailSendLogRepository
 
