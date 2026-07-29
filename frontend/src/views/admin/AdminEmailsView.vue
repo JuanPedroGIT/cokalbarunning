@@ -60,7 +60,7 @@ const configEditionFilter = ref<string>('')
 const editingConfigId = ref<string | null>(null)
 const configSaving = ref(false)
 const configForm = ref<EmailForm>({
-  type: 'raffle', subject: '', title: '', description: '',
+  raceEditionId: '', type: 'raffle', subject: '', title: '', description: '',
   prize: '', drawDate: '', prizeImageUrl: '',
 })
 const previewModalOpen = ref(false)
