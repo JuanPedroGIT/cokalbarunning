@@ -1,8 +1,8 @@
 # Progreso - Cokalba Running
 
-> **Última actualización:** 2026-07-27
-> **Última revisión:** Refactor emails en 2 tabs (gestión + envío) — tracking: `21_REFACTOR_EMAILS_2_TABS.md`
-> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6 + ✅ Ajuste SOLID (18_AJUSTE_SOLID.md) + ✅ SOLID Restantes (19_SOLID_RESTANTES.md) + ✅ Separación carga runners / envío emails (20_SEPARAR_CARGA_RUNNERS_EMAILS.md) + ⬜ Refactor emails 2 tabs (21_REFACTOR_EMAILS_2_TABS.md)
+> **Última actualización:** 2026-07-28
+> **Última revisión:** Formulario de patrocinador — tracking: `22_FORMULARIO_PATROCINADOR.md`
+> **Estado general:** ✅ COMPLETADO (PRD R2) + ✅ FASE 2 COMPLETADA (Post-PRD) + ✅ FASE 3 (Roles + Auditoría + Blog) + ✅ Banner informativo (noticias tipo 2) + ✅ Envío de dorsales por email + ✅ Búsqueda de dorsal en /ediciones + ✅ Nuevos tipos de correo (sorteo + últimas indicaciones) + ✅ Imagen del premio en sorteo + ✅ Config unificada emails_config + ✅ Foto en últimas indicaciones + ✅ SOLID F4 + ✅ Tests F6 + ✅ Ajuste SOLID (18_AJUSTE_SOLID.md) + ✅ SOLID Restantes (19_SOLID_RESTANTES.md) + ✅ Separación carga runners / envío emails (20_SEPARAR_CARGA_RUNNERS_EMAILS.md) + ✅ Refactor emails 2 tabs (21_REFACTOR_EMAILS_2_TABS.md) + ⬜ Formulario patrocinador (22_FORMULARIO_PATROCINADOR.md)
 
 ---
 

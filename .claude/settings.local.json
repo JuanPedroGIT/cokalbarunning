@@ -8,7 +8,8 @@
       "Bash(docker compose *)",
       "Bash(ssh *)",
       "Bash(docker exec *)",
-      "Bash(tee /tmp/jwt4.txt)"
+      "Bash(tee /tmp/jwt4.txt)",
+      "Bash(curl -s -X POST \"http://en-construccion.cokalba-running.com/api/v1/sponsorship/contact\" -H \"Content-Type: application/json\" -d '{\"name\":\"Test\",\"company\":\"Test Corp\",\"email\":\"test@test.com\",\"phone\":\"123456789\"}')"
     ]
   }
 }

@@ -105,6 +105,12 @@ const router = createRouter({
       redirect: '/admin/emails',
     },
     {
+      path: '/admin/sponsorship-contacts',
+      name: 'admin-sponsorship-contacts',
+      component: () => import('../views/admin/AdminSponsorshipContactsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/admin/users',
       name: 'admin-users',
       component: () => import('../views/admin/AdminUsersView.vue'),

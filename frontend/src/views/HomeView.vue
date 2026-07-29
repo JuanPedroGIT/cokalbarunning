@@ -8,6 +8,7 @@ import { useRaceStore } from '@/stores/race.store'
 import api from '@/services/api.service'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { useHead } from '@vueuse/head'
+import SponsorContactModal from '@/components/ui/SponsorContactModal.vue'
 
 interface ClubMember {
   id: string; name: string; description: string | null; bio: string | null; photoUrl: string | null
@@ -26,6 +27,7 @@ const raceDate = computed(() => {
 const { days, hours, minutes, seconds, isExpired } = useCountdown(raceDate)
 const { zoomImage } = useImageZoom()
 const loading = ref(true)
+const showSponsorModal = ref(false)
 const clubMembers = ref<ClubMember[]>([])
 const latestPost = ref<LatestPost | null>(null)
 
@@ -314,13 +316,15 @@ onMounted(async () => {
 
         <div class="text-center mt-10 p-7 border border-white/[0.06]">
           <p class="text-white/30 text-sm mb-4">Tu empresa quiere apoyar la carrera? Contacta con nosotros.</p>
-          <a href="mailto:jabautistah@gmail.com" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-transparent text-white border border-white/30 px-8 py-3 hover:border-naranja hover:text-naranja transition-colors inline-block">
+          <button @click="showSponsorModal = true" class="font-barlow-condensed font-bold text-sm tracking-widest uppercase bg-transparent text-white border border-white/30 px-8 py-3 hover:border-naranja hover:text-naranja transition-colors inline-block cursor-pointer">
             Conviertete en patrocinador
-          </a>
+          </button>
         </div>
       </div>
     </section>
 
   </template>
+
+  <SponsorContactModal v-if="showSponsorModal" @close="showSponsorModal = false" />
   </div>
 </template>

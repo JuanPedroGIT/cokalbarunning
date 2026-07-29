@@ -76,6 +76,9 @@ services:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineResultRepository
         public: true
 
+    App\Domain\Sponsorship\Contact\Repository\SponsorshipContactRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineSponsorshipContactRepository
+
     App\Domain\SocialPublishing\Repository\SocialPublishLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\Doctrine\Repository\DoctrineSocialPublishLogRepository
 
