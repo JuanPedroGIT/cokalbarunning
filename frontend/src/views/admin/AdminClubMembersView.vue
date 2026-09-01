@@ -27,6 +27,7 @@ const users = ref<AdminUser[]>([])
 const form = ref<Partial<ClubMember>>({ name: '', description: '', bio: '', isActive: true, sortOrder: 0, userId: null })
 const router = useRouter()
 const editingId = ref<string | null>(null)
+const saving = ref(false)
 const uploadingPhoto = ref(false)
 
 async function fetch() {
@@ -39,14 +40,20 @@ async function fetch() {
 }
 
 async function save() {
-  const payload: Record<string, any> = { ...form.value }
-  if (editingId.value) {
-    await api.put(`/admin/club-members/${editingId.value}`, payload)
-  } else {
-    await api.post('/admin/club-members', payload)
+  if (saving.value) return
+  saving.value = true
+  try {
+    const payload: Record<string, any> = { ...form.value }
+    if (editingId.value) {
+      await api.put(`/admin/club-members/${editingId.value}`, payload)
+    } else {
+      await api.post('/admin/club-members', payload)
+    }
+    resetForm()
+    await fetch()
+  } finally {
+    saving.value = false
   }
-  resetForm()
-  await fetch()
 }
 
 function edit(m: ClubMember) {
@@ -166,8 +173,8 @@ onMounted(fetch)
           </div>
         </div>
         <div class="flex gap-2 pt-2">
-          <button @click="save" :disabled="!form.name" class="bg-[#FF5C00] text-white px-6 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-            {{ editingId ? 'Guardar cambios' : 'Crear miembro' }}
+          <button @click="save" :disabled="saving || !form.name" class="bg-[#FF5C00] text-white px-6 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+            {{ saving ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear miembro') }}
           </button>
           <button v-if="editingId" @click="resetForm" class="bg-[#222] px-4 py-2 rounded hover:bg-[#333] transition cursor-pointer">Cancelar</button>
         </div>

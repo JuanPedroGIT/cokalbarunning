@@ -23,6 +23,7 @@ interface Edition {
 const photos = ref<Photo[]>([])
 const editions = ref<Edition[]>([])
 const file = ref<File | null>(null)
+const uploading = ref(false)
 const previewUrl = ref<string | null>(null)
 const altText = ref('')
 const isFeatured = ref(false)
@@ -45,31 +46,36 @@ async function fetchEditions() {
 }
 
 async function upload() {
-  if (!file.value) return
+  if (uploading.value || !file.value) return
   if (!selectedEditionId.value) {
     alert('Selecciona una edicion primero')
     return
   }
-  const formData = new FormData()
-  formData.append('file', file.value)
-  formData.append('altText', altText.value)
-  formData.append('isFeatured', String(isFeatured.value))
-  formData.append('sortOrder', String(sortOrder.value))
-  formData.append('raceEditionId', selectedEditionId.value)
+  uploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file.value)
+    formData.append('altText', altText.value)
+    formData.append('isFeatured', String(isFeatured.value))
+    formData.append('sortOrder', String(sortOrder.value))
+    formData.append('raceEditionId', selectedEditionId.value)
 
-  await api.post('/admin/photos', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+    await api.post('/admin/photos', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
 
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+    }
+    file.value = null
+    previewUrl.value = null
+    altText.value = ''
+    isFeatured.value = false
+    sortOrder.value = 0
+    await fetchPhotos()
+  } finally {
+    uploading.value = false
   }
-  file.value = null
-  previewUrl.value = null
-  altText.value = ''
-  isFeatured.value = false
-  sortOrder.value = 0
-  await fetchPhotos()
 }
 
 async function remove(id: string) {
@@ -144,7 +150,7 @@ onMounted(() => { fetchEditions() })
                 </label>
               </div>
             </div>
-            <button @click="upload" :disabled="!file" class="bg-[#FF5C00] text-white px-5 py-2.5 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-start">Subir foto</button>
+            <button @click="upload" :disabled="uploading || !file" class="bg-[#FF5C00] text-white px-5 py-2.5 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-start">{{ uploading ? 'Subiendo...' : 'Subir foto' }}</button>
           </div>
         </div>
       </div>

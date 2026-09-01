@@ -15,6 +15,7 @@ const users = ref<AdminUser[]>([])
 const form = ref({ email: '', password: '', firstName: '', lastName: '', roles: ['ROLE_EDITOR'] })
 const router = useRouter()
 const editingId = ref<string | null>(null)
+const saving = ref(false)
 
 async function fetch() {
   const res = await api.get('/admin/users')
@@ -22,13 +23,19 @@ async function fetch() {
 }
 
 async function save() {
-  if (editingId.value) {
-    await api.put(`/admin/users/${editingId.value}`, form.value)
-  } else {
-    await api.post('/admin/users', form.value)
+  if (saving.value) return
+  saving.value = true
+  try {
+    if (editingId.value) {
+      await api.put(`/admin/users/${editingId.value}`, form.value)
+    } else {
+      await api.post('/admin/users', form.value)
+    }
+    resetForm()
+    await fetch()
+  } finally {
+    saving.value = false
   }
-  resetForm()
-  await fetch()
 }
 
 function edit(u: AdminUser) {
@@ -100,8 +107,8 @@ onMounted(fetch)
           </div>
         </div>
         <div class="flex gap-2 pt-2">
-          <button @click="save" :disabled="!form.email || (!editingId && !form.password)" class="bg-[#FF5C00] text-white px-6 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-            {{ editingId ? 'Guardar cambios' : 'Crear usuario' }}
+          <button @click="save" :disabled="saving || !form.email || (!editingId && !form.password)" class="bg-[#FF5C00] text-white px-6 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+            {{ saving ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear usuario') }}
           </button>
           <button v-if="editingId" @click="resetForm" class="bg-[#222] px-4 py-2 rounded hover:bg-[#333] transition cursor-pointer">Cancelar</button>
         </div>

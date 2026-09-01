@@ -46,6 +46,7 @@ const coverFile = ref<File | null>(null)
 const coverPreviewUrl = ref<string | null>(null)
 const socialPublishes = ref<Record<string, SocialPublishLog>>({})
 const publishingIds = ref<Set<string>>(new Set())
+const saving = ref(false)
 
 async function fetchPosts() {
   const res = await api.get('/admin/posts')
@@ -83,25 +84,31 @@ async function publishToInstagram(id: string) {
 }
 
 async function save() {
-  const payload = { ...form.value }
-  delete payload.coverImage
-  let id = editingId.value
-  if (id) {
-    await api.put(`/admin/posts/${id}`, payload)
-  } else {
-    const res = await api.post('/admin/posts', payload)
-    id = res.data.data?.id
-  }
-  if (coverFile.value && id) {
-    await uploadCover(id, coverFile.value)
-    coverFile.value = null
-    if (coverPreviewUrl.value) {
-      URL.revokeObjectURL(coverPreviewUrl.value)
-      coverPreviewUrl.value = null
+  if (saving.value) return
+  saving.value = true
+  try {
+    const payload = { ...form.value }
+    delete payload.coverImage
+    let id = editingId.value
+    if (id) {
+      await api.put(`/admin/posts/${id}`, payload)
+    } else {
+      const res = await api.post('/admin/posts', payload)
+      id = res.data.data?.id
     }
+    if (coverFile.value && id) {
+      await uploadCover(id, coverFile.value)
+      coverFile.value = null
+      if (coverPreviewUrl.value) {
+        URL.revokeObjectURL(coverPreviewUrl.value)
+        coverPreviewUrl.value = null
+      }
+    }
+    resetForm()
+    await fetchPosts()
+  } finally {
+    saving.value = false
   }
-  resetForm()
-  await fetchPosts()
 }
 
 async function uploadCover(postId: string, file: File) {
@@ -228,7 +235,7 @@ onMounted(async () => {
           </div>
         </div>
         <div class="flex gap-2 pt-2">
-          <button @click="save" class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition">Guardar</button>
+          <button @click="save" :disabled="saving" class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
           <button v-if="editingId" @click="resetForm" class="bg-[#222] px-4 py-2 rounded hover:bg-[#333] transition">Cancelar</button>
         </div>
       </div>

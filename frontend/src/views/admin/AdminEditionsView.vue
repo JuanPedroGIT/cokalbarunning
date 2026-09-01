@@ -45,6 +45,7 @@ const form = ref<Partial<Edition>>({
 
 const router = useRouter()
 const editingId = ref<string | null>(null)
+const saving = ref(false)
 const uploadingPoster = ref(false)
 const uploadingShirt = ref(false)
 const uploadingTrophy = ref(false)
@@ -56,14 +57,20 @@ async function fetchEditions() {
 }
 
 async function save() {
-  const payload = { ...form.value }
-  if (editingId.value) {
-    await api.put(`/admin/editions/${editingId.value}`, payload)
-  } else {
-    await api.post('/admin/editions', payload)
+  if (saving.value) return
+  saving.value = true
+  try {
+    const payload = { ...form.value }
+    if (editingId.value) {
+      await api.put(`/admin/editions/${editingId.value}`, payload)
+    } else {
+      await api.post('/admin/editions', payload)
+    }
+    resetForm()
+    await fetchEditions()
+  } finally {
+    saving.value = false
   }
-  resetForm()
-  await fetchEditions()
 }
 
 async function uploadPoster(file: File) {
@@ -430,9 +437,10 @@ onMounted(() => {
         <div class="flex flex-wrap gap-2 pt-2">
           <button
             @click="save"
-            class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition cursor-pointer"
+            :disabled="saving"
+            class="bg-[#FF5C00] text-white px-4 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Guardar
+            {{ saving ? 'Guardando...' : 'Guardar' }}
           </button>
           <button
             v-if="editingId"

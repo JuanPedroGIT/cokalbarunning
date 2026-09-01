@@ -27,6 +27,7 @@ const form = ref<Partial<Sponsor>>({
 })
 const router = useRouter()
 const editingId = ref<string | null>(null)
+const saving = ref(false)
 const uploadingLogo = ref(false)
 
 async function fetchSponsors() {
@@ -37,14 +38,20 @@ async function fetchSponsors() {
 }
 
 async function save() {
-  if (editingId.value) {
-    await api.put(`/admin/sponsors/${editingId.value}`, form.value)
-  } else {
-    const res = await api.post('/admin/sponsors', form.value)
-    editingId.value = res.data.id
+  if (saving.value) return
+  saving.value = true
+  try {
+    if (editingId.value) {
+      await api.put(`/admin/sponsors/${editingId.value}`, form.value)
+    } else {
+      const res = await api.post('/admin/sponsors', form.value)
+      editingId.value = res.data.id
+    }
+    resetForm()
+    await fetchSponsors()
+  } finally {
+    saving.value = false
   }
-  resetForm()
-  await fetchSponsors()
 }
 
 function edit(s: Sponsor) {
@@ -210,10 +217,10 @@ onMounted(() => {
         <div class="flex flex-wrap gap-2 pt-2">
           <button
             @click="save"
-            :disabled="!form.name"
+            :disabled="saving || !form.name"
             class="bg-[#FF5C00] text-white px-6 py-2 rounded font-medium hover:bg-[#FFD600] hover:text-[#0A0A0A] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {{ editingId ? 'Guardar cambios' : 'Crear patrocinador' }}
+            {{ saving ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear patrocinador') }}
           </button>
           <button
             v-if="editingId"
