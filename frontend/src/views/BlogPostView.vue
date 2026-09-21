@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api.service'
 import { usePageMeta } from '@/composables/usePageMeta'
+import { useImageZoom } from '@/composables/useImageZoom'
 import InstagramSvg from '@/assets/icons/instagram.svg?raw'
 import WhatsappSvg from '@/assets/icons/whatsapp.svg?raw'
 import XSvg from '@/assets/icons/x.svg?raw'
@@ -20,6 +21,7 @@ interface Post {
 }
 
 const route = useRoute()
+const { zoomImage } = useImageZoom()
 const post = ref<Post | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -131,7 +133,7 @@ function shareToInstagram() {
           />
         </div>
       </div>
-      <img v-if="post.coverImage" :src="post.coverImage" class="w-full max-h-96 object-cover mb-8 rounded border border-white/5" loading="lazy" />
+      <img v-if="post.coverImage" :src="post.coverImage" :alt="post.title" class="w-full aspect-[297/210] object-cover mb-8 rounded border border-white/5 cursor-zoom-in" loading="lazy" @click="zoomImage($event.target as HTMLImageElement)" />
       <!-- ADVERTENCIA: el backend debe sanitizar el HTML antes de guardarlo -->
       <div class="text-white/70 leading-relaxed" v-html="post.content"></div>
     </div>
